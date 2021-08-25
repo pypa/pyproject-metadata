@@ -26,17 +26,6 @@ class Metadata():
     def __init__(self, data: Mapping[str, Any]) -> None:
         self._data = data
 
-    def __contains__(self, key: Any) -> bool:
-        if not isinstance(key, str):  # pragma: no cover
-            return False
-        try:
-            val = self._data['tool']['trampolim']
-            for part in key.split('.'):
-                val = val[part]
-            return True
-        except KeyError:
-            return False
-
     def get(self, key: str) -> Any:
         val = self._data
         for part in key.split('.'):
