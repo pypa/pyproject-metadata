@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import os
 import os.path
+import pathlib
 import re
 
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import packaging.markers
 import packaging.requirements
@@ -111,8 +114,13 @@ class Metadata():
 
 
 class StandardMetadata(Metadata):
-    def __init__(self, data: Mapping[str, Any]) -> None:
+    def __init__(
+        self,
+        data: Mapping[str, Any],
+        project_dir: Union[str, os.PathLike[str]] = os.path.curdir,
+    ) -> None:
         super().__init__(data)
+        self._project_dir = pathlib.Path(project_dir)
 
         if 'project' not in self._data:
             raise ConfigurationError('Section `project` missing in pyproject.toml')
@@ -174,8 +182,7 @@ class StandardMetadata(Metadata):
                     f'License file not found (`{file}`)',
                     key='project.license.file',
                 )
-            with open(file) as f:
-                text = f.read()
+            text = self._project_dir.joinpath(file).read_text()
 
         return (file, text)
 
@@ -235,8 +242,7 @@ class StandardMetadata(Metadata):
                     f'Readme file not found (`{file}`)',
                     key='project.license.file',
                 )
-            with open(file) as f:
-                text = f.read()
+            text = self._project_dir.joinpath(file).read_text()
 
         return (file, text, content_type)
 
