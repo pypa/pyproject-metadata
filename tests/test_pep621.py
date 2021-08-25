@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: MIT
 
+import pathlib
 import re
 import textwrap
 
+import packaging.specifiers
+import packaging.version
 import pytest
 import tomli
 
@@ -460,3 +463,61 @@ import pep621
 def test_load(package, data, error):
     with pytest.raises(pep621.ConfigurationError, match=re.escape(error)):
         pep621.StandardMetadata(tomli.loads(data))
+
+
+def test_value(package):
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pep621.StandardMetadata(tomli.load(f))
+
+    assert metadata.dynamic == []
+    assert metadata.name == 'full-metadata'
+    assert metadata.version == packaging.version.Version('3.2.1')
+    assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
+    assert metadata.license_file is None
+    assert metadata.license_text == 'some license text'
+    assert metadata.readme_file == 'README.md'
+    assert metadata.readme_text == pathlib.Path('README.md').read_text()
+    assert metadata.description == 'A package with all the metadata :)'
+    assert metadata.authors == [
+        ('Unknown', 'example@example.com'),
+        ('Example!', None),
+    ]
+    assert metadata.maintainers == [
+        ('Other Example', 'other@example.com'),
+    ]
+    assert metadata.keywords == ['trampolim', 'is', 'interesting']
+    assert metadata.classifiers == [
+        'Development Status :: 4 - Beta',
+        'Programming Language :: Python',
+    ]
+    assert metadata.urls == {
+        'changelog': 'github.com/some/repo/blob/master/CHANGELOG.rst',
+        'documentation': 'readthedocs.org',
+        'homepage': 'example.com',
+        'repository': 'github.com/some/repo',
+    }
+    assert metadata.entrypoints == {
+        'custom': {
+            'full-metadata': 'full_metadata:main_custom',
+        },
+    }
+    assert metadata.scripts == {
+        'full-metadata': 'full_metadata:main_cli',
+    }
+    assert metadata.gui_scripts == {
+        'full-metadata-gui': 'full_metadata:main_gui',
+    }
+    assert metadata.dependencies == [
+        'dependency1',
+        'dependency2>1.0.0',
+        'dependency3[extra]',
+        'dependency4; os_name != "nt"',
+        'dependency5[other-extra]>1.0; os_name == "nt"',
+    ]
+    assert metadata.optional_dependencies == {
+        'test': [
+            'test_dependency',
+            'test_dependency[test_extra]',
+            'test_dependency[test_extra2] > 3.0; os_name == "nt"',
+        ],
+    }
