@@ -14,6 +14,9 @@ import packaging.requirements
 import packaging.version
 
 
+__version__ = '0.1.0'
+
+
 class ConfigurationError(Exception):
     '''Error in the backend metadata.'''
     def __init__(self, msg: str, *, key: Optional[str] = None):
