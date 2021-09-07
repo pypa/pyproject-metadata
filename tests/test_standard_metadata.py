@@ -545,3 +545,11 @@ def test_readme_content_type(package, content_type):
         metadata = pep621.StandardMetadata(tomli.load(f))
 
     assert metadata.readme_content_type == content_type
+
+
+def test_readme_content_type_unknown():
+    with cd_package('unknown-readme-type'), pytest.raises(
+        pep621.ConfigurationError,
+        match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
+    ), open('pyproject.toml', 'rb') as f:
+        pep621.StandardMetadata(tomli.load(f))
