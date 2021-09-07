@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import collections
 import os
 import os.path
 import pathlib
 import re
 
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, OrderedDict, Tuple, Union
 
 import packaging.markers
 import packaging.requirements
@@ -26,6 +27,37 @@ class ConfigurationError(Exception):
     @property
     def key(self) -> Optional[str]:  # pragma: no cover
         return self._key
+
+
+class RFC822Message():
+    '''Simple RFC 822 message implementation.
+
+    Note: Does not support multiline fields, as Python packaging flavored
+    RFC 822 metadata does.
+    '''
+
+    def __init__(self) -> None:
+        self.headers: OrderedDict[str, List[str]] = collections.OrderedDict()
+        self.body: Optional[str] = None
+
+    def __setitem__(self, name: str, value: Optional[str]) -> None:
+        if not value:
+            return
+        if name not in self.headers:
+            self.headers[name] = []
+        self.headers[name].append(value)
+
+    def __str__(self) -> str:
+        text = ''
+        for name, entries in self.headers.items():
+            for entry in entries:
+                text += f'{name}: {entry}\n'
+        if self.body:
+            text += '\n' + self.body
+        return text
+
+    def __bytes__(self) -> bytes:
+        return str(self).encode()
 
 
 class Metadata():
