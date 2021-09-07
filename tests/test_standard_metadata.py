@@ -11,6 +11,8 @@ import tomli
 
 import pep621
 
+from .conftest import cd_package
+
 
 @pytest.mark.parametrize(
     ('data', 'error'),
@@ -529,3 +531,17 @@ def test_read_license(package2):
 
     assert metadata.license_file == 'LICENSE'
     assert metadata.license_text == 'Some license!\n'
+
+
+@pytest.mark.parametrize(
+    ('package', 'content_type'),
+    [
+        ('full-metadata', 'text/markdown'),
+        ('full-metadata2', 'text/x-rst'),
+    ],
+)
+def test_readme_content_type(package, content_type):
+    with cd_package(package), open('pyproject.toml', 'rb') as f:
+        metadata = pep621.StandardMetadata(tomli.load(f))
+
+    assert metadata.readme_content_type == content_type
