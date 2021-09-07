@@ -521,3 +521,11 @@ def test_value(package):
             'test_dependency[test_extra2] > 3.0; os_name == "nt"',
         ],
     }
+
+
+def test_read_license(package2):
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pep621.StandardMetadata(tomli.load(f))
+
+    assert metadata.license_file == 'LICENSE'
+    assert metadata.license_text == 'Some license!\n'
