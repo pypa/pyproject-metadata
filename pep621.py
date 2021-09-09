@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import collections
+import dataclasses
 import os
 import os.path
 import pathlib
 import re
+import typing
 
-from typing import Any, Dict, List, Mapping, Optional, OrderedDict, Tuple, Union
+from typing import Any, DefaultDict, Dict, List, Mapping, Optional, OrderedDict, Tuple, Union
 
 import packaging.markers
 import packaging.requirements
@@ -60,9 +62,20 @@ class RFC822Message():
         return str(self).encode()
 
 
-class Metadata():
+class DataFetcher():
     def __init__(self, data: Mapping[str, Any]) -> None:
         self._data = data
+
+    def __contains__(self, key: Any) -> bool:
+        if not isinstance(key, str):
+            return False
+        val = self._data
+        try:
+            for part in key.split('.'):
+                val = val[part]
+        except KeyError:
+            return False
+        return True
 
     def get(self, key: str) -> Any:
         val = self._data
@@ -148,53 +161,89 @@ class Metadata():
             return []
 
 
-class StandardMetadata(Metadata):
-    def __init__(
-        self,
+class License(typing.NamedTuple):
+    text: str
+    file: Optional[str]
+
+
+class Readme(typing.NamedTuple):
+    text: str
+    file: Optional[str]
+    content_type: str
+
+
+@dataclasses.dataclass
+class StandardMetadata():
+    name: str
+    version: Optional[packaging.version.Version]
+    description: Optional[str]
+    license: Optional[License]
+    readme: Optional[Readme]
+    requires_python: Optional[packaging.specifiers.Specifier]
+    dependencies: List[packaging.requirements.Requirement]
+    optional_dependencies: Dict[str, List[packaging.requirements.Requirement]]
+    entrypoints: Dict[str, Dict[str, str]]
+    authors: List[Tuple[str, str]]
+    maintainers: List[Tuple[str, str]]
+    urls: Dict[str, str]
+    classifiers: List[str]
+    keywords: List[str]
+    scripts: Dict[str, str]
+    gui_scripts: Dict[str, str]
+    dynamic: List[str]
+
+    def __post_init__(self) -> None:
+        self.name = re.sub(r'[-_.]+', '-', self.name).lower()
+
+    @classmethod
+    def from_pyproject(
+        cls,
         data: Mapping[str, Any],
         project_dir: Union[str, os.PathLike[str]] = os.path.curdir,
-    ) -> None:
-        super().__init__(data)
-        self._project_dir = pathlib.Path(project_dir)
+    ) -> StandardMetadata:
+        fetcher = DataFetcher(data)
+        project_dir = pathlib.Path(project_dir)
 
-        if 'project' not in self._data:
+        if 'project' not in fetcher:
             raise ConfigurationError('Section `project` missing in pyproject.toml')
 
-        self.dynamic = self.get_list('project.dynamic')
-        if 'name' in self.dynamic:
+        dynamic = fetcher.get_list('project.dynamic')
+        if 'name' in dynamic:
             raise ConfigurationError('Unsupported field `name` in `project.dynamic`')
 
-        name = self.get_str('project.name')
+        name = fetcher.get_str('project.name')
         if not name:
             raise ConfigurationError('Field `project.name` missing')
-        self.name = re.sub(r'[-_.]+', '-', name).lower()
 
-        version = self.get_str('project.version')
-        self.version = packaging.version.Version(version) if version else None
+        version_string = fetcher.get_str('project.version')
+        requires_python_string = fetcher.get_str('project.requires-python')
 
-        requires_python = self.get_str('project.requires-python')
-        self.requires_python = packaging.specifiers.Specifier(requires_python) if requires_python else None
+        return cls(
+            name,
+            packaging.version.Version(version_string) if version_string else None,
+            fetcher.get_str('project.description'),
+            cls._get_license(fetcher, project_dir),
+            cls._get_readme(fetcher, project_dir),
+            packaging.specifiers.Specifier(requires_python_string) if requires_python_string else None,
+            cls._get_dependencies(fetcher),
+            cls._get_optional_dependencies(fetcher),
+            cls._get_entrypoints(fetcher),
+            fetcher.get_people('project.authors'),
+            fetcher.get_people('project.maintainers'),
+            fetcher.get_dict('project.urls'),
+            fetcher.get_list('project.classifiers'),
+            fetcher.get_list('project.keywords'),
+            fetcher.get_dict('project.scripts'),
+            fetcher.get_dict('project.gui-scripts'),
+            dynamic,
+        )
 
-        self.license_file, self.license_text = self._get_license()
-        self.readme_file, self.readme_text, self.readme_content_type = self._get_readme()
-        self.optional_dependencies = self._get_optional_dependencies()
-        self.entrypoints = self._get_entrypoints()
+    @staticmethod
+    def _get_license(fetcher: DataFetcher, project_dir: pathlib.Path) -> Optional[License]:
+        if 'project.license' not in fetcher:
+            return None
 
-        self.description = self.get_str('project.description')
-        self.authors = self.get_people('project.authors')
-        self.maintainers = self.get_people('project.maintainers')
-        self.keywords = self.get_list('project.keywords')
-        self.classifiers = self.get_list('project.classifiers')
-        self.dependencies = self.get_list('project.dependencies')
-        self.urls = self.get_dict('project.urls')
-        self.scripts = self.get_dict('project.scripts')
-        self.gui_scripts = self.get_dict('project.gui-scripts')
-
-    def _get_license(self) -> Tuple[Optional[str], Optional[str]]:
-        if 'license' not in self._data['project']:
-            return (None, None)
-
-        _license = self.get_dict('project.license')
+        _license = fetcher.get_dict('project.license')
         for field in _license:
             if field not in ('file', 'text'):
                 raise ConfigurationError(
@@ -202,8 +251,8 @@ class StandardMetadata(Metadata):
                     key=f'project.license.{field}',
                 )
 
-        file = self.get_str('project.license.file')
-        text = self.get_str('project.license.text')
+        file = fetcher.get_str('project.license.file')
+        text = fetcher.get_str('project.license.text')
 
         if (file and text) or (not file and not text):
             raise ConfigurationError(
@@ -217,19 +266,21 @@ class StandardMetadata(Metadata):
                     f'License file not found (`{file}`)',
                     key='project.license.file',
                 )
-            text = self._project_dir.joinpath(file).read_text()
+            text = project_dir.joinpath(file).read_text()
 
-        return (file, text)
+        assert text
+        return License(text, file)
 
-    def _get_readme(self) -> Tuple[Optional[str], Optional[str], Optional[str]]:  # noqa: C901
-        if 'readme' not in self._data['project']:
-            return (None, None, None)
+    @staticmethod
+    def _get_readme(fetcher: DataFetcher, project_dir: pathlib.Path) -> Optional[Readme]:  # noqa: C901
+        if 'project.readme' not in fetcher:
+            return None
 
         file: Optional[str]
         text: Optional[str]
         content_type: Optional[str]
 
-        readme = self.get('project.readme')
+        readme = fetcher.get('project.readme')
         if isinstance(readme, str):
             # readme is a file
             text = None
@@ -251,9 +302,9 @@ class StandardMetadata(Metadata):
                         f'Unexpected field `project.readme.{field}`',
                         key=f'project.readme.{field}',
                     )
-            content_type = self.get_str('project.readme.content-type')
-            file = self.get_str('project.readme.file')
-            text = self.get_str('project.readme.text')
+            content_type = fetcher.get_str('project.readme.content-type')
+            file = fetcher.get_str('project.readme.file')
+            text = fetcher.get_str('project.readme.text')
             if (file and text) or (not file and not text):
                 raise ConfigurationError(
                     f'Invalid `project.readme` value, expecting either `file` or `text` (got `{readme}`)',
@@ -277,45 +328,68 @@ class StandardMetadata(Metadata):
                     f'Readme file not found (`{file}`)',
                     key='project.license.file',
                 )
-            text = self._project_dir.joinpath(file).read_text()
+            text = project_dir.joinpath(file).read_text()
 
-        return (file, text, content_type)
+        assert text
+        return Readme(text, file, content_type)
 
-    def _get_optional_dependencies(self) -> Dict[str, List[str]]:
+    @staticmethod
+    def _get_dependencies(fetcher: DataFetcher) -> List[packaging.requirements.Requirement]:
         try:
-            val = self._data['project']['optional-dependencies']
-            if not isinstance(val, dict):
+            requirement_strings = fetcher.get_list('project.dependencies')
+        except KeyError:
+            return []
+
+        requirements: List[packaging.requirements.Requirement] = []
+        for req in requirement_strings:
+            try:
+                requirements.append(packaging.requirements.Requirement(req))
+            except packaging.requirements.InvalidRequirement as e:
                 raise ConfigurationError(
-                    'Field `project.optional-dependencies` has an invalid type, expecting a '
-                    f'dictionary of PEP 508 requirement strings (got `{val}`)'
+                    'Field `project.dependencies` contains an invalid PEP 508 '
+                    f'requirement string `{req}` (`{str(e)}`)'
                 )
-            for extra, requirements in val.items():
-                assert isinstance(extra, str)
-                if not isinstance(requirements, list):
-                    raise ConfigurationError(
-                        f'Field `project.optional-dependencies.{extra}` has an invalid type, expecting a '
-                        f'dictionary PEP 508 requirement strings (got `{requirements}`)'
-                    )
-                for req in requirements:
-                    if not isinstance(req, str):
-                        raise ConfigurationError(
-                            f'Field `project.optional-dependencies.{extra}` has an invalid type, '
-                            f'expecting a PEP 508 requirement string (got `{req}`)'
-                        )
-                    try:
-                        packaging.requirements.Requirement(req)
-                    except packaging.requirements.InvalidRequirement as e:
-                        raise ConfigurationError(
-                            f'Field `project.optional-dependencies.{extra}` contains '
-                            f'an invalid PEP 508 requirement string `{req}` (`{str(e)}`)'
-                        )
-            return val
+        return requirements
+
+    @staticmethod
+    def _get_optional_dependencies(fetcher: DataFetcher) -> Dict[str, List[packaging.requirements.Requirement]]:
+        try:
+            val = fetcher.get('project.optional-dependencies')
         except KeyError:
             return {}
 
-    def _get_entrypoints(self) -> Dict[str, Dict[str, str]]:
+        requirements_dict: DefaultDict[str, List[packaging.requirements.Requirement]] = collections.defaultdict(list)
+        if not isinstance(val, dict):
+            raise ConfigurationError(
+                'Field `project.optional-dependencies` has an invalid type, expecting a '
+                f'dictionary of PEP 508 requirement strings (got `{val}`)'
+            )
+        for extra, requirements in val.copy().items():
+            assert isinstance(extra, str)
+            if not isinstance(requirements, list):
+                raise ConfigurationError(
+                    f'Field `project.optional-dependencies.{extra}` has an invalid type, expecting a '
+                    f'dictionary PEP 508 requirement strings (got `{requirements}`)'
+                )
+            for i, req in enumerate(requirements):
+                if not isinstance(req, str):
+                    raise ConfigurationError(
+                        f'Field `project.optional-dependencies.{extra}` has an invalid type, '
+                        f'expecting a PEP 508 requirement string (got `{req}`)'
+                    )
+                try:
+                    requirements_dict[extra].append(packaging.requirements.Requirement(req))
+                except packaging.requirements.InvalidRequirement as e:
+                    raise ConfigurationError(
+                        f'Field `project.optional-dependencies.{extra}` contains '
+                        f'an invalid PEP 508 requirement string `{req}` (`{str(e)}`)'
+                    )
+        return dict(requirements_dict)
+
+    @staticmethod
+    def _get_entrypoints(fetcher: DataFetcher) -> Dict[str, Dict[str, str]]:
         try:
-            val = self._data['project']['entry-points']
+            val = fetcher.get('project.entry-points')
             if not isinstance(val, dict):
                 raise ConfigurationError(
                     'Field `project.entry-points` has an invalid type, expecting a '

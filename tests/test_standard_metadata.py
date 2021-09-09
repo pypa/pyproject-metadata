@@ -220,6 +220,20 @@ from .conftest import cd_package
             '''),
             ('Field `project.dependencies` contains item with invalid type, expecting a string (got `99`)'),
         ),
+        (
+            textwrap.dedent('''
+                [project]
+                name = 'test'
+                dependencies = [
+                    'definitely not a valid PEP 508 requirement!',
+                ]
+            '''),
+            (
+                'Field `project.dependencies` contains an invalid PEP 508 requirement '
+                'string `definitely not a valid PEP 508 requirement!` '
+                '(`Parse error at "\'not a va\'": Expected stringEnd`)'
+            ),
+        ),
         # optional-dependencies
         (
             textwrap.dedent('''
@@ -464,21 +478,22 @@ from .conftest import cd_package
 )
 def test_load(package, data, error):
     with pytest.raises(pep621.ConfigurationError, match=re.escape(error)):
-        pep621.StandardMetadata(tomli.loads(data))
+        pep621.StandardMetadata.from_pyproject(tomli.loads(data))
 
 
 def test_value(package):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata(tomli.load(f))
+        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
 
     assert metadata.dynamic == []
     assert metadata.name == 'full-metadata'
     assert metadata.version == packaging.version.Version('3.2.1')
     assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
-    assert metadata.license_file is None
-    assert metadata.license_text == 'some license text'
-    assert metadata.readme_file == 'README.md'
-    assert metadata.readme_text == pathlib.Path('README.md').read_text()
+    assert metadata.license.file is None
+    assert metadata.license.text == 'some license text'
+    assert metadata.readme.file == 'README.md'
+    assert metadata.readme.text == pathlib.Path('README.md').read_text()
+    assert metadata.readme.content_type == 'text/markdown'
     assert metadata.description == 'A package with all the metadata :)'
     assert metadata.authors == [
         ('Unknown', 'example@example.com'),
@@ -509,28 +524,43 @@ def test_value(package):
     assert metadata.gui_scripts == {
         'full-metadata-gui': 'full_metadata:main_gui',
     }
-    assert metadata.dependencies == [
+    print(metadata.dependencies)
+    print(list(map(packaging.requirements.Requirement, [
+        'dependency1',
+        'dependency2>1.0.0',
+        'dependency3[extra]',
+        'dependency4; os_name != "nt"',
+        'dependency5[other-extra]>1.0; os_name == "nt"',
+    ])))
+    print(metadata.dependencies == list(map(packaging.requirements.Requirement, [
+        'dependency1',
+        'dependency2>1.0.0',
+        'dependency3[extra]',
+        'dependency4; os_name != "nt"',
+        'dependency5[other-extra]>1.0; os_name == "nt"',
+    ])))
+    print(metadata.dependencies[0] == packaging.requirements.Requirement('dependency1'))
+    assert list(map(str, metadata.dependencies)) == [
         'dependency1',
         'dependency2>1.0.0',
         'dependency3[extra]',
         'dependency4; os_name != "nt"',
         'dependency5[other-extra]>1.0; os_name == "nt"',
     ]
-    assert metadata.optional_dependencies == {
-        'test': [
-            'test_dependency',
-            'test_dependency[test_extra]',
-            'test_dependency[test_extra2] > 3.0; os_name == "nt"',
-        ],
-    }
+    assert list(metadata.optional_dependencies.keys()) == ['test']
+    assert list(map(str, metadata.optional_dependencies['test'])) == [
+        'test_dependency',
+        'test_dependency[test_extra]',
+        'test_dependency[test_extra2]>3.0; os_name == "nt"',
+    ]
 
 
 def test_read_license(package2):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata(tomli.load(f))
+        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
 
-    assert metadata.license_file == 'LICENSE'
-    assert metadata.license_text == 'Some license!\n'
+    assert metadata.license.file == 'LICENSE'
+    assert metadata.license.text == 'Some license!\n'
 
 
 @pytest.mark.parametrize(
@@ -542,9 +572,9 @@ def test_read_license(package2):
 )
 def test_readme_content_type(package, content_type):
     with cd_package(package), open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata(tomli.load(f))
+        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
 
-    assert metadata.readme_content_type == content_type
+    assert metadata.readme.content_type == content_type
 
 
 def test_readme_content_type_unknown():
@@ -552,4 +582,4 @@ def test_readme_content_type_unknown():
         pep621.ConfigurationError,
         match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
     ), open('pyproject.toml', 'rb') as f:
-        pep621.StandardMetadata(tomli.load(f))
+        pep621.StandardMetadata.from_pyproject(tomli.load(f))
