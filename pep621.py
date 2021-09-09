@@ -390,25 +390,25 @@ class StandardMetadata():
     def _get_entrypoints(fetcher: DataFetcher) -> Dict[str, Dict[str, str]]:
         try:
             val = fetcher.get('project.entry-points')
-            if not isinstance(val, dict):
-                raise ConfigurationError(
-                    'Field `project.entry-points` has an invalid type, expecting a '
-                    f'dictionary of entrypoint sections (got `{val}`)'
-                )
-            for section, entrypoints in val.items():
-                assert isinstance(section, str)
-                if not isinstance(entrypoints, dict):
-                    raise ConfigurationError(
-                        f'Field `project.entry-points.{section}` has an invalid type, expecting a '
-                        f'dictionary of entrypoints (got `{entrypoints}`)'
-                    )
-                for name, entrypoint in entrypoints.items():
-                    assert isinstance(name, str)
-                    if not isinstance(entrypoint, str):
-                        raise ConfigurationError(
-                            f'Field `project.entry-points.{section}.{name}` has an invalid type, '
-                            f'expecting a string (got `{entrypoint}`)'
-                        )
-            return val
         except KeyError:
             return {}
+        if not isinstance(val, dict):
+            raise ConfigurationError(
+                'Field `project.entry-points` has an invalid type, expecting a '
+                f'dictionary of entrypoint sections (got `{val}`)'
+            )
+        for section, entrypoints in val.items():
+            assert isinstance(section, str)
+            if not isinstance(entrypoints, dict):
+                raise ConfigurationError(
+                    f'Field `project.entry-points.{section}` has an invalid type, expecting a '
+                    f'dictionary of entrypoints (got `{entrypoints}`)'
+                )
+            for name, entrypoint in entrypoints.items():
+                assert isinstance(name, str)
+                if not isinstance(entrypoint, str):
+                    raise ConfigurationError(
+                        f'Field `project.entry-points.{section}.{name}` has an invalid type, '
+                        f'expecting a string (got `{entrypoint}`)'
+                    )
+        return val
