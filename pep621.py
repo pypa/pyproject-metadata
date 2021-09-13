@@ -238,6 +238,65 @@ class StandardMetadata():
             dynamic,
         )
 
+    def as_rfc822(self) -> RFC822Message:
+        message = RFC822Message()
+        self.write_to_rfc822(message)
+        return message
+
+    def write_to_rfc822(self, message: RFC822Message) -> None:  # noqa: C901
+        message['Metadata-Version'] = '2.1'
+        message['Name'] = self.name
+        message['Version'] = str(self.version)
+        # skip 'Platform'
+        # skip 'Supported-Platform'
+        if self.description:
+            message['Summary'] = self.description
+        message['Keywords'] = ' '.join(self.keywords)
+        if 'homepage' in self.urls:
+            message['Home-page'] = self.urls['homepage']
+        # skip 'Download-URL'
+        message['Author'] = message['Author-Email'] = self._person_list(self.authors)
+        message['Maintainer'] = message['Maintainer-Email'] = self._person_list(self.maintainers)
+        # TODO: 'License'
+        for classifier in self.classifiers:
+            message['Classifier'] = classifier
+        # skip 'Provides-Dist'
+        # skip 'Obsoletes-Dist'
+        # skip 'Requires-External'
+        for name, url in self.urls.items():
+            message['Project-URL'] = f'{name.capitalize()}, {url}'
+        if self.requires_python:
+            message['Requires-Python'] = str(self.requires_python)
+        for dep in self.dependencies:
+            message['Requires-Dist'] = str(dep)
+        for extra, requirements in self.optional_dependencies.items():
+            message['Provides-Extra'] = extra
+            for requirement in requirements:
+                message['Requires-Dist'] = str(self._build_extra_req(extra, requirement))
+        if self.readme:
+            if self.readme.content_type:
+                message['Description-Content-Type'] = self.readme.content_type
+            message.body = self.readme.text
+
+    def _person_list(self, people: List[Tuple[str, str]]) -> str:
+        return ', '.join([
+            '{}{}'.format(name, f' <{_email}>' if _email else '')
+            for name, _email in people
+        ])
+
+    def _build_extra_req(
+        self,
+        extra: str,
+        requirement: packaging.requirements.Requirement,
+    ) -> packaging.requirements.Requirement:
+        if requirement.marker:  # append our extra to the marker
+            requirement.marker = packaging.markers.Marker(
+                str(requirement.marker) + f' and extra == "{extra}"'
+            )
+        else:  # add our extra marker
+            requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
+        return requirement
+
     @staticmethod
     def _get_license(fetcher: DataFetcher, project_dir: pathlib.Path) -> Optional[License]:
         if 'project.license' not in fetcher:

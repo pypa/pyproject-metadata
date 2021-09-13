@@ -583,3 +583,46 @@ def test_readme_content_type_unknown():
         match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
     ), open('pyproject.toml', 'rb') as f:
         pep621.StandardMetadata.from_pyproject(tomli.load(f))
+
+
+def test_as_rfc822(package):
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.headers == {
+        'Metadata-Version': ['2.1'],
+        'Name': ['full-metadata'],
+        'Summary': ['A package with all the metadata :)'],
+        'Version': ['3.2.1'],
+        'Keywords': ['trampolim is interesting'],
+        'Home-page': ['example.com'],
+        'Author': ['Unknown <example@example.com>, Example!'],
+        'Author-Email': ['Unknown <example@example.com>, Example!'],
+        'Maintainer': ['Other Example <other@example.com>'],
+        'Maintainer-Email': ['Other Example <other@example.com>'],
+        'Classifier': [
+            'Development Status :: 4 - Beta',
+            'Programming Language :: Python',
+        ],
+        'Project-URL': [
+            'Homepage, example.com',
+            'Documentation, readthedocs.org',
+            'Repository, github.com/some/repo',
+            'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst',
+        ],
+        'Requires-Python': ['>=3.8'],
+        'Provides-Extra': ['test'],
+        'Requires-Dist': [
+            'dependency1',
+            'dependency2>1.0.0',
+            'dependency3[extra]',
+            'dependency4; os_name != "nt"',
+            'dependency5[other-extra]>1.0; os_name == "nt"',
+            'test_dependency; extra == "test"',
+            'test_dependency[test_extra]; extra == "test"',
+            'test_dependency[test_extra2]>3.0; os_name == "nt" and '
+            'extra == "test"',
+        ],
+        'Description-Content-Type': ['text/markdown'],
+    }
+    assert core_metadata.body == 'some readme\n'
