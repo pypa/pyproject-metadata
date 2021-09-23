@@ -524,22 +524,6 @@ def test_value(package):
     assert metadata.gui_scripts == {
         'full-metadata-gui': 'full_metadata:main_gui',
     }
-    print(metadata.dependencies)
-    print(list(map(packaging.requirements.Requirement, [
-        'dependency1',
-        'dependency2>1.0.0',
-        'dependency3[extra]',
-        'dependency4; os_name != "nt"',
-        'dependency5[other-extra]>1.0; os_name == "nt"',
-    ])))
-    print(metadata.dependencies == list(map(packaging.requirements.Requirement, [
-        'dependency1',
-        'dependency2>1.0.0',
-        'dependency3[extra]',
-        'dependency4; os_name != "nt"',
-        'dependency5[other-extra]>1.0; os_name == "nt"',
-    ])))
-    print(metadata.dependencies[0] == packaging.requirements.Requirement('dependency1'))
     assert list(map(str, metadata.dependencies)) == [
         'dependency1',
         'dependency2>1.0.0',
