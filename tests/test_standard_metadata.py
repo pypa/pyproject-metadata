@@ -580,9 +580,8 @@ def test_as_rfc822(package):
         'Version': ['3.2.1'],
         'Keywords': ['trampolim is interesting'],
         'Home-page': ['example.com'],
-        'Author': ['Unknown <example@example.com>, Example!'],
-        'Author-Email': ['Unknown <example@example.com>, Example!'],
-        'Maintainer': ['Other Example <other@example.com>'],
+        'Author': ['Example!'],
+        'Author-Email': ['Unknown <example@example.com>'],
         'Maintainer-Email': ['Other Example <other@example.com>'],
         'Classifier': [
             'Development Status :: 4 - Beta',

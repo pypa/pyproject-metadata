@@ -255,8 +255,10 @@ class StandardMetadata():
         if 'homepage' in self.urls:
             message['Home-page'] = self.urls['homepage']
         # skip 'Download-URL'
-        message['Author'] = message['Author-Email'] = self._person_list(self.authors)
-        message['Maintainer'] = message['Maintainer-Email'] = self._person_list(self.maintainers)
+        message['Author'] = self._name_list(self.authors)
+        message['Author-Email'] = self._email_list(self.authors)
+        message['Maintainer'] = self._name_list(self.maintainers)
+        message['Maintainer-Email'] = self._email_list(self.maintainers)
         # TODO: 'License'
         for classifier in self.classifiers:
             message['Classifier'] = classifier
@@ -278,10 +280,18 @@ class StandardMetadata():
                 message['Description-Content-Type'] = self.readme.content_type
             message.body = self.readme.text
 
-    def _person_list(self, people: List[Tuple[str, str]]) -> str:
+    def _name_list(sefl, people: List[Tuple[str, str]]) -> str:
+        return ', '.join(
+            name
+            for name, email_ in people
+            if not email_
+        )
+
+    def _email_list(self, people: List[Tuple[str, str]]) -> str:
         return ', '.join([
             '{}{}'.format(name, f' <{_email}>' if _email else '')
             for name, _email in people
+            if _email
         ])
 
     def _build_extra_req(
