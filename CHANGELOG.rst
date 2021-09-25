@@ -3,6 +3,12 @@ Changelog
 +++++++++
 
 
+0.3.1 (25-09-2021)
+==================
+
+- Avoid core metadata ``Author``/``Maintainer`` fields in favor of ``Author-Email``/``Maintainer-Email``
+
+
 0.3.0.post2 (15-09-2021)
 ========================
 
