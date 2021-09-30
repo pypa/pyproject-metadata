@@ -175,22 +175,22 @@ class Readme(typing.NamedTuple):
 @dataclasses.dataclass
 class StandardMetadata():
     name: str
-    version: Optional[packaging.version.Version]
-    description: Optional[str]
-    license: Optional[License]
-    readme: Optional[Readme]
-    requires_python: Optional[packaging.specifiers.Specifier]
-    dependencies: List[packaging.requirements.Requirement]
-    optional_dependencies: Dict[str, List[packaging.requirements.Requirement]]
-    entrypoints: Dict[str, Dict[str, str]]
-    authors: List[Tuple[str, str]]
-    maintainers: List[Tuple[str, str]]
-    urls: Dict[str, str]
-    classifiers: List[str]
-    keywords: List[str]
-    scripts: Dict[str, str]
-    gui_scripts: Dict[str, str]
-    dynamic: List[str]
+    version: Optional[packaging.version.Version] = None
+    description: Optional[str] = None
+    license: Optional[License] = None
+    readme: Optional[Readme] = None
+    requires_python: Optional[packaging.specifiers.Specifier] = None
+    dependencies: List[packaging.requirements.Requirement] = dataclasses.field(default_factory=list)
+    optional_dependencies: Dict[str, List[packaging.requirements.Requirement]] = dataclasses.field(default_factory=dict)
+    entrypoints: Dict[str, Dict[str, str]] = dataclasses.field(default_factory=dict)
+    authors: List[Tuple[str, str]] = dataclasses.field(default_factory=list)
+    maintainers: List[Tuple[str, str]] = dataclasses.field(default_factory=list)
+    urls: Dict[str, str] = dataclasses.field(default_factory=dict)
+    classifiers: List[str] = dataclasses.field(default_factory=list)
+    keywords: List[str] = dataclasses.field(default_factory=list)
+    scripts: Dict[str, str] = dataclasses.field(default_factory=dict)
+    gui_scripts: Dict[str, str] = dataclasses.field(default_factory=dict)
+    dynamic: List[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.name = re.sub(r'[-_.]+', '-', self.name).lower()
