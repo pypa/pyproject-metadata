@@ -337,7 +337,7 @@ class StandardMetadata():
                 )
             text = project_dir.joinpath(file).read_text()
 
-        assert text
+        assert text is not None
         return License(text, file)
 
     @staticmethod
@@ -399,7 +399,7 @@ class StandardMetadata():
                 )
             text = project_dir.joinpath(file).read_text()
 
-        assert text
+        assert text is not None
         return Readme(text, file, content_type)
 
     @staticmethod
