@@ -609,3 +609,32 @@ def test_as_rfc822(package):
         'Description-Content-Type': ['text/markdown'],
     }
     assert core_metadata.body == 'some readme\n'
+
+
+def test_as_rfc822_dynamic(package_dynamic_description):
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+    core_metadata = metadata.as_rfc822()
+    assert dict(core_metadata.headers) == {
+        'Metadata-Version': ['2.2'],
+        'Name': ['dynamic-description'],
+        'Version': ['1.0.0'],
+        'Dynamic': ['description'],
+    }
+
+
+@pytest.mark.parametrize('field', ['name', 'version'])
+def test_as_rfc822_invalid_dynamic(field):
+    metadata = pep621.StandardMetadata(
+        name='something',
+        version=packaging.version.Version('1.0.0'),
+        dynamic=[field],
+    )
+    with pytest.raises(pep621.ConfigurationError, match=f'Field cannot be dynamic: {field}'):
+        metadata.as_rfc822()
+
+
+def test_as_rfc822_missing_version():
+    metadata = pep621.StandardMetadata(name='something')
+    with pytest.raises(pep621.ConfigurationError, match='Missing version field'):
+        metadata.as_rfc822()

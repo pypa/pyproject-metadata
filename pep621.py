@@ -244,8 +244,10 @@ class StandardMetadata():
         return message
 
     def write_to_rfc822(self, message: RFC822Message) -> None:  # noqa: C901
-        message['Metadata-Version'] = '2.1'
+        message['Metadata-Version'] = '2.2' if self.dynamic else '2.1'
         message['Name'] = self.name
+        if not self.version:
+            raise ConfigurationError('Missing version field')
         message['Version'] = str(self.version)
         # skip 'Platform'
         # skip 'Supported-Platform'
@@ -279,6 +281,11 @@ class StandardMetadata():
             if self.readme.content_type:
                 message['Description-Content-Type'] = self.readme.content_type
             message.body = self.readme.text
+        # Core Metadata 2.2
+        for field in self.dynamic:
+            if field in ('name', 'version'):
+                raise ConfigurationError(f'Field cannot be dynamic: {field}')
+            message['Dynamic'] = field
 
     def _name_list(sefl, people: List[Tuple[str, str]]) -> str:
         return ', '.join(

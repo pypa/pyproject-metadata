@@ -31,3 +31,9 @@ def package():
 def package2():
     with cd_package('full-metadata2') as new_path:
         yield new_path
+
+
+@pytest.fixture
+def package_dynamic_description():
+    with cd_package('dynamic-description') as new_path:
+        yield new_path
