@@ -3,6 +3,13 @@ Changelog
 +++++++++
 
 
+0.4.0 (30-09-2021)
+==================
+
+- Use Core Metadata 2.1 if possible
+- Fix bug preventing empty README and license files from being used
+
+
 0.3.1 (25-09-2021)
 ==================
 
