@@ -7,7 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/pep621/badge/?version=latest)](https://pep621.readthedocs.io/en/latest/?badge=latest)
 
 
-> Data class for PEP 621 metadata with support for [core metadata] generation
+> Dataclass for PEP 621 metadata with support for [core metadata] generation
 
 This project does not implement the parsing of `pyproject.toml`
 containing PEP 621 metadata.
@@ -27,7 +27,7 @@ from pep621 import StandardMetadata
 
 parsed_pyproject = { ... }  # you can use parsers like `tomli` to obtain this dict
 metadata = StandardMetadata.from_pyproject(parsed_pyproject)
-print(metadata.entrypoints)  # Same fields as defined in PEP 621
+print(metadata.entrypoints)  # same fields as defined in PEP 621
 
 pkg_info = metadata.as_rfc822()
 print(str(pkg_info))  # core metadata
