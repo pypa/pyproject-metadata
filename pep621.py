@@ -211,6 +211,12 @@ class StandardMetadata():
         if 'name' in dynamic:
             raise ConfigurationError('Unsupported field `name` in `project.dynamic`')
 
+        for field in dynamic:
+            if field in data['project']:
+                raise ConfigurationError(
+                    f'Field `project.{field}` declared as dynamic in but is defined'
+                )
+
         name = fetcher.get_str('project.name')
         if not name:
             raise ConfigurationError('Field `project.name` missing')
