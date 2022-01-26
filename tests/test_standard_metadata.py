@@ -638,3 +638,16 @@ def test_as_rfc822_missing_version():
     metadata = pep621.StandardMetadata(name='something')
     with pytest.raises(pep621.ConfigurationError, match='Missing version field'):
         metadata.as_rfc822()
+
+
+def test_stically_defined_dynamic_field():
+    with pytest.raises(pep621.ConfigurationError, match='Field `project.version` declared as dynamic in but is defined'):
+        pep621.StandardMetadata.from_pyproject({
+            'project': {
+                'name': 'example',
+                'version': '1.2.3',
+                'dynamic': [
+                    'version',
+                ],
+            },
+        })
