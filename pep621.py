@@ -194,6 +194,7 @@ class StandardMetadata():
 
     def __post_init__(self) -> None:
         self.name = re.sub(r'[-_.]+', '-', self.name).lower()
+        self._update_dynamic(self.version)
 
     @classmethod
     def from_pyproject(
@@ -243,6 +244,18 @@ class StandardMetadata():
             fetcher.get_dict('project.gui-scripts'),
             dynamic,
         )
+
+    def _update_dynamic(self, value: Any) -> None:
+        if value and 'version' in self.dynamic:
+            self.dynamic.remove('version')
+        elif not value and 'version' not in self.dynamic:
+            self.dynamic.append('version')
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        # update dynamic when version is set
+        if name == 'version' and hasattr(self, 'dynamic'):
+            self._update_dynamic(value)
+        super().__setattr__(name, value)
 
     def as_rfc822(self) -> RFC822Message:
         message = RFC822Message()

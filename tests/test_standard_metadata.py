@@ -623,14 +623,16 @@ def test_as_rfc822_dynamic(package_dynamic_description):
     }
 
 
-@pytest.mark.parametrize('field', ['name', 'version'])
-def test_as_rfc822_invalid_dynamic(field):
+def test_as_rfc822_invalid_dynamic():
     metadata = pep621.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
-        dynamic=[field],
     )
-    with pytest.raises(pep621.ConfigurationError, match=f'Field cannot be dynamic: {field}'):
+    metadata.dynamic = ['name']
+    with pytest.raises(pep621.ConfigurationError, match='Field cannot be dynamic: name'):
+        metadata.as_rfc822()
+    metadata.dynamic = ['version']
+    with pytest.raises(pep621.ConfigurationError, match='Field cannot be dynamic: version'):
         metadata.as_rfc822()
 
 
@@ -669,3 +671,18 @@ def test_requires_python(value):
             'requires-python': value,
         },
     })
+
+
+def test_version_dynamic():
+    metadata = pep621.StandardMetadata.from_pyproject({
+        'project': {
+            'name': 'example',
+            'dynamic': [
+                'version',
+            ],
+        },
+    })
+    metadata.version = packaging.version.Version('1.2.3')
+    assert 'version' not in metadata.dynamic
+    metadata.version = None
+    assert 'version' in metadata.dynamic
