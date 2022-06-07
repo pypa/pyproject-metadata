@@ -651,3 +651,21 @@ def test_stically_defined_dynamic_field():
                 ],
             },
         })
+
+
+@pytest.mark.parametrize(
+    'value',
+    [
+        '<3.10',
+        '>3.7,<3.11',
+        '>3.7,<3.11,!=3.8.4',
+        '~=3.10,!=3.10.3',
+    ],
+)
+def test_requires_python(value):
+    pep621.StandardMetadata.from_pyproject({
+        'project': {
+            'name': 'example',
+            'requires-python': value,
+        },
+    })
