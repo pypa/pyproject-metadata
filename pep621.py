@@ -179,7 +179,7 @@ class StandardMetadata():
     description: Optional[str] = None
     license: Optional[License] = None
     readme: Optional[Readme] = None
-    requires_python: Optional[packaging.specifiers.Specifier] = None
+    requires_python: Optional[packaging.specifiers.SpecifierSet] = None
     dependencies: List[packaging.requirements.Requirement] = dataclasses.field(default_factory=list)
     optional_dependencies: Dict[str, List[packaging.requirements.Requirement]] = dataclasses.field(default_factory=dict)
     entrypoints: Dict[str, Dict[str, str]] = dataclasses.field(default_factory=dict)
@@ -230,7 +230,7 @@ class StandardMetadata():
             fetcher.get_str('project.description'),
             cls._get_license(fetcher, project_dir),
             cls._get_readme(fetcher, project_dir),
-            packaging.specifiers.Specifier(requires_python_string) if requires_python_string else None,
+            packaging.specifiers.SpecifierSet(requires_python_string) if requires_python_string else None,
             cls._get_dependencies(fetcher),
             cls._get_optional_dependencies(fetcher),
             cls._get_entrypoints(fetcher),
