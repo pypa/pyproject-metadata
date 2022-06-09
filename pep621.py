@@ -18,7 +18,7 @@ import packaging.requirements
 import packaging.version
 
 
-__version__ = '0.4.0'
+__version__ = '0.4.0.post2'
 
 
 warnings.warn('Project was renamed to `pyproject-metadata`!', DeprecationWarning)
