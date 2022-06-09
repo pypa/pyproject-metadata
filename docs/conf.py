@@ -10,19 +10,19 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import pep621
+import pyproject_metadata
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'pep621'
+project = 'pyproject-metadata'
 copyright = '2021, Filipe Laíns'
 author = 'Filipe Laíns'
 
 # The short X.Y version
-version = pep621.__version__
+version = pyproject_metadata.__version__
 # The full version, including alpha/beta/rc tags
-release = pep621.__version__
+release = pyproject_metadata.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -58,7 +58,7 @@ default_role = 'any'
 # a list of builtin themes.
 #
 html_theme = 'furo'
-html_title = f'pep621 {version}'
+html_title = f'pyproject-metadata {version}'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

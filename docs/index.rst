@@ -1,8 +1,8 @@
 :hide-toc:
 
-******
-pep621
-******
+******************
+pyproject-metadata
+******************
 
 PEP 621 metadata parsing.
 
@@ -11,27 +11,27 @@ API Reference
 =============
 
 
-.. autoclass:: pep621.StandardMetadata
+.. autoclass:: pyproject_metadata.StandardMetadata
    :members:
    :undoc-members:
 
-.. autoclass:: pep621.ConfigurationError
+.. autoclass:: pyproject_metadata.ConfigurationError
    :members:
    :undoc-members:
 
-.. autoclass:: pep621.License
+.. autoclass:: pyproject_metadata.License
    :members:
    :undoc-members:
 
-.. autoclass:: pep621.Readme
+.. autoclass:: pyproject_metadata.Readme
    :members:
    :undoc-members:
 
-.. autoclass:: pep621.RFC822Message
+.. autoclass:: pyproject_metadata.RFC822Message
    :members:
    :undoc-members:
 
-.. autoclass:: pep621.DataFetcher
+.. autoclass:: pyproject_metadata.DataFetcher
    :members:
    :undoc-members:
 
@@ -45,5 +45,5 @@ API Reference
    :caption: Project Links
    :hidden:
 
-   Source Code <https://github.com/FFY00/python-pep621>
-   Issue Tracker <https://github.com/FFY00/python-pep621/issues>
+   Source Code <https://github.com/FFY00/python-pyproject-metadata>
+   Issue Tracker <https://github.com/FFY00/python-pyproject-metadata/issues>
