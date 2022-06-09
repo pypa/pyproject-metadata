@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-import pep621
+import pyproject_metadata
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ import pep621
     ],
 )
 def test_headers(items, data):
-    message = pep621.RFC822Message()
+    message = pyproject_metadata.RFC822Message()
 
     for name, value in items:
         message[name] = value
@@ -90,7 +90,7 @@ def test_headers(items, data):
 
 
 def test_body():
-    message = pep621.RFC822Message()
+    message = pyproject_metadata.RFC822Message()
 
     message['ItemA'] = 'ValueA'
     message['ItemB'] = 'ValueB'

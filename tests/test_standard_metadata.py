@@ -9,7 +9,7 @@ import packaging.version
 import pytest
 import tomli
 
-import pep621
+import pyproject_metadata
 
 from .conftest import cd_package
 
@@ -477,13 +477,13 @@ from .conftest import cd_package
     ]
 )
 def test_load(package, data, error):
-    with pytest.raises(pep621.ConfigurationError, match=re.escape(error)):
-        pep621.StandardMetadata.from_pyproject(tomli.loads(data))
+    with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
+        pyproject_metadata.StandardMetadata.from_pyproject(tomli.loads(data))
 
 
 def test_value(package):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
 
     assert metadata.dynamic == []
     assert metadata.name == 'full-metadata'
@@ -541,7 +541,7 @@ def test_value(package):
 
 def test_read_license(package2):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
 
     assert metadata.license.file == 'LICENSE'
     assert metadata.license.text == 'Some license!\n'
@@ -556,22 +556,22 @@ def test_read_license(package2):
 )
 def test_readme_content_type(package, content_type):
     with cd_package(package), open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
 
     assert metadata.readme.content_type == content_type
 
 
 def test_readme_content_type_unknown():
     with cd_package('unknown-readme-type'), pytest.raises(
-        pep621.ConfigurationError,
+        pyproject_metadata.ConfigurationError,
         match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
     ), open('pyproject.toml', 'rb') as f:
-        pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
 
 
 def test_as_rfc822(package):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
     core_metadata = metadata.as_rfc822()
     assert core_metadata.headers == {
         'Metadata-Version': ['2.1'],
@@ -613,7 +613,7 @@ def test_as_rfc822(package):
 
 def test_as_rfc822_dynamic(package_dynamic_description):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pep621.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
     core_metadata = metadata.as_rfc822()
     assert dict(core_metadata.headers) == {
         'Metadata-Version': ['2.2'],
@@ -624,27 +624,30 @@ def test_as_rfc822_dynamic(package_dynamic_description):
 
 
 def test_as_rfc822_invalid_dynamic():
-    metadata = pep621.StandardMetadata(
+    metadata = pyproject_metadata.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
     )
     metadata.dynamic = ['name']
-    with pytest.raises(pep621.ConfigurationError, match='Field cannot be dynamic: name'):
+    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: name'):
         metadata.as_rfc822()
     metadata.dynamic = ['version']
-    with pytest.raises(pep621.ConfigurationError, match='Field cannot be dynamic: version'):
+    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: version'):
         metadata.as_rfc822()
 
 
 def test_as_rfc822_missing_version():
-    metadata = pep621.StandardMetadata(name='something')
-    with pytest.raises(pep621.ConfigurationError, match='Missing version field'):
+    metadata = pyproject_metadata.StandardMetadata(name='something')
+    with pytest.raises(pyproject_metadata.ConfigurationError, match='Missing version field'):
         metadata.as_rfc822()
 
 
 def test_stically_defined_dynamic_field():
-    with pytest.raises(pep621.ConfigurationError, match='Field `project.version` declared as dynamic in but is defined'):
-        pep621.StandardMetadata.from_pyproject({
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match='Field `project.version` declared as dynamic in but is defined',
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject({
             'project': {
                 'name': 'example',
                 'version': '1.2.3',
@@ -665,7 +668,7 @@ def test_stically_defined_dynamic_field():
     ],
 )
 def test_requires_python(value):
-    pep621.StandardMetadata.from_pyproject({
+    pyproject_metadata.StandardMetadata.from_pyproject({
         'project': {
             'name': 'example',
             'requires-python': value,
@@ -674,7 +677,7 @@ def test_requires_python(value):
 
 
 def test_version_dynamic():
-    metadata = pep621.StandardMetadata.from_pyproject({
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject({
         'project': {
             'name': 'example',
             'dynamic': [
