@@ -9,6 +9,7 @@ import os.path
 import pathlib
 import re
 import typing
+import warnings
 
 from typing import Any, DefaultDict, Dict, List, Mapping, Optional, OrderedDict, Tuple, Union
 
@@ -18,6 +19,9 @@ import packaging.version
 
 
 __version__ = '0.4.0'
+
+
+warnings.warn('Project was renamed to `pyproject-metadata`!', DeprecationWarning)
 
 
 class ConfigurationError(Exception):

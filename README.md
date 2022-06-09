@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/FFY00/python-pep621/branch/main/graph/badge.svg?token=9chBjS1lch)](https://codecov.io/gh/FFY00/python-pep621)
 [![Documentation Status](https://readthedocs.org/projects/pep621/badge/?version=latest)](https://pep621.readthedocs.io/en/latest/?badge=latest)
 
+###### DEPRECATED! The project was renamed to `pyproject-metadata`.
 
 > Dataclass for PEP 621 metadata with support for [core metadata] generation
 
