@@ -3,6 +3,15 @@ Changelog
 +++++++++
 
 
+0.5.0 (09-06-2022)
+==================
+
+- Renamed project to ``pyproject_metadata``
+- Support multiple clauses in requires-python
+- Error out when dynamic fields are defined
+- Update dynamic field when setting version
+
+
 0.4.0 (30-09-2021)
 ==================
 
