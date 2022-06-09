@@ -306,7 +306,7 @@ class StandardMetadata():
                 raise ConfigurationError(f'Field cannot be dynamic: {field}')
             message['Dynamic'] = field
 
-    def _name_list(sefl, people: List[Tuple[str, str]]) -> str:
+    def _name_list(self, people: List[Tuple[str, str]]) -> str:
         return ', '.join(
             name
             for name, email_ in people
