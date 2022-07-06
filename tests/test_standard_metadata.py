@@ -583,6 +583,7 @@ def test_as_rfc822(package):
         'Author': ['Example!'],
         'Author-Email': ['Unknown <example@example.com>'],
         'Maintainer-Email': ['Other Example <other@example.com>'],
+        'License': ['some license text'],
         'Classifier': [
             'Development Status :: 4 - Beta',
             'Programming Language :: Python',
