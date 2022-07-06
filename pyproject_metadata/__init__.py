@@ -283,7 +283,8 @@ class StandardMetadata():
         message['Author-Email'] = self._email_list(self.authors)
         message['Maintainer'] = self._name_list(self.maintainers)
         message['Maintainer-Email'] = self._email_list(self.maintainers)
-        # TODO: 'License'
+        if self.license:
+            message['License'] = self.license.text
         for classifier in self.classifiers:
             message['Classifier'] = classifier
         # skip 'Provides-Dist'
