@@ -53,7 +53,7 @@ class RFC822Message():
         text = ''
         for name, entries in self.headers.items():
             for entry in entries:
-                lines = entry.split('\n')
+                lines = entry.strip('\n').split('\n')
                 text += f'{name}: {lines[0]}\n'
                 for line in lines[1:]:
                     text += ' ' * 8 + line + '\n'
