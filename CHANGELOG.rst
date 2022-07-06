@@ -3,6 +3,14 @@ Changelog
 +++++++++
 
 
+0.6.0 (06-07-2022)
+==================
+
+- Make license and readme files ``pathlib.Path`` instances
+- Add the license contents to the metadata file
+- Add support for multiline data in metadata fields
+
+
 0.5.0 (09-06-2022)
 ==================
 
