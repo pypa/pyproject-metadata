@@ -76,6 +76,20 @@ import pyproject_metadata
             ItemC: ValueC
             ''',
         ),
+        (
+            [
+                ('ItemA', 'ValueA'),
+                ('ItemB', 'ValueB1\nValueB2\nValueB3'),
+                ('ItemC', 'ValueC'),
+            ],
+            '''\
+            ItemA: ValueA
+            ItemB: ValueB1
+                    ValueB2
+                    ValueB3
+            ItemC: ValueC
+            '''
+        ),
     ],
 )
 def test_headers(items, data):
