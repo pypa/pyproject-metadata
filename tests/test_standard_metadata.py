@@ -491,7 +491,7 @@ def test_value(package):
     assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
     assert metadata.license.file is None
     assert metadata.license.text == 'some license text'
-    assert metadata.readme.file == 'README.md'
+    assert metadata.readme.file == pathlib.Path('README.md')
     assert metadata.readme.text == pathlib.Path('README.md').read_text()
     assert metadata.readme.content_type == 'text/markdown'
     assert metadata.description == 'A package with all the metadata :)'
@@ -543,7 +543,7 @@ def test_read_license(package2):
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
 
-    assert metadata.license.file == 'LICENSE'
+    assert metadata.license.file == pathlib.Path('LICENSE')
     assert metadata.license.text == 'Some license!\n'
 
 

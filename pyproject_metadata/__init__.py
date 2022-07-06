@@ -163,12 +163,12 @@ class DataFetcher():
 
 class License(typing.NamedTuple):
     text: str
-    file: Optional[str]
+    file: Optional[pathlib.Path]
 
 
 class Readme(typing.NamedTuple):
     text: str
-    file: Optional[str]
+    file: Optional[pathlib.Path]
     content_type: str
 
 
@@ -346,22 +346,24 @@ class StandardMetadata():
                     key=f'project.license.{field}',
                 )
 
-        file = fetcher.get_str('project.license.file')
+        file: Optional[pathlib.Path] = None
+        filename = fetcher.get_str('project.license.file')
         text = fetcher.get_str('project.license.text')
 
-        if (file and text) or (not file and not text):
+        if (filename and text) or (not filename and not text):
             raise ConfigurationError(
                 f'Invalid `project.license` value, expecting either `file` or `text` (got `{_license}`)',
                 key='project.license',
             )
 
-        if file:
-            if not os.path.isfile(file):
+        if filename:
+            file = project_dir.joinpath(filename)
+            if not file.is_file():
                 raise ConfigurationError(
-                    f'License file not found (`{file}`)',
+                    f'License file not found (`{filename}`)',
                     key='project.license.file',
                 )
-            text = project_dir.joinpath(file).read_text()
+            text = file.read_text()
 
         assert text is not None
         return License(text, file)
@@ -371,7 +373,8 @@ class StandardMetadata():
         if 'project.readme' not in fetcher:
             return None
 
-        file: Optional[str]
+        filename: Optional[str]
+        file: Optional[pathlib.Path] = None
         text: Optional[str]
         content_type: Optional[str]
 
@@ -379,14 +382,14 @@ class StandardMetadata():
         if isinstance(readme, str):
             # readme is a file
             text = None
-            file = readme
-            if file.endswith('.md'):
+            filename = readme
+            if filename.endswith('.md'):
                 content_type = 'text/markdown'
-            elif file.endswith('.rst'):
+            elif filename.endswith('.rst'):
                 content_type = 'text/x-rst'
             else:
                 raise ConfigurationError(
-                    f'Could not infer content type for readme file `{file}`',
+                    f'Could not infer content type for readme file `{filename}`',
                     key='project.readme',
                 )
         elif isinstance(readme, dict):
@@ -398,9 +401,9 @@ class StandardMetadata():
                         key=f'project.readme.{field}',
                     )
             content_type = fetcher.get_str('project.readme.content-type')
-            file = fetcher.get_str('project.readme.file')
+            filename = fetcher.get_str('project.readme.file')
             text = fetcher.get_str('project.readme.text')
-            if (file and text) or (not file and not text):
+            if (filename and text) or (not filename and not text):
                 raise ConfigurationError(
                     f'Invalid `project.readme` value, expecting either `file` or `text` (got `{readme}`)',
                     key='project.license',
@@ -417,13 +420,14 @@ class StandardMetadata():
                 key='project.readme',
             )
 
-        if file:
-            if not os.path.isfile(file):
+        if filename:
+            file = project_dir.joinpath(filename)
+            if not file.is_file():
                 raise ConfigurationError(
-                    f'Readme file not found (`{file}`)',
+                    f'Readme file not found (`{filename}`)',
                     key='project.license.file',
                 )
-            text = project_dir.joinpath(file).read_text()
+            text = file.read_text()
 
         assert text is not None
         return Readme(text, file, content_type)
