@@ -17,7 +17,7 @@ import packaging.requirements
 import packaging.version
 
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 
 class ConfigurationError(Exception):

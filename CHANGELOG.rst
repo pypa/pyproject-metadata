@@ -3,6 +3,12 @@ Changelog
 +++++++++
 
 
+0.6.1 (07-07-2022)
+==================
+
+- Avoid first and last newlines in license contents
+
+
 0.6.0 (06-07-2022)
 ==================
 
