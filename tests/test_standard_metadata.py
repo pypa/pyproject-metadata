@@ -7,7 +7,12 @@ import textwrap
 import packaging.specifiers
 import packaging.version
 import pytest
-import tomli
+
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 import pyproject_metadata
 
@@ -478,12 +483,12 @@ from .conftest import cd_package
 )
 def test_load(package, data, error):
     with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
-        pyproject_metadata.StandardMetadata.from_pyproject(tomli.loads(data))
+        pyproject_metadata.StandardMetadata.from_pyproject(tomllib.loads(data))
 
 
 def test_value(package):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert metadata.dynamic == []
     assert metadata.name == 'full-metadata'
@@ -541,7 +546,7 @@ def test_value(package):
 
 def test_read_license(package2):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert metadata.license.file == pathlib.Path('LICENSE')
     assert metadata.license.text == 'Some license!\n'
@@ -556,7 +561,7 @@ def test_read_license(package2):
 )
 def test_readme_content_type(package, content_type):
     with cd_package(package), open('pyproject.toml', 'rb') as f:
-        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert metadata.readme.content_type == content_type
 
@@ -566,12 +571,12 @@ def test_readme_content_type_unknown():
         pyproject_metadata.ConfigurationError,
         match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
     ), open('pyproject.toml', 'rb') as f:
-        pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
 def test_as_rfc822(package):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
     assert core_metadata.headers == {
         'Metadata-Version': ['2.1'],
@@ -614,7 +619,7 @@ def test_as_rfc822(package):
 
 def test_as_rfc822_dynamic(package_dynamic_description):
     with open('pyproject.toml', 'rb') as f:
-        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomli.load(f))
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
     assert dict(core_metadata.headers) == {
         'Metadata-Version': ['2.2'],
