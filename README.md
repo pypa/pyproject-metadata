@@ -23,7 +23,7 @@ After [installing `pyproject-metadata`](https://pypi.org/project/pyproject-metad
 you can use it as a library in your scripts and programs:
 
 ```python
-from ptproject_metadata import StandardMetadata
+from pyproject_metadata import StandardMetadata
 
 parsed_pyproject = { ... }  # you can use parsers like `tomli` to obtain this dict
 metadata = StandardMetadata.from_pyproject(parsed_pyproject)
