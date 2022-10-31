@@ -32,11 +32,7 @@ class ConfigurationError(Exception):
 
 
 class RFC822Message():
-    '''Simple RFC 822 message implementation.
-
-    Note: Does not support multiline fields, as Python packaging flavored
-    RFC 822 metadata does.
-    '''
+    '''Python-flavored RFC 822 message implementation.'''
 
     def __init__(self) -> None:
         self.headers: OrderedDict[str, List[str]] = collections.OrderedDict()
