@@ -497,7 +497,7 @@ def test_value(package):
     assert metadata.license.file is None
     assert metadata.license.text == 'some license text'
     assert metadata.readme.file == pathlib.Path('README.md')
-    assert metadata.readme.text == pathlib.Path('README.md').read_text()
+    assert metadata.readme.text == pathlib.Path('README.md').read_text(encoding='utf-8')
     assert metadata.readme.content_type == 'text/markdown'
     assert metadata.description == 'A package with all the metadata :)'
     assert metadata.authors == [
@@ -549,7 +549,7 @@ def test_read_license(package2):
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert metadata.license.file == pathlib.Path('LICENSE')
-    assert metadata.license.text == 'Some license!\n'
+    assert metadata.license.text == 'Some license! 👋\n'
 
 
 @pytest.mark.parametrize(
@@ -614,7 +614,7 @@ def test_as_rfc822(package):
         ],
         'Description-Content-Type': ['text/markdown'],
     }
-    assert core_metadata.body == 'some readme\n'
+    assert core_metadata.body == 'some readme 👋\n'
 
 
 def test_as_rfc822_dynamic(package_dynamic_description):

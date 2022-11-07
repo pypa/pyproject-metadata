@@ -363,7 +363,7 @@ class StandardMetadata():
                     f'License file not found (`{filename}`)',
                     key='project.license.file',
                 )
-            text = file.read_text()
+            text = file.read_text(encoding='utf-8')
 
         assert text is not None
         return License(text, file)
@@ -427,7 +427,7 @@ class StandardMetadata():
                     f'Readme file not found (`{filename}`)',
                     key='project.license.file',
                 )
-            text = file.read_text()
+            text = file.read_text(encoding='utf-8')
 
         assert text is not None
         return Readme(text, file, content_type)
