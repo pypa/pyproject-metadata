@@ -14,6 +14,7 @@ from typing import Any, DefaultDict, Dict, List, Mapping, Optional, OrderedDict,
 
 import packaging.markers
 import packaging.requirements
+import packaging.specifiers
 import packaging.version
 
 
