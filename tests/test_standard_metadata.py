@@ -236,7 +236,7 @@ from .conftest import cd_package
             (
                 'Field `project.dependencies` contains an invalid PEP 508 requirement '
                 'string `definitely not a valid PEP 508 requirement!` '
-                '(`Parse error at "\'not a va\'": Expected string_end`)'
+                '(`Expected end or semicolon (after name and no valid version specifier)'
             ),
         ),
         # optional-dependencies
@@ -289,7 +289,7 @@ from .conftest import cd_package
             (
                 'Field `project.optional-dependencies.test` contains an invalid '
                 'PEP 508 requirement string `definitely not a valid PEP 508 requirement!` '
-                '(`Parse error at "\'not a va\'": Expected string_end`)'
+                '(`Expected end or semicolon (after name and no valid version specifier)'
             ),
         ),
         # requires-python
