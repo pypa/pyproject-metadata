@@ -15,6 +15,7 @@ from typing import Any
 
 import packaging.markers
 import packaging.requirements
+import packaging.specifiers
 import packaging.version
 
 
