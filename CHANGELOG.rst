@@ -3,6 +3,13 @@ Changelog
 +++++++++
 
 
+0.7.0 (18-01-2023)
+==================
+
+- Use UTF-8 when opening files
+- Use ``tomllib``  on Python >= 3.11
+
+
 0.6.1 (07-07-2022)
 ==================
 
