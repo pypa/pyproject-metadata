@@ -484,9 +484,13 @@ def test_load(package, data, error):
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.loads(data))
 
 
-def test_value(package):
+@pytest.mark.parametrize('after_rfc', [False, True])
+def test_value(package, after_rfc):
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+
+    if after_rfc:
+        metadata.as_rfc822()
 
     assert metadata.dynamic == []
     assert metadata.name == 'full-metadata'
