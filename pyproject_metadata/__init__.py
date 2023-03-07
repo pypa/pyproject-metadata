@@ -449,7 +449,7 @@ class StandardMetadata():
                 raise ConfigurationError(
                     'Field "project.dependencies" contains an invalid PEP 508 '
                     f'requirement string "{req}" ("{str(e)}")'
-                )
+                ) from None
         return requirements
 
     @staticmethod
@@ -472,7 +472,7 @@ class StandardMetadata():
                     f'Field "project.optional-dependencies.{extra}" has an invalid type, expecting a '
                     f'dictionary PEP 508 requirement strings (got "{requirements}")'
                 )
-            for i, req in enumerate(requirements):
+            for req in requirements:
                 if not isinstance(req, str):
                     raise ConfigurationError(
                         f'Field "project.optional-dependencies.{extra}" has an invalid type, '
@@ -484,7 +484,7 @@ class StandardMetadata():
                     raise ConfigurationError(
                         f'Field "project.optional-dependencies.{extra}" contains '
                         f'an invalid PEP 508 requirement string "{req}" ("{str(e)}")'
-                    )
+                    ) from None
         return dict(requirements_dict)
 
     @staticmethod

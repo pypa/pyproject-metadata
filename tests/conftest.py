@@ -21,19 +21,19 @@ def cd_package(package):
         os.chdir(cur_dir)
 
 
-@pytest.fixture
+@pytest.fixture()
 def package():
     with cd_package('full-metadata') as new_path:
         yield new_path
 
 
-@pytest.fixture
+@pytest.fixture()
 def package2():
     with cd_package('full-metadata2') as new_path:
         yield new_path
 
 
-@pytest.fixture
+@pytest.fixture()
 def package_dynamic_description():
     with cd_package('dynamic-description') as new_path:
         yield new_path
