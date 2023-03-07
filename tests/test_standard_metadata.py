@@ -77,7 +77,7 @@ from .conftest import cd_package
             '''),
             (
                 'Invalid "project.license" value, expecting either "file" '
-                "or \"text\" (got '{'file': '...', 'text': '...'}')"
+                "or \"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
         ),
         (
@@ -144,7 +144,7 @@ from .conftest import cd_package
             '''),
             (
                 'Invalid "project.readme" value, expecting either "file" or '
-                "\"text\" (got '{'file': '...', 'text': '...'}')"
+                "\"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
         ),
         (
