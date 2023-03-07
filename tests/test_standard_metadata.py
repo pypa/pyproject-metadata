@@ -22,15 +22,15 @@ from .conftest import cd_package
 @pytest.mark.parametrize(
     ('data', 'error'),
     [
-        ('', 'Section `project` missing in pyproject.toml'),
+        ('', 'Section "project" missing in pyproject.toml'),
         # name
-        ('[project]', 'Field `project.name` missing'),
+        ('[project]', 'Field "project.name" missing'),
         (
             textwrap.dedent('''
                 [project]
                 name = true
             '''),
-            ('Field `project.name` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.name" has an invalid type, expecting a string (got "True")'),
         ),
         # dynamic
         (
@@ -41,7 +41,7 @@ from .conftest import cd_package
                     'name',
                 ]
             '''),
-            ('Unsupported field `name` in `project.dynamic`'),
+            ('Unsupported field "name" in "project.dynamic"'),
         ),
         # version
         (
@@ -50,7 +50,7 @@ from .conftest import cd_package
                 name = 'test'
                 version = true
             '''),
-            ('Field `project.version` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.version" has an invalid type, expecting a string (got "True")'),
         ),
         # license
         (
@@ -59,7 +59,7 @@ from .conftest import cd_package
                 name = 'test'
                 license = true
             '''),
-            ('Field `project.license` has an invalid type, expecting a dictionary of strings (got `True`)'),
+            ('Field "project.license" has an invalid type, expecting a dictionary of strings (got "True")'),
         ),
         (
             textwrap.dedent('''
@@ -67,7 +67,7 @@ from .conftest import cd_package
                 name = 'test'
                 license = {}
             '''),
-            ('Invalid `project.license` value, expecting either `file` or `text` (got `{}`)'),
+            ('Invalid "project.license" value, expecting either "file" or "text" (got "{}")'),
         ),
         (
             textwrap.dedent('''
@@ -76,8 +76,8 @@ from .conftest import cd_package
                 license = { file = '...', text = '...' }
             '''),
             (
-                'Invalid `project.license` value, expecting either `file` '
-                "or `text` (got `{'file': '...', 'text': '...'}`)"
+                'Invalid "project.license" value, expecting either "file" '
+                "or \"text\" (got '{'file': '...', 'text': '...'}')"
             ),
         ),
         (
@@ -87,7 +87,7 @@ from .conftest import cd_package
                 license = { made-up = ':(' }
             '''),
             (
-                'Unexpected field `project.license.made-up`'
+                'Unexpected field "project.license.made-up"'
             ),
         ),
         (
@@ -96,7 +96,7 @@ from .conftest import cd_package
                 name = 'test'
                 license = { file = true }
             '''),
-            ('Field `project.license.file` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.license.file" has an invalid type, expecting a string (got "True")'),
         ),
         (
             textwrap.dedent('''
@@ -104,7 +104,7 @@ from .conftest import cd_package
                 name = 'test'
                 license = { text = true }
             '''),
-            ('Field `project.license.text` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.license.text" has an invalid type, expecting a string (got "True")'),
         ),
         (
             textwrap.dedent('''
@@ -112,7 +112,7 @@ from .conftest import cd_package
                 name = 'test'
                 license = { file = 'this-file-does-not-exist' }
             '''),
-            ('License file not found (`this-file-does-not-exist`)'),
+            ('License file not found ("this-file-does-not-exist")'),
         ),
         # readme
         (
@@ -122,8 +122,8 @@ from .conftest import cd_package
                 readme = true
             '''),
             (
-                'Field `project.readme` has an invalid type, expecting either, '
-                'a string or dictionary of strings (got `True`)'
+                'Field "project.readme" has an invalid type, expecting either, '
+                'a string or dictionary of strings (got "True")'
             ),
         ),
         (
@@ -133,7 +133,7 @@ from .conftest import cd_package
                 readme = {}
             '''),
             (
-                'Invalid `project.readme` value, expecting either `file` or `text` (got `{}`)'
+                'Invalid "project.readme" value, expecting either "file" or "text" (got "{}")'
             ),
         ),
         (
@@ -143,8 +143,8 @@ from .conftest import cd_package
                 readme = { file = '...', text = '...' }
             '''),
             (
-                'Invalid `project.readme` value, expecting either `file` or '
-                "`text` (got `{'file': '...', 'text': '...'}`)"
+                'Invalid "project.readme" value, expecting either "file" or '
+                "\"text\" (got '{'file': '...', 'text': '...'}')"
             ),
         ),
         (
@@ -154,7 +154,7 @@ from .conftest import cd_package
                 readme = { made-up = ':(' }
             '''),
             (
-                'Unexpected field `project.readme.made-up`'
+                'Unexpected field "project.readme.made-up"'
             ),
         ),
         (
@@ -163,7 +163,7 @@ from .conftest import cd_package
                 name = 'test'
                 readme = { file = true }
             '''),
-            ('Field `project.readme.file` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.readme.file" has an invalid type, expecting a string (got "True")'),
         ),
         (
             textwrap.dedent('''
@@ -171,7 +171,7 @@ from .conftest import cd_package
                 name = 'test'
                 readme = { text = true }
             '''),
-            ('Field `project.readme.text` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.readme.text" has an invalid type, expecting a string (got "True")'),
         ),
         (
             textwrap.dedent('''
@@ -179,7 +179,7 @@ from .conftest import cd_package
                 name = 'test'
                 readme = { file = 'this-file-does-not-exist', content-type = '...' }
             '''),
-            ('Readme file not found (`this-file-does-not-exist`)'),
+            ('Readme file not found ("this-file-does-not-exist")'),
         ),
         (
             textwrap.dedent('''
@@ -187,7 +187,7 @@ from .conftest import cd_package
                 name = 'test'
                 readme = { file = 'README.md' }
             '''),
-            ('Field `project.readme.content-type` missing'),
+            ('Field "project.readme.content-type" missing'),
         ),
         (
             textwrap.dedent('''
@@ -195,7 +195,7 @@ from .conftest import cd_package
                 name = 'test'
                 readme = { text = '...' }
             '''),
-            ('Field `project.readme.content-type` missing'),
+            ('Field "project.readme.content-type" missing'),
         ),
         # description
         (
@@ -204,7 +204,7 @@ from .conftest import cd_package
                 name = 'test'
                 description = true
             '''),
-            ('Field `project.description` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.description" has an invalid type, expecting a string (got "True")'),
         ),
         # dependencies
         (
@@ -213,7 +213,7 @@ from .conftest import cd_package
                 name = 'test'
                 dependencies = 'some string!'
             '''),
-            ('Field `project.dependencies` has an invalid type, expecting a list of strings (got `some string!`)'),
+            ('Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")'),
         ),
         (
             textwrap.dedent('''
@@ -223,7 +223,7 @@ from .conftest import cd_package
                     99,
                 ]
             '''),
-            ('Field `project.dependencies` contains item with invalid type, expecting a string (got `99`)'),
+            ('Field "project.dependencies" contains item with invalid type, expecting a string (got "99")'),
         ),
         (
             textwrap.dedent('''
@@ -234,8 +234,8 @@ from .conftest import cd_package
                 ]
             '''),
             (
-                'Field `project.dependencies` contains an invalid PEP 508 requirement '
-                'string `definitely not a valid PEP 508 requirement!` '
+                'Field "project.dependencies" contains an invalid PEP 508 requirement '
+                'string "definitely not a valid PEP 508 requirement!" '
             ),
         ),
         # optional-dependencies
@@ -246,8 +246,8 @@ from .conftest import cd_package
                 optional-dependencies = true
             '''),
             (
-                'Field `project.optional-dependencies` has an invalid type, '
-                'expecting a dictionary of PEP 508 requirement strings (got `True`)'
+                'Field "project.optional-dependencies" has an invalid type, '
+                'expecting a dictionary of PEP 508 requirement strings (got "True")'
             ),
         ),
         (
@@ -258,8 +258,8 @@ from .conftest import cd_package
                 test = 'some string!'
             '''),
             (
-                'Field `project.optional-dependencies.test` has an invalid type, '
-                'expecting a dictionary PEP 508 requirement strings (got `some string!`)'
+                'Field "project.optional-dependencies.test" has an invalid type, '
+                'expecting a dictionary PEP 508 requirement strings (got "some string!")'
             ),
         ),
         (
@@ -272,8 +272,8 @@ from .conftest import cd_package
                 ]
             '''),
             (
-                'Field `project.optional-dependencies.test` has an invalid type, '
-                'expecting a PEP 508 requirement string (got `True`)'
+                'Field "project.optional-dependencies.test" has an invalid type, '
+                'expecting a PEP 508 requirement string (got "True")'
             ),
         ),
         (
@@ -286,8 +286,8 @@ from .conftest import cd_package
                 ]
             '''),
             (
-                'Field `project.optional-dependencies.test` contains an invalid '
-                'PEP 508 requirement string `definitely not a valid PEP 508 requirement!` '
+                'Field "project.optional-dependencies.test" contains an invalid '
+                'PEP 508 requirement string "definitely not a valid PEP 508 requirement!" '
             ),
         ),
         # requires-python
@@ -297,7 +297,7 @@ from .conftest import cd_package
                 name = 'test'
                 requires-python = true
             '''),
-            ('Field `project.requires-python` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.requires-python" has an invalid type, expecting a string (got "True")'),
         ),
         # keywords
         (
@@ -306,7 +306,7 @@ from .conftest import cd_package
                 name = 'test'
                 keywords = 'some string!'
             '''),
-            ('Field `project.keywords` has an invalid type, expecting a list of strings (got `some string!`)'),
+            ('Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")'),
         ),
         (
             textwrap.dedent('''
@@ -316,7 +316,7 @@ from .conftest import cd_package
                     true,
                 ]
             '''),
-            ('Field `project.keywords` contains item with invalid type, expecting a string (got `True`)'),
+            ('Field "project.keywords" contains item with invalid type, expecting a string (got "True")'),
         ),
         # authors
         (
@@ -326,8 +326,8 @@ from .conftest import cd_package
                 authors = {}
             '''),
             (
-                'Field `project.authors` has an invalid type, expecting a list of '
-                'dictionaries containing the `name` and/or `email` keys (got `{}`)'
+                'Field "project.authors" has an invalid type, expecting a list of '
+                'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
         ),
         (
@@ -339,8 +339,8 @@ from .conftest import cd_package
                 ]
             '''),
             (
-                'Field `project.authors` has an invalid type, expecting a list of '
-                'dictionaries containing the `name` and/or `email` keys (got `[True]`)'
+                'Field "project.authors" has an invalid type, expecting a list of '
+                'dictionaries containing the "name" and/or "email" keys (got "[True]")'
             ),
         ),
         # maintainers
@@ -351,8 +351,8 @@ from .conftest import cd_package
                 maintainers = {}
             '''),
             (
-                'Field `project.maintainers` has an invalid type, expecting a list of '
-                'dictionaries containing the `name` and/or `email` keys (got `{}`)'
+                'Field "project.maintainers" has an invalid type, expecting a list of '
+                'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
         ),
         (
@@ -364,8 +364,8 @@ from .conftest import cd_package
                 ]
             '''),
             (
-                'Field `project.maintainers` has an invalid type, expecting a list of '
-                'dictionaries containing the `name` and/or `email` keys (got `[10]`)'
+                'Field "project.maintainers" has an invalid type, expecting a list of '
+                'dictionaries containing the "name" and/or "email" keys (got "[10]")'
             ),
         ),
         # classifiers
@@ -375,7 +375,7 @@ from .conftest import cd_package
                 name = 'test'
                 classifiers = 'some string!'
             '''),
-            ('Field `project.classifiers` has an invalid type, expecting a list of strings (got `some string!`)'),
+            ('Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")'),
         ),
         (
             textwrap.dedent('''
@@ -385,7 +385,7 @@ from .conftest import cd_package
                     true,
                 ]
             '''),
-            ('Field `project.classifiers` contains item with invalid type, expecting a string (got `True`)'),
+            ('Field "project.classifiers" contains item with invalid type, expecting a string (got "True")'),
         ),
         # homepage
         (
@@ -395,7 +395,7 @@ from .conftest import cd_package
                 [project.urls]
                 homepage = true
             '''),
-            ('Field `project.urls.homepage` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.urls.homepage" has an invalid type, expecting a string (got "True")'),
         ),
         # documentation
         (
@@ -405,7 +405,7 @@ from .conftest import cd_package
                 [project.urls]
                 documentation = true
             '''),
-            ('Field `project.urls.documentation` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.urls.documentation" has an invalid type, expecting a string (got "True")'),
         ),
         # repository
         (
@@ -415,7 +415,7 @@ from .conftest import cd_package
                 [project.urls]
                 repository = true
             '''),
-            ('Field `project.urls.repository` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.urls.repository" has an invalid type, expecting a string (got "True")'),
         ),
         # changelog
         (
@@ -425,7 +425,7 @@ from .conftest import cd_package
                 [project.urls]
                 changelog = true
             '''),
-            ('Field `project.urls.changelog` has an invalid type, expecting a string (got `True`)'),
+            ('Field "project.urls.changelog" has an invalid type, expecting a string (got "True")'),
         ),
         # scripts
         (
@@ -434,7 +434,7 @@ from .conftest import cd_package
                 name = 'test'
                 scripts = []
             '''),
-            ('Field `project.scripts` has an invalid type, expecting a dictionary of strings (got `[]`)'),
+            ('Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
         ),
         # gui-scripts
         (
@@ -443,7 +443,7 @@ from .conftest import cd_package
                 name = 'test'
                 gui-scripts = []
             '''),
-            ('Field `project.gui-scripts` has an invalid type, expecting a dictionary of strings (got `[]`)'),
+            ('Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
         ),
         # entry-points
         (
@@ -453,8 +453,8 @@ from .conftest import cd_package
                 entry-points = []
             '''),
             (
-                'Field `project.entry-points` has an invalid type, '
-                'expecting a dictionary of entrypoint sections (got `[]`)'
+                'Field "project.entry-points" has an invalid type, '
+                'expecting a dictionary of entrypoint sections (got "[]")'
             ),
         ),
         (
@@ -464,8 +464,8 @@ from .conftest import cd_package
                 entry-points = { section = 'something' }
             '''),
             (
-                'Field `project.entry-points.section` has an invalid type, '
-                'expecting a dictionary of entrypoints (got `something`)'
+                'Field "project.entry-points.section" has an invalid type, '
+                'expecting a dictionary of entrypoints (got "something")'
             ),
         ),
         (
@@ -475,7 +475,7 @@ from .conftest import cd_package
                 [project.entry-points.section]
                 entrypoint = []
             '''),
-            ('Field `project.entry-points.section.entrypoint` has an invalid type, expecting a string (got `[]`)'),
+            ('Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")'),
         ),
     ]
 )
@@ -571,7 +571,7 @@ def test_readme_content_type(package, content_type):
 def test_readme_content_type_unknown():
     with cd_package('unknown-readme-type'), pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match=re.escape('Could not infer content type for readme file `README.just-made-this-up-now`'),
+        match=re.escape('Could not infer content type for readme file "README.just-made-this-up-now"'),
     ), open('pyproject.toml', 'rb') as f:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
@@ -653,7 +653,7 @@ def test_as_rfc822_missing_version():
 def test_stically_defined_dynamic_field():
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field `project.version` declared as dynamic in but is defined',
+        match='Field "project.version" declared as dynamic in but is defined',
     ):
         pyproject_metadata.StandardMetadata.from_pyproject({
             'project': {
