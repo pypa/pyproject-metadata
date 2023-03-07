@@ -479,13 +479,15 @@ from .conftest import cd_package
         ),
     ]
 )
-def test_load(package, data, error):
+@pytest.mark.usefixtures('package')
+def test_load(data, error):
     with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.loads(data))
 
 
 @pytest.mark.parametrize('after_rfc', [False, True])
-def test_value(package, after_rfc):
+@pytest.mark.usefixtures('package')
+def test_value(after_rfc):
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
@@ -546,7 +548,8 @@ def test_value(package, after_rfc):
     ]
 
 
-def test_read_license(package2):
+@pytest.mark.usefixtures('package2')
+def test_read_license():
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
@@ -576,7 +579,8 @@ def test_readme_content_type_unknown():
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
-def test_as_rfc822(package):
+@pytest.mark.usefixtures('package')
+def test_as_rfc822():
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
@@ -619,7 +623,8 @@ def test_as_rfc822(package):
     assert core_metadata.body == 'some readme 👋\n'
 
 
-def test_as_rfc822_dynamic(package_dynamic_description):
+@pytest.mark.usefixtures('package_dynamic_description')
+def test_as_rfc822_dynamic():
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
