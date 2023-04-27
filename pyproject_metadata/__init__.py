@@ -408,7 +408,7 @@ class StandardMetadata():
             if (filename and text) or (not filename and not text):
                 raise ConfigurationError(
                     f'Invalid "project.readme" value, expecting either "file" or "text" (got "{readme}")',
-                    key='project.license',
+                    key='project.readme',
                 )
             if not content_type:
                 raise ConfigurationError(
@@ -427,7 +427,7 @@ class StandardMetadata():
             if not file.is_file():
                 raise ConfigurationError(
                     f'Readme file not found ("{filename}")',
-                    key='project.license.file',
+                    key='project.readme.file',
                 )
             text = file.read_text(encoding='utf-8')
 
