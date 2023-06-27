@@ -274,7 +274,7 @@ class StandardMetadata():
         # skip 'Supported-Platform'
         if self.description:
             message['Summary'] = self.description
-        message['Keywords'] = ' '.join(self.keywords)
+        message['Keywords'] = ','.join(self.keywords)
         if 'homepage' in self.urls:
             message['Home-page'] = self.urls['homepage']
         # skip 'Download-URL'
