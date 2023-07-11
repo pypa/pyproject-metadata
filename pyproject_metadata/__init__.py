@@ -448,7 +448,7 @@ class StandardMetadata:
             except packaging.requirements.InvalidRequirement as e:
                 raise ConfigurationError(
                     'Field "project.dependencies" contains an invalid PEP 508 '
-                    f'requirement string "{req}" ("{e!s}")'
+                    f'requirement string "{req}" ("{e}")'
                 ) from None
         return requirements
 
@@ -483,7 +483,7 @@ class StandardMetadata:
                 except packaging.requirements.InvalidRequirement as e:
                     raise ConfigurationError(
                         f'Field "project.optional-dependencies.{extra}" contains '
-                        f'an invalid PEP 508 requirement string "{req}" ("{e!s}")'
+                        f'an invalid PEP 508 requirement string "{req}" ("{e}")'
                     ) from None
         return dict(requirements_dict)
 
