@@ -34,7 +34,7 @@ class ConfigurationError(Exception):
         return self._key
 
 
-class RFC822Message():
+class RFC822Message:
     '''Python-flavored RFC 822 message implementation.'''
 
     def __init__(self) -> None:
@@ -64,7 +64,7 @@ class RFC822Message():
         return str(self).encode()
 
 
-class DataFetcher():
+class DataFetcher:
     def __init__(self, data: Mapping[str, Any]) -> None:
         self._data = data
 
@@ -175,7 +175,7 @@ class Readme(typing.NamedTuple):
 
 
 @dataclasses.dataclass
-class StandardMetadata():
+class StandardMetadata:
     name: str
     version: packaging.version.Version | None = None
     description: str | None = None
@@ -448,7 +448,7 @@ class StandardMetadata():
             except packaging.requirements.InvalidRequirement as e:
                 raise ConfigurationError(
                     'Field "project.dependencies" contains an invalid PEP 508 '
-                    f'requirement string "{req}" ("{str(e)}")'
+                    f'requirement string "{req}" ("{e}")'
                 ) from None
         return requirements
 
@@ -483,7 +483,7 @@ class StandardMetadata():
                 except packaging.requirements.InvalidRequirement as e:
                     raise ConfigurationError(
                         f'Field "project.optional-dependencies.{extra}" contains '
-                        f'an invalid PEP 508 requirement string "{req}" ("{str(e)}")'
+                        f'an invalid PEP 508 requirement string "{req}" ("{e}")'
                     ) from None
         return dict(requirements_dict)
 
