@@ -589,7 +589,7 @@ def test_as_rfc822():
         'Name': ['full-metadata'],
         'Summary': ['A package with all the metadata :)'],
         'Version': ['3.2.1'],
-        'Keywords': ['trampolim is interesting'],
+        'Keywords': ['trampolim,is,interesting'],
         'Home-page': ['example.com'],
         'Author': ['Example!'],
         'Author-Email': ['Unknown <example@example.com>'],
