@@ -8,7 +8,6 @@ import dataclasses
 import os
 import os.path
 import pathlib
-import re
 import typing
 
 from collections.abc import Mapping
@@ -17,6 +16,7 @@ from typing import Any
 import packaging.markers
 import packaging.requirements
 import packaging.specifiers
+import packaging.utils
 import packaging.version
 
 
@@ -195,8 +195,11 @@ class StandardMetadata:
     dynamic: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
-        self.name = re.sub(r'[-_.]+', '-', self.name).lower()
         self._update_dynamic(self.version)
+
+    @property
+    def canonnical_name(self) -> str:
+        return packaging.utils.canonicalize_name(self.name)
 
     @classmethod
     def from_pyproject(
