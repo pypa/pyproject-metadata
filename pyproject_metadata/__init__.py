@@ -198,7 +198,7 @@ class StandardMetadata:
         self._update_dynamic(self.version)
 
     @property
-    def canonnical_name(self) -> str:
+    def canonical_name(self) -> str:
         return packaging.utils.canonicalize_name(self.name)
 
     @classmethod
