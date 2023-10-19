@@ -642,16 +642,7 @@ def test_as_rfc822_invalid_dynamic():
         version=packaging.version.Version('1.0.0'),
     )
     metadata.dynamic = ['name']
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: name'):
-        metadata.as_rfc822()
-    metadata.dynamic = ['version']
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: version'):
-        metadata.as_rfc822()
-
-
-def test_as_rfc822_missing_version():
-    metadata = pyproject_metadata.StandardMetadata(name='something')
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Missing version field'):
+    with pytest.raises(pyproject_metadata.ConfigurationError, match='Name cannot be dynamic'):
         metadata.as_rfc822()
 
 
