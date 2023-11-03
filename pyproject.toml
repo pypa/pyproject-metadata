@@ -27,10 +27,9 @@ dependencies = [
 
 [project.optional-dependencies]
 docs = [
-    "furo>=2020.11.19b18",
-    "Jinja2<3.1",  # https://github.com/readthedocs/readthedocs.org/issues/9038
+    "furo>=2023.9.10",
     "sphinx-autodoc-typehints>=1.10.0",
-    "sphinx~=3.0",
+    "sphinx~=7.0",
 ]
 test = [
     "pytest-cov[toml]>=2",
