@@ -29,6 +29,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = true
+                version = '0.1.0'
             '''),
             ('Field "project.name" has an invalid type, expecting a string (got "True")'),
         ),
@@ -37,6 +38,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = true
+                version = '0.1.0'
                 dynamic = [
                     'name',
                 ]
@@ -52,11 +54,19 @@ from .conftest import cd_package
             '''),
             ('Field "project.version" has an invalid type, expecting a string (got "True")'),
         ),
+        (
+            textwrap.dedent('''
+                [project]
+                name = 'test'
+            '''),
+            ('Field "project.version" missing and "version" not specified in "project.dynamic"'),
+        ),
         # license
         (
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = true
             '''),
             ('Field "project.license" has an invalid type, expecting a dictionary of strings (got "True")'),
@@ -65,6 +75,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = {}
             '''),
             ('Invalid "project.license" value, expecting either "file" or "text" (got "{}")'),
@@ -73,6 +84,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = { file = '...', text = '...' }
             '''),
             (
@@ -84,6 +96,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = { made-up = ':(' }
             '''),
             (
@@ -94,6 +107,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = { file = true }
             '''),
             ('Field "project.license.file" has an invalid type, expecting a string (got "True")'),
@@ -102,6 +116,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = { text = true }
             '''),
             ('Field "project.license.text" has an invalid type, expecting a string (got "True")'),
@@ -110,6 +125,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 license = { file = 'this-file-does-not-exist' }
             '''),
             ('License file not found ("this-file-does-not-exist")'),
@@ -119,6 +135,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = true
             '''),
             (
@@ -130,6 +147,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = {}
             '''),
             (
@@ -140,6 +158,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { file = '...', text = '...' }
             '''),
             (
@@ -151,6 +170,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { made-up = ':(' }
             '''),
             (
@@ -161,6 +181,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { file = true }
             '''),
             ('Field "project.readme.file" has an invalid type, expecting a string (got "True")'),
@@ -169,6 +190,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { text = true }
             '''),
             ('Field "project.readme.text" has an invalid type, expecting a string (got "True")'),
@@ -177,6 +199,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { file = 'this-file-does-not-exist', content-type = '...' }
             '''),
             ('Readme file not found ("this-file-does-not-exist")'),
@@ -185,6 +208,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { file = 'README.md' }
             '''),
             ('Field "project.readme.content-type" missing'),
@@ -193,6 +217,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 readme = { text = '...' }
             '''),
             ('Field "project.readme.content-type" missing'),
@@ -202,6 +227,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 description = true
             '''),
             ('Field "project.description" has an invalid type, expecting a string (got "True")'),
@@ -210,6 +236,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 description = """Multiple
                 lines."""
             '''),
@@ -220,6 +247,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 dependencies = 'some string!'
             '''),
             ('Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")'),
@@ -228,6 +256,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 dependencies = [
                     99,
                 ]
@@ -238,6 +267,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 dependencies = [
                     'definitely not a valid PEP 508 requirement!',
                 ]
@@ -252,6 +282,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 optional-dependencies = true
             '''),
             (
@@ -263,6 +294,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.optional-dependencies]
                 test = 'some string!'
             '''),
@@ -275,6 +307,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.optional-dependencies]
                 test = [
                     true,
@@ -289,6 +322,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.optional-dependencies]
                 test = [
                     'definitely not a valid PEP 508 requirement!',
@@ -304,6 +338,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 requires-python = true
             '''),
             ('Field "project.requires-python" has an invalid type, expecting a string (got "True")'),
@@ -313,6 +348,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 keywords = 'some string!'
             '''),
             ('Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")'),
@@ -321,6 +357,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 keywords = [
                     true,
                 ]
@@ -332,6 +369,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 authors = {}
             '''),
             (
@@ -343,6 +381,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 authors = [
                     true,
                 ]
@@ -357,6 +396,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 maintainers = {}
             '''),
             (
@@ -368,6 +408,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 maintainers = [
                     10
                 ]
@@ -382,6 +423,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 classifiers = 'some string!'
             '''),
             ('Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")'),
@@ -390,6 +432,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 classifiers = [
                     true,
                 ]
@@ -401,6 +444,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.urls]
                 homepage = true
             '''),
@@ -411,6 +455,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.urls]
                 documentation = true
             '''),
@@ -421,6 +466,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.urls]
                 repository = true
             '''),
@@ -431,6 +477,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.urls]
                 changelog = true
             '''),
@@ -441,6 +488,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 scripts = []
             '''),
             ('Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
@@ -450,6 +498,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 gui-scripts = []
             '''),
             ('Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
@@ -459,6 +508,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 entry-points = []
             '''),
             (
@@ -470,6 +520,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 entry-points = { section = 'something' }
             '''),
             (
@@ -481,6 +532,7 @@ from .conftest import cd_package
             textwrap.dedent('''
                 [project]
                 name = 'test'
+                version = '0.1.0'
                 [project.entry-points.section]
                 entrypoint = []
             '''),
@@ -694,6 +746,7 @@ def test_requires_python(value):
     pyproject_metadata.StandardMetadata.from_pyproject({
         'project': {
             'name': 'example',
+            'version': '0.1.0',
             'requires-python': value,
         },
     })
@@ -710,5 +763,3 @@ def test_version_dynamic():
     })
     metadata.version = packaging.version.Version('1.2.3')
     assert 'version' not in metadata.dynamic
-    metadata.version = None
-    assert 'version' in metadata.dynamic
