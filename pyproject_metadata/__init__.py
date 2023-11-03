@@ -257,6 +257,9 @@ class StandardMetadata:
         # update dynamic when version is set
         if name == 'version' and hasattr(self, 'dynamic'):
             self._update_dynamic(value)
+        # Can't be multiline
+        if name == 'description' and value and '\n' in value:
+            raise ConfigurationError('The description must be a single line')
         super().__setattr__(name, value)
 
     def as_rfc822(self) -> RFC822Message:
