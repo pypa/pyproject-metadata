@@ -592,8 +592,8 @@ def test_as_rfc822():
         'Keywords': ['trampolim,is,interesting'],
         'Home-page': ['example.com'],
         'Author': ['Example!'],
-        'Author-Email': ['Unknown <example@example.com>'],
-        'Maintainer-Email': ['Other Example <other@example.com>'],
+        'Author-email': ['Unknown <example@example.com>'],
+        'Maintainer-email': ['Other Example <other@example.com>'],
         'License': ['some license text'],
         'Classifier': [
             'Development Status :: 4 - Beta',

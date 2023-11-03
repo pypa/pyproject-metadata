@@ -279,9 +279,9 @@ class StandardMetadata:
             message['Home-page'] = self.urls['homepage']
         # skip 'Download-URL'
         message['Author'] = self._name_list(self.authors)
-        message['Author-Email'] = self._email_list(self.authors)
+        message['Author-email'] = self._email_list(self.authors)
         message['Maintainer'] = self._name_list(self.maintainers)
-        message['Maintainer-Email'] = self._email_list(self.maintainers)
+        message['Maintainer-email'] = self._email_list(self.maintainers)
         if self.license:
             message['License'] = self.license.text
         for classifier in self.classifiers:
