@@ -227,10 +227,15 @@ class StandardMetadata:
         version_string = fetcher.get_str('project.version')
         requires_python_string = fetcher.get_str('project.requires-python')
 
+        # Description can't be multiline
+        description = fetcher.get_str('project.description')
+        if description and '\n' in description:
+            raise ConfigurationError('The description must be a single line')
+
         return cls(
             name,
             packaging.version.Version(version_string) if version_string else None,
-            fetcher.get_str('project.description'),
+            description,
             cls._get_license(fetcher, project_dir),
             cls._get_readme(fetcher, project_dir),
             packaging.specifiers.SpecifierSet(requires_python_string) if requires_python_string else None,
@@ -257,9 +262,6 @@ class StandardMetadata:
         # update dynamic when version is set
         if name == 'version' and hasattr(self, 'dynamic'):
             self._update_dynamic(value)
-        # Can't be multiline
-        if name == 'description' and value and '\n' in value:
-            raise ConfigurationError('The description must be a single line')
         super().__setattr__(name, value)
 
     def as_rfc822(self) -> RFC822Message:
