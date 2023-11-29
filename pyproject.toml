@@ -59,9 +59,8 @@ ignore_missing_imports = true
 strict = true
 
 
-[tool.ruff]
-select = [
-  "E", "F", "W", # flake8
+[tool.ruff.lint]
+extend-select = [
   "C90",         # mccabe
   "B",           # flake8-bugbear
   "I",           # isort
@@ -84,17 +83,10 @@ select = [
   "NPY",         # NumPy specific rules
   "PD",          # pandas-vet
 ]
-extend-ignore = [
-  "PLR",    # Design related pylint codes
-  "E501",   # Line too long
-  "PT004",  # Use underscore for non-returning fixture (use usefixture instead)
-]
 isort.known-first-party = ["pyproject-metadata"]
 isort.lines-after-imports = 2
 isort.lines-between-types = 1
-line-length = 129
-mccabe.max-complexity = 10
-target-version = "py37"
+pylint.max-branches = 15
 
 
 [tool.coverage]
