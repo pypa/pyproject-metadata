@@ -504,7 +504,8 @@ def test_value(after_rfc):
         metadata.as_rfc822()
 
     assert metadata.dynamic == []
-    assert metadata.name == 'full-metadata'
+    assert metadata.name == 'full_metadata'
+    assert metadata.canonical_name == 'full-metadata'
     assert metadata.version == packaging.version.Version('3.2.1')
     assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
     assert metadata.license.file is None
@@ -595,7 +596,7 @@ def test_as_rfc822():
     core_metadata = metadata.as_rfc822()
     assert core_metadata.headers == {
         'Metadata-Version': ['2.1'],
-        'Name': ['full-metadata'],
+        'Name': ['full_metadata'],
         'Summary': ['A package with all the metadata :)'],
         'Version': ['3.2.1'],
         'Keywords': ['trampolim,is,interesting'],
