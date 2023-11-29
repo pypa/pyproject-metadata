@@ -43,8 +43,8 @@ jobs:
         run: |
           import platform; import os; import sys; import codecs
           base = '.'.join(map(str, sys.version_info[:2]))
-          env = 'BASE={}\n'.format(base)
-          print('Picked:\n{}for{}'.format(env, sys.version))
+          env = f'BASE={base}\n'
+          print(f'Picked:\n{env}for{sys.version}')
           with codecs.open(os.environ['GITHUB_ENV'], 'a', 'utf-8') as file_handler:
                file_handler.write(env)
         shell: python
