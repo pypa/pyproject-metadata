@@ -1,5 +1,5 @@
 [project]
-name = 'full-metadata'
+name = 'full_metadata'
 version = '3.2.1'
 description = 'A package with all the metadata :)'
 readme = 'README.md'
