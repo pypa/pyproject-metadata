@@ -194,9 +194,6 @@ class StandardMetadata:
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     dynamic: list[str] = dataclasses.field(default_factory=list)
 
-    def __post_init__(self) -> None:
-        self._update_dynamic(self.version)
-
     @property
     def canonical_name(self) -> str:
         return packaging.utils.canonicalize_name(self.name)
@@ -229,6 +226,10 @@ class StandardMetadata:
 
         version_string = fetcher.get_str('project.version')
         requires_python_string = fetcher.get_str('project.requires-python')
+        version = packaging.version.Version(version_string) if version_string else None
+
+        if version is None and 'version' not in dynamic:
+            raise ConfigurationError('Field "project.version" missing and "version" not specified in "project.dynamic"')
 
         # Description can't be multiline
         description = fetcher.get_str('project.description')
@@ -237,7 +238,7 @@ class StandardMetadata:
 
         return cls(
             name,
-            packaging.version.Version(version_string) if version_string else None,
+            version,
             description,
             cls._get_license(fetcher, project_dir),
             cls._get_readme(fetcher, project_dir),
@@ -258,8 +259,6 @@ class StandardMetadata:
     def _update_dynamic(self, value: Any) -> None:
         if value and 'version' in self.dynamic:
             self.dynamic.remove('version')
-        elif not value and 'version' not in self.dynamic:
-            self.dynamic.append('version')
 
     def __setattr__(self, name: str, value: Any) -> None:
         # update dynamic when version is set
