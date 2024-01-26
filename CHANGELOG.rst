@@ -2,6 +2,19 @@
 Changelog
 +++++++++
 
+0.8.0
+=====
+
+- Preserve the user-specified name style in the metadata. ``.canonical_name`` added to get the normalized name
+- Require "version" in the dynamic table if unset (following PEP 621)
+- Support extras using markers containing "or"
+- Using ``.as_rfc822()`` no longer modifies the metadata object
+- Validate the description is one line
+- Separate core metadata keywords with commas, following the (modified) spec
+- An error message reported ``project.license`` instead of ``project.readme``
+- Produce slightly cleaner tracebacks
+- The build backend is now ``flit-core``
+
 
 0.7.1 (30-01-2023)
 ==================
