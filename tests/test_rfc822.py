@@ -149,11 +149,11 @@ def test_body():
 def test_convert_optional_dependencies():
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            "project": {
-                "name": "example",
-                "version": "0.1.0",
-                "optional-dependencies": {
-                    "test": [
+            'project': {
+                'name': 'example',
+                'version': '0.1.0',
+                'optional-dependencies': {
+                    'test': [
                         'foo; os_name == "nt" or sys_platform == "win32"',
                         'bar; os_name == "posix" and sys_platform == "linux"',
                     ],
@@ -162,7 +162,7 @@ def test_convert_optional_dependencies():
         }
     )
     message = metadata.as_rfc822()
-    requires = message.headers["Requires-Dist"]
+    requires = message.headers['Requires-Dist']
     assert requires == [
         'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
         'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
