@@ -94,5 +94,5 @@ pylint.max-branches = 15
 [tool.coverage]
 html.show_contexts = true
 report.exclude_also = [
-    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
 ]
