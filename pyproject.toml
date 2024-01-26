@@ -69,6 +69,7 @@ extend-select = [
   "C4",          # flake8-comprehensions
   "ICN",         # flake8-import-conventions
   "ISC",         # flake8-implicit-str-concat
+  "EM",          # flake8-errmsg
   "G",           # flake8-logging-format
   "PGH",         # pygrep-hooks
   "PIE",         # flake8-pie
@@ -92,3 +93,6 @@ pylint.max-branches = 15
 
 [tool.coverage]
 html.show_contexts = true
+report.exclude_also = [
+    "if typing.TYPE_CHECKING:",
+]
