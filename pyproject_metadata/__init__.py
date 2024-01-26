@@ -337,9 +337,17 @@ class StandardMetadata:
     ) -> packaging.requirements.Requirement:
         # append or add our extra marker
         requirement = copy.copy(requirement)
-        requirement.marker = packaging.markers.Marker(
-            f'{requirement.marker} and extra == "{extra}"' if requirement.marker else f'extra == "{extra}"',
-        )
+        if requirement.marker:
+            if "or" in requirement.marker._markers:
+                requirement.marker = packaging.markers.Marker(
+                    f'({requirement.marker}) and extra == "{extra}"'
+                )
+            else:
+                requirement.marker = packaging.markers.Marker(
+                    f'{requirement.marker} and extra == "{extra}"'
+                )
+        else:
+            requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
         return requirement
 
     @staticmethod

@@ -144,3 +144,26 @@ def test_body():
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
     ''')
+
+
+def test_convert_optional_dependencies():
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "optional-dependencies": {
+                    "test": [
+                        'foo; os_name == "nt" or sys_platform == "win32"',
+                        'bar; os_name == "posix" and sys_platform == "linux"',
+                    ],
+                },
+            },
+        }
+    )
+    message = metadata.as_rfc822()
+    requires = message.headers["Requires-Dist"]
+    assert requires == [
+        'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
+        'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
+    ]
