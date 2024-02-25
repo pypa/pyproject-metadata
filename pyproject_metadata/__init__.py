@@ -10,6 +10,8 @@ import os.path
 import pathlib
 import typing
 
+from email.utils import formataddr
+
 
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
@@ -319,11 +321,11 @@ class StandardMetadata:
         )
 
     def _email_list(self, people: list[tuple[str, str]]) -> str:
-        return ', '.join([
-            '{}{}'.format(name, f' <{_email}>' if _email else '')
+        return ', '.join(
+            formataddr((name, _email))
             for name, _email in people
             if _email
-        ])
+        )
 
     def _build_extra_req(
         self,
