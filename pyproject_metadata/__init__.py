@@ -26,6 +26,8 @@ import packaging.version
 
 __version__ = '0.7.1'
 
+KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
+
 
 class ConfigurationError(Exception):
     '''Error in the backend metadata.'''
@@ -183,6 +185,14 @@ class StandardMetadata:
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     dynamic: list[str] = dataclasses.field(default_factory=list)
 
+    _metadata_version: str | None = None
+
+    @property
+    def metadata_version(self) -> str:
+        if self._metadata_version is None:
+            return '2.2' if self.dynamic else '2.1'
+        return self._metadata_version
+
     @property
     def canonical_name(self) -> str:
         return packaging.utils.canonicalize_name(self.name)
@@ -192,6 +202,7 @@ class StandardMetadata:
         cls,
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
+        metadata_version: str | None = None,
     ) -> StandardMetadata:
         fetcher = DataFetcher(data)
         project_dir = pathlib.Path(project_dir)
@@ -229,6 +240,10 @@ class StandardMetadata:
             msg = 'The description must be a single line'
             raise ConfigurationError(msg)
 
+        if metadata_version and metadata_version not in KNOWN_METADATA_VERSIONS:
+            msg = 'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
+            raise ConfigurationError(msg)
+
         return cls(
             name,
             version,
@@ -247,6 +262,7 @@ class StandardMetadata:
             fetcher.get_dict('project.scripts'),
             fetcher.get_dict('project.gui-scripts'),
             dynamic,
+            metadata_version,
         )
 
     def _update_dynamic(self, value: Any) -> None:
@@ -265,7 +281,7 @@ class StandardMetadata:
         return message
 
     def write_to_rfc822(self, message: RFC822Message) -> None:  # noqa: C901
-        message['Metadata-Version'] = '2.2' if self.dynamic else '2.1'
+        message['Metadata-Version'] = self.metadata_version
         message['Name'] = self.name
         if not self.version:
             msg = 'Missing version field'
@@ -297,19 +313,21 @@ class StandardMetadata:
         for dep in self.dependencies:
             message['Requires-Dist'] = str(dep)
         for extra, requirements in self.optional_dependencies.items():
-            message['Provides-Extra'] = extra
+            norm_extra = extra if self.metadata_version in {'2.1', '2.2'} else extra.replace('.', '-').replace('_', '-').lower()
+            message['Provides-Extra'] = norm_extra
             for requirement in requirements:
-                message['Requires-Dist'] = str(self._build_extra_req(extra, requirement))
+                message['Requires-Dist'] = str(self._build_extra_req(norm_extra, requirement))
         if self.readme:
             if self.readme.content_type:
                 message['Description-Content-Type'] = self.readme.content_type
             message.body = self.readme.text
         # Core Metadata 2.2
-        for field in self.dynamic:
-            if field in ('name', 'version'):
-                msg = f'Field cannot be dynamic: {field}'
-                raise ConfigurationError(msg)
-            message['Dynamic'] = field
+        if self.metadata_version != '2.1':
+            for field in self.dynamic:
+                if field in ('name', 'version'):
+                    msg = f'Field cannot be dynamic: {field}'
+                    raise ConfigurationError(msg)
+                message['Dynamic'] = field
 
     def _name_list(self, people: list[tuple[str, str]]) -> str:
         return ', '.join(
