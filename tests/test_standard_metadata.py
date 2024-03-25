@@ -718,7 +718,7 @@ def test_as_rfc822_set_metadata(metadata_version):
 
     rfc822 = str(metadata.as_rfc822())
 
-    assert f"Metadata-Version: {metadata_version}" in rfc822
+    assert f'Metadata-Version: {metadata_version}' in rfc822
 
     assert 'Provides-Extra: under-score' in rfc822
     assert 'Provides-Extra: da-sh' in rfc822
