@@ -698,6 +698,36 @@ def test_as_rfc822_dynamic():
     }
 
 
+@pytest.mark.parametrize('metadata_version', ['2.1', '2.2', '2.3'])
+def test_as_rfc822_set_metadata(metadata_version):
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'hi',
+                'version': '1.2',
+                'optional-dependencies': {
+                    'under_score': ['some_package'],
+                    'da-sh': ['some-package'],
+                    'do.t': ['some.package'],
+                },
+            }
+        },
+        metadata_version=metadata_version,
+    )
+    assert metadata.metadata_version == metadata_version
+
+    rfc822 = str(metadata.as_rfc822())
+
+    assert f"Metadata-Version: {metadata_version}" in rfc822
+
+    assert 'Provides-Extra: under-score' in rfc822
+    assert 'Provides-Extra: da-sh' in rfc822
+    assert 'Provides-Extra: do-t' in rfc822
+    assert 'Requires-Dist: some_package; extra == "under-score"' in rfc822
+    assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
+    assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
+
+
 def test_as_rfc822_invalid_dynamic():
     metadata = pyproject_metadata.StandardMetadata(
         name='something',

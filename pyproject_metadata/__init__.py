@@ -313,7 +313,7 @@ class StandardMetadata:
         for dep in self.dependencies:
             message['Requires-Dist'] = str(dep)
         for extra, requirements in self.optional_dependencies.items():
-            norm_extra = extra if self.metadata_version in {'2.1', '2.2'} else extra.replace('.', '-').replace('_', '-').lower()
+            norm_extra = extra.replace('.', '-').replace('_', '-').lower()
             message['Provides-Extra'] = norm_extra
             for requirement in requirements:
                 message['Requires-Dist'] = str(self._build_extra_req(norm_extra, requirement))
