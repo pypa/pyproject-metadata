@@ -5,6 +5,7 @@ from __future__ import annotations
 import collections
 import copy
 import dataclasses
+import email.utils
 import os
 import os.path
 import pathlib
@@ -319,11 +320,11 @@ class StandardMetadata:
         )
 
     def _email_list(self, people: list[tuple[str, str]]) -> str:
-        return ', '.join([
-            '{}{}'.format(name, f' <{_email}>' if _email else '')
+        return ', '.join(
+            email.utils.formataddr((name, _email))
             for name, _email in people
             if _email
-        ])
+        )
 
     def _build_extra_req(
         self,

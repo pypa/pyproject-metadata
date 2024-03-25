@@ -167,3 +167,28 @@ def test_convert_optional_dependencies():
         'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
         'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
     ]
+
+
+def test_convert_author_email():
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'example',
+                'version': '0.1.0',
+                'authors': [
+                    {
+                        'name': 'John Doe, Inc.',
+                        'email': 'johndoe@example.com',
+                    },
+                    {
+                        'name': 'Kate Doe, LLC.',
+                        'email': 'katedoe@example.com',
+                    }
+                ],
+            },
+        }
+    )
+    message = metadata.as_rfc822()
+    assert message.headers['Author-Email'] == [
+        '"John Doe, Inc." <johndoe@example.com>, "Kate Doe, LLC." <katedoe@example.com>'
+    ]
