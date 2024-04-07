@@ -39,8 +39,8 @@ test = [
 ]
 
 [project.urls]
-changelog = "https://pyproject-metadata.readthedocs.io/en/stable/changelog.html"
-homepage = "https://github.com/FFY00/python-pyproject-metadata"
+changelog = "https://pep621.readthedocs.io/en/stable/changelog.html"
+homepage = "https://github.com/pypa/pyproject-metadata"
 
 [tool.flit.sdist]
 include = ["LICENSE", "tests/**", "docs/**", "CHANGELOG.rst"]
