@@ -10,6 +10,7 @@ Changelog
 - Preserve the user-specified name style in the metadata. ``.canonical_name`` added to get the normalized name
 - Require "version" in the dynamic table if unset (following PEP 621)
 - Support extras using markers containing "or"
+- Support empty extras
 - Using ``.as_rfc822()`` no longer modifies the metadata object
 - Fix email-author listing for names containing commas
 - Validate the description is one line
