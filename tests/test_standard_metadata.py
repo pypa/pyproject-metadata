@@ -709,6 +709,7 @@ def test_as_rfc822_set_metadata(metadata_version):
                     'under_score': ['some_package'],
                     'da-sh': ['some-package'],
                     'do.t': ['some.package'],
+                    'empty': [],
                 },
             }
         },
@@ -723,6 +724,7 @@ def test_as_rfc822_set_metadata(metadata_version):
     assert 'Provides-Extra: under-score' in rfc822
     assert 'Provides-Extra: da-sh' in rfc822
     assert 'Provides-Extra: do-t' in rfc822
+    assert 'Provides-Extra: empty' in rfc822
     assert 'Requires-Dist: some_package; extra == "under-score"' in rfc822
     assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822

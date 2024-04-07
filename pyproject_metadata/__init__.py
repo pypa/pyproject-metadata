@@ -473,7 +473,7 @@ class StandardMetadata:
         except KeyError:
             return {}
 
-        requirements_dict: collections.defaultdict[str, list[Requirement]] = collections.defaultdict(list)
+        requirements_dict: dict[str, list[Requirement]] = {}
         if not isinstance(val, dict):
             msg = (
                 'Field "project.optional-dependencies" has an invalid type, expecting a '
@@ -488,6 +488,7 @@ class StandardMetadata:
                     f'dictionary PEP 508 requirement strings (got "{requirements}")'
                 )
                 raise ConfigurationError(msg)
+            requirements_dict[extra] = []
             for req in requirements:
                 if not isinstance(req, str):
                     msg = (
