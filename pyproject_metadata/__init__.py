@@ -242,7 +242,7 @@ class StandardMetadata:
             raise ConfigurationError(msg)
 
         if metadata_version and metadata_version not in KNOWN_METADATA_VERSIONS:
-            msg = 'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
+            msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
             raise ConfigurationError(msg)
 
         return cls(

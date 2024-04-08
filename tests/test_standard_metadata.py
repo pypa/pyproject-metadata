@@ -729,6 +729,21 @@ def test_as_rfc822_set_metadata(metadata_version):
     assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
 
+def test_as_rfc822_set_metadata_invalid():
+    with pytest.raises(pyproject_metadata.ConfigurationError, match='The metadata_version must be one of') as err:
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'project': {
+                    'name': 'hi',
+                    'version': '1.2',
+                    },
+            },
+            metadata_version='2.0',
+        )
+    assert '2.1' in str(err.value)
+    assert '2.2' in str(err.value)
+    assert '2.3' in str(err.value)
+
 
 def test_as_rfc822_invalid_dynamic():
     metadata = pyproject_metadata.StandardMetadata(
