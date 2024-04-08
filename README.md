@@ -4,7 +4,7 @@
 [![checks](https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml/badge.svg)](https://github.com/FFY00/python-pyproject-metadata/actions/workflows/checks.yml)
 [![tests](https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml/badge.svg)](https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/pypa/pyproject-metadata/branch/main/graph/badge.svg?token=9chBjS1lch)](https://codecov.io/gh/pypa/pyproject-metadata)
-[![Documentation Status](https://readthedocs.org/projects/pyproject-metadata/badge/?version=latest)](https://pyproject-metadata.pypa.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pyproject-metadata/badge/?version=latest)](https://pep621.readthedocs.io/en/latest/?badge=latest)
 
 
 > Dataclass for PEP 621 metadata with support for [core metadata] generation
