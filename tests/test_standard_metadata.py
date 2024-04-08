@@ -26,211 +26,227 @@ from .conftest import cd_package
         # name
         ('[project]', 'Field "project.name" missing'),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = true
                 version = '0.1.0'
-            '''),
-            ('Field "project.name" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.name" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # dynamic
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = true
                 version = '0.1.0'
                 dynamic = [
                     'name',
                 ]
-            '''),
+            """),
             ('Unsupported field "name" in "project.dynamic"'),
         ),
         # version
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = true
-            '''),
-            ('Field "project.version" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.version" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
-            '''),
-            ('Field "project.version" missing and "version" not specified in "project.dynamic"'),
+            """),
+            (
+                'Field "project.version" missing and "version" not specified in "project.dynamic"'
+            ),
         ),
         # license
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = true
-            '''),
-            ('Field "project.license" has an invalid type, expecting a dictionary of strings (got "True")'),
+            """),
+            (
+                'Field "project.license" has an invalid type, expecting a dictionary of strings (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = {}
-            '''),
-            ('Invalid "project.license" value, expecting either "file" or "text" (got "{}")'),
+            """),
+            (
+                'Invalid "project.license" value, expecting either "file" or "text" (got "{}")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = { file = '...', text = '...' }
-            '''),
+            """),
             (
                 'Invalid "project.license" value, expecting either "file" '
                 "or \"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = { made-up = ':(' }
-            '''),
-            (
-                'Unexpected field "project.license.made-up"'
-            ),
+            """),
+            ('Unexpected field "project.license.made-up"'),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = { file = true }
-            '''),
-            ('Field "project.license.file" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.license.file" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = { text = true }
-            '''),
-            ('Field "project.license.text" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.license.text" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 license = { file = 'this-file-does-not-exist' }
-            '''),
+            """),
             ('License file not found ("this-file-does-not-exist")'),
         ),
         # readme
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = true
-            '''),
+            """),
             (
                 'Field "project.readme" has an invalid type, expecting either, '
                 'a string or dictionary of strings (got "True")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = {}
-            '''),
+            """),
             (
                 'Invalid "project.readme" value, expecting either "file" or "text" (got "{}")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { file = '...', text = '...' }
-            '''),
+            """),
             (
                 'Invalid "project.readme" value, expecting either "file" or '
                 "\"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { made-up = ':(' }
-            '''),
-            (
-                'Unexpected field "project.readme.made-up"'
-            ),
+            """),
+            ('Unexpected field "project.readme.made-up"'),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { file = true }
-            '''),
-            ('Field "project.readme.file" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.readme.file" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { text = true }
-            '''),
-            ('Field "project.readme.text" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.readme.text" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { file = 'this-file-does-not-exist', content-type = '...' }
-            '''),
+            """),
             ('Readme file not found ("this-file-does-not-exist")'),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { file = 'README.md' }
-            '''),
+            """),
             ('Field "project.readme.content-type" missing'),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { text = '...' }
-            '''),
+            """),
             ('Field "project.readme.content-type" missing'),
         ),
         # description
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 description = true
-            '''),
-            ('Field "project.description" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.description" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         (
             textwrap.dedent('''
@@ -244,34 +260,38 @@ from .conftest import cd_package
         ),
         # dependencies
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 dependencies = 'some string!'
-            '''),
-            ('Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")'),
+            """),
+            (
+                'Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 dependencies = [
                     99,
                 ]
-            '''),
-            ('Field "project.dependencies" contains item with invalid type, expecting a string (got "99")'),
+            """),
+            (
+                'Field "project.dependencies" contains item with invalid type, expecting a string (got "99")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 dependencies = [
                     'definitely not a valid PEP 508 requirement!',
                 ]
-            '''),
+            """),
             (
                 'Field "project.dependencies" contains an invalid PEP 508 requirement '
                 'string "definitely not a valid PEP 508 requirement!" '
@@ -279,32 +299,32 @@ from .conftest import cd_package
         ),
         # optional-dependencies
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 optional-dependencies = true
-            '''),
+            """),
             (
                 'Field "project.optional-dependencies" has an invalid type, '
                 'expecting a dictionary of PEP 508 requirement strings (got "True")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.optional-dependencies]
                 test = 'some string!'
-            '''),
+            """),
             (
                 'Field "project.optional-dependencies.test" has an invalid type, '
                 'expecting a dictionary PEP 508 requirement strings (got "some string!")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
@@ -312,14 +332,14 @@ from .conftest import cd_package
                 test = [
                     true,
                 ]
-            '''),
+            """),
             (
                 'Field "project.optional-dependencies.test" has an invalid type, '
                 'expecting a PEP 508 requirement string (got "True")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
@@ -327,7 +347,7 @@ from .conftest import cd_package
                 test = [
                     'definitely not a valid PEP 508 requirement!',
                 ]
-            '''),
+            """),
             (
                 'Field "project.optional-dependencies.test" contains an invalid '
                 'PEP 508 requirement string "definitely not a valid PEP 508 requirement!" '
@@ -335,57 +355,63 @@ from .conftest import cd_package
         ),
         # requires-python
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 requires-python = true
-            '''),
-            ('Field "project.requires-python" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.requires-python" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # keywords
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 keywords = 'some string!'
-            '''),
-            ('Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")'),
+            """),
+            (
+                'Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 keywords = [
                     true,
                 ]
-            '''),
-            ('Field "project.keywords" contains item with invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.keywords" contains item with invalid type, expecting a string (got "True")'
+            ),
         ),
         # authors
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 authors = {}
-            '''),
+            """),
             (
                 'Field "project.authors" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 authors = [
                     true,
                 ]
-            '''),
+            """),
             (
                 'Field "project.authors" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "[True]")'
@@ -393,26 +419,26 @@ from .conftest import cd_package
         ),
         # maintainers
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 maintainers = {}
-            '''),
+            """),
             (
                 'Field "project.maintainers" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 maintainers = [
                     10
                 ]
-            '''),
+            """),
             (
                 'Field "project.maintainers" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "[10]")'
@@ -420,125 +446,143 @@ from .conftest import cd_package
         ),
         # classifiers
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 classifiers = 'some string!'
-            '''),
-            ('Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")'),
+            """),
+            (
+                'Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")'
+            ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 classifiers = [
                     true,
                 ]
-            '''),
-            ('Field "project.classifiers" contains item with invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.classifiers" contains item with invalid type, expecting a string (got "True")'
+            ),
         ),
         # homepage
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.urls]
                 homepage = true
-            '''),
-            ('Field "project.urls.homepage" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.urls.homepage" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # documentation
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.urls]
                 documentation = true
-            '''),
-            ('Field "project.urls.documentation" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.urls.documentation" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # repository
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.urls]
                 repository = true
-            '''),
-            ('Field "project.urls.repository" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.urls.repository" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # changelog
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.urls]
                 changelog = true
-            '''),
-            ('Field "project.urls.changelog" has an invalid type, expecting a string (got "True")'),
+            """),
+            (
+                'Field "project.urls.changelog" has an invalid type, expecting a string (got "True")'
+            ),
         ),
         # scripts
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 scripts = []
-            '''),
-            ('Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
+            """),
+            (
+                'Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")'
+            ),
         ),
         # gui-scripts
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 gui-scripts = []
-            '''),
-            ('Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")'),
+            """),
+            (
+                'Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")'
+            ),
         ),
         # entry-points
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 entry-points = []
-            '''),
+            """),
             (
                 'Field "project.entry-points" has an invalid type, '
                 'expecting a dictionary of entrypoint sections (got "[]")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 entry-points = { section = 'something' }
-            '''),
+            """),
             (
                 'Field "project.entry-points.section" has an invalid type, '
                 'expecting a dictionary of entrypoints (got "something")'
             ),
         ),
         (
-            textwrap.dedent('''
+            textwrap.dedent("""
                 [project]
                 name = 'test'
                 version = '0.1.0'
                 [project.entry-points.section]
                 entrypoint = []
-            '''),
-            ('Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")'),
+            """),
+            (
+                'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")'
+            ),
         ),
-    ]
+    ],
 )
 @pytest.mark.usefixtures('package')
 def test_load(data, error):
@@ -636,7 +680,9 @@ def test_readme_content_type(package, content_type):
 def test_readme_content_type_unknown():
     with cd_package('unknown-readme-type'), pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match=re.escape('Could not infer content type for readme file "README.just-made-this-up-now"'),
+        match=re.escape(
+            'Could not infer content type for readme file "README.just-made-this-up-now"'
+        ),
     ), open('pyproject.toml', 'rb') as f:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
@@ -677,8 +723,7 @@ def test_as_rfc822():
             'dependency5[other-extra]>1.0; os_name == "nt"',
             'test_dependency; extra == "test"',
             'test_dependency[test_extra]; extra == "test"',
-            'test_dependency[test_extra2]>3.0; os_name == "nt" and '
-            'extra == "test"',
+            'test_dependency[test_extra2]>3.0; os_name == "nt" and ' 'extra == "test"',
         ],
         'Description-Content-Type': ['text/markdown'],
     }
@@ -729,14 +774,18 @@ def test_as_rfc822_set_metadata(metadata_version):
     assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
 
+
 def test_as_rfc822_set_metadata_invalid():
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='The metadata_version must be one of') as err:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match='The metadata_version must be one of',
+    ) as err:
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
                 'project': {
                     'name': 'hi',
                     'version': '1.2',
-                    },
+                },
             },
             metadata_version='2.0',
         )
@@ -751,16 +800,22 @@ def test_as_rfc822_invalid_dynamic():
         version=packaging.version.Version('1.0.0'),
     )
     metadata.dynamic = ['name']
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: name'):
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: name'
+    ):
         metadata.as_rfc822()
     metadata.dynamic = ['version']
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: version'):
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: version'
+    ):
         metadata.as_rfc822()
 
 
 def test_as_rfc822_missing_version():
     metadata = pyproject_metadata.StandardMetadata(name='something')
-    with pytest.raises(pyproject_metadata.ConfigurationError, match='Missing version field'):
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError, match='Missing version field'
+    ):
         metadata.as_rfc822()
 
 
@@ -769,15 +824,17 @@ def test_stically_defined_dynamic_field():
         pyproject_metadata.ConfigurationError,
         match='Field "project.version" declared as dynamic in but is defined',
     ):
-        pyproject_metadata.StandardMetadata.from_pyproject({
-            'project': {
-                'name': 'example',
-                'version': '1.2.3',
-                'dynamic': [
-                    'version',
-                ],
-            },
-        })
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                    'dynamic': [
+                        'version',
+                    ],
+                },
+            }
+        )
 
 
 @pytest.mark.parametrize(
@@ -790,23 +847,27 @@ def test_stically_defined_dynamic_field():
     ],
 )
 def test_requires_python(value):
-    pyproject_metadata.StandardMetadata.from_pyproject({
-        'project': {
-            'name': 'example',
-            'version': '0.1.0',
-            'requires-python': value,
-        },
-    })
+    pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'example',
+                'version': '0.1.0',
+                'requires-python': value,
+            },
+        }
+    )
 
 
 def test_version_dynamic():
-    metadata = pyproject_metadata.StandardMetadata.from_pyproject({
-        'project': {
-            'name': 'example',
-            'dynamic': [
-                'version',
-            ],
-        },
-    })
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'example',
+                'dynamic': [
+                    'version',
+                ],
+            },
+        }
+    )
     metadata.version = packaging.version.Version('1.2.3')
     assert 'version' not in metadata.dynamic

@@ -24,10 +24,10 @@ import pyproject_metadata
                 ('Foo', 'Bar'),
                 ('Foo2', 'Bar2'),
             ],
-            '''\
+            """\
             Foo: Bar
             Foo2: Bar2
-            ''',
+            """,
         ),
         # None
         (
@@ -43,11 +43,11 @@ import pyproject_metadata
                 ('ItemB', 'ValueB'),
                 ('ItemC', 'ValueC'),
             ],
-            '''\
+            """\
             ItemA: ValueA
             ItemB: ValueB
             ItemC: ValueC
-            ''',
+            """,
         ),
         (
             [
@@ -55,11 +55,11 @@ import pyproject_metadata
                 ('ItemC', 'ValueC'),
                 ('ItemA', 'ValueA'),
             ],
-            '''\
+            """\
             ItemB: ValueB
             ItemC: ValueC
             ItemA: ValueA
-            ''',
+            """,
         ),
         # multiple keys
         (
@@ -69,12 +69,12 @@ import pyproject_metadata
                 ('ItemC', 'ValueC'),
                 ('ItemA', 'ValueA2'),
             ],
-            '''\
+            """\
             ItemA: ValueA1
             ItemA: ValueA2
             ItemB: ValueB
             ItemC: ValueC
-            ''',
+            """,
         ),
         (
             [
@@ -82,13 +82,13 @@ import pyproject_metadata
                 ('ItemB', 'ValueB1\nValueB2\nValueB3'),
                 ('ItemC', 'ValueC'),
             ],
-            '''\
+            """\
             ItemA: ValueA
             ItemB: ValueB1
                     ValueB2
                     ValueB3
             ItemC: ValueC
-            '''
+            """,
         ),
     ],
 )
@@ -110,7 +110,7 @@ def test_body():
     message['ItemB'] = 'ValueB'
     message['ItemC'] = 'ValueC'
 
-    message.body = textwrap.dedent('''
+    message.body = textwrap.dedent("""
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
         fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
         In porttitor congue luctus. Vivamus eu dignissim orci. Donec egestas mi ac
@@ -123,9 +123,9 @@ def test_body():
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
-    ''')
+    """)
 
-    assert str(message) == textwrap.dedent('''\
+    assert str(message) == textwrap.dedent("""\
         ItemA: ValueA
         ItemB: ValueB
         ItemC: ValueC
@@ -143,7 +143,7 @@ def test_body():
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
-    ''')
+    """)
 
 
 def test_convert_optional_dependencies():
@@ -183,7 +183,7 @@ def test_convert_author_email():
                     {
                         'name': 'Kate Doe, LLC.',
                         'email': 'katedoe@example.com',
-                    }
+                    },
                 ],
             },
         }
