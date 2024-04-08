@@ -5,7 +5,7 @@ Changelog
 0.8.0
 =====
 
-- Support specifying the `metadata_version` to 2.1, 2.2, and 2.3
+- Support specifying the `metadata_version` as 2.1, 2.2, or 2.3
 - Always normalize extras following PEP 685
 - Preserve the user-specified name style in the metadata. ``.canonical_name`` added to get the normalized name
 - Require "version" in the dynamic table if unset (following PEP 621)
