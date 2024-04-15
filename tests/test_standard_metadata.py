@@ -767,7 +767,7 @@ def test_as_rfc822_missing_version():
 def test_stically_defined_dynamic_field():
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field "project.version" declared as dynamic in but is defined',
+        match='Field "project.version" declared as dynamic in "project.dynamic" but is defined',
     ):
         pyproject_metadata.StandardMetadata.from_pyproject({
             'project': {

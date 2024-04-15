@@ -225,7 +225,7 @@ class StandardMetadata:
 
         for field in dynamic:
             if field in data['project']:
-                msg = f'Field "project.{field}" declared as dynamic in but is defined'
+                msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
                 raise ConfigurationError(msg)
 
         name = fetcher.get_str('project.name')
