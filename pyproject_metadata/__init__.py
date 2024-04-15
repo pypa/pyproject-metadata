@@ -9,6 +9,7 @@ import email.utils
 import os
 import os.path
 import pathlib
+import sys
 import typing
 
 
@@ -17,6 +18,11 @@ if typing.TYPE_CHECKING:
     from typing import Any
 
     from packaging.requirements import Requirement
+
+    if sys.version_info < (3, 11):
+        from typing_extensions import Self
+    else:
+        from typing import Self
 
 import packaging.markers
 import packaging.requirements
@@ -204,7 +210,7 @@ class StandardMetadata:
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
-    ) -> StandardMetadata:
+    ) -> Self:
         fetcher = DataFetcher(data)
         project_dir = pathlib.Path(project_dir)
 
