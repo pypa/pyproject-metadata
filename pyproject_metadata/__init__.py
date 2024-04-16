@@ -241,11 +241,10 @@ class StandardMetadata:
             msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
             raise ConfigurationError(msg)
 
-        # Description can't be multiline
+        # Description fills Summary, which cannot be multiline
+        # However, throwing an error isn't backward compatible,
+        # so leave it up to the users for now.
         description = fetcher.get_str('project.description')
-        if description and '\n' in description:
-            msg = 'The description must be a single line'
-            raise ConfigurationError(msg)
 
         if metadata_version and metadata_version not in KNOWN_METADATA_VERSIONS:
             msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
