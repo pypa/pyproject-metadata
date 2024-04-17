@@ -5,7 +5,7 @@ Changelog
 0.8.0
 =====
 
-- Support specifying the `metadata_version` as 2.1, 2.2, or 2.3
+- Support specifying the ``metadata_version`` as 2.1, 2.2, or 2.3
 - Always normalize extras following PEP 685
 - Preserve the user-specified name style in the metadata. ``.canonical_name`` added to get the normalized name
 - Require "version" in the dynamic table if unset (following PEP 621)
@@ -13,10 +13,11 @@ Changelog
 - Support empty extras
 - Using ``.as_rfc822()`` no longer modifies the metadata object
 - Fix email-author listing for names containing commas
-- Validate the description is one line
 - Separate core metadata keywords with commas, following the (modified) spec
 - An error message reported ``project.license`` instead of ``project.readme``
 - Produce slightly cleaner tracebacks
+  Fix a typo in an exception message
+- Subclasses now type check correctly
 - The build backend is now ``flit-core``
 
 
