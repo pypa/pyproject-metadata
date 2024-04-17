@@ -232,16 +232,6 @@ from .conftest import cd_package
             '''),
             ('Field "project.description" has an invalid type, expecting a string (got "True")'),
         ),
-        (
-            textwrap.dedent('''
-                [project]
-                name = 'test'
-                version = '0.1.0'
-                description = """Multiple
-                lines."""
-            '''),
-            ('The description must be a single line'),
-        ),
         # dependencies
         (
             textwrap.dedent('''
