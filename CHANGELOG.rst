@@ -2,8 +2,8 @@
 Changelog
 +++++++++
 
-0.8.0
-=====
+0.8.0 (17-04-2024)
+==================
 
 - Support specifying the ``metadata_version`` as 2.1, 2.2, or 2.3
 - Always normalize extras following PEP 685
