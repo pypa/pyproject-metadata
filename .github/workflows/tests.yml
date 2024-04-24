@@ -25,9 +25,9 @@ jobs:
           - '3.11'
           - '3.12'
         include:
-          - os: macos-latest
+          - os: macos-13
             python: '3.7'
-          - os: macos-latest
+          - os: macos-14
             python: '3.12'
 
     steps:
