@@ -32,10 +32,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up target Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
@@ -50,7 +50,7 @@ jobs:
         shell: python
 
       - name: Set up Python for nox
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.12
 
@@ -63,7 +63,7 @@ jobs:
         run: nox -s test-${{ env.BASE }}
 
       - name: Send coverage report
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
         env:
           PYTHON: ${{ matrix.python }}
         with:
