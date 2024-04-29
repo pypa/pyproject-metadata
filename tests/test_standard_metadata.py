@@ -572,6 +572,18 @@ from .conftest import cd_package
                 'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")'
             ),
         ),
+        # invalid mame
+        (
+            textwrap.dedent("""
+                [project]
+                name = '.test'
+                version = '0.1.0'
+            """),
+            (
+                'Invalid project name ".test". A valid name consists only of ASCII letters and '
+                'numbers, period, underscore and hyphen. It must start and end with a letter or number'
+            ),
+        ),
     ],
 )
 @pytest.mark.usefixtures('package')

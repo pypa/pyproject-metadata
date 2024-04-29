@@ -9,6 +9,7 @@ import email.utils
 import os
 import os.path
 import pathlib
+import re
 import sys
 import typing
 
@@ -195,6 +196,18 @@ class StandardMetadata:
     dynamic: list[str] = dataclasses.field(default_factory=list)
 
     _metadata_version: str | None = None
+
+    def __post_init__(self) -> None:
+        # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
+        # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+        if not re.match(
+            r'^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$', self.name, re.IGNORECASE
+        ):
+            msg = (
+                f'Invalid project name "{self.name}". A valid name consists only of ASCII letters and '
+                'numbers, period, underscore and hyphen. It must start and end with a letter or number'
+            )
+            raise ConfigurationError(msg)
 
     @property
     def metadata_version(self) -> str:
