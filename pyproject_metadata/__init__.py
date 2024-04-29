@@ -37,7 +37,8 @@ KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
 
 class ConfigurationError(Exception):
-    '''Error in the backend metadata.'''
+    """Error in the backend metadata."""
+
     def __init__(self, msg: str, *, key: str | None = None):
         super().__init__(msg)
         self._key = key
@@ -48,10 +49,12 @@ class ConfigurationError(Exception):
 
 
 class RFC822Message:
-    '''Python-flavored RFC 822 message implementation.'''
+    """Python-flavored RFC 822 message implementation."""
 
     def __init__(self) -> None:
-        self.headers: collections.OrderedDict[str, list[str]] = collections.OrderedDict()
+        self.headers: collections.OrderedDict[str, list[str]] = (
+            collections.OrderedDict()
+        )
         self.body: str | None = None
 
     def __setitem__(self, name: str, value: str | None) -> None:
@@ -153,10 +156,7 @@ class DataFetcher:
                     f'dictionaries containing the "name" and/or "email" keys (got "{val}")'
                 )
                 raise ConfigurationError(msg, key=key)
-            return [
-                (entry.get('name', 'Unknown'), entry.get('email'))
-                for entry in val
-            ]
+            return [(entry.get('name', 'Unknown'), entry.get('email')) for entry in val]
         except KeyError:
             return []
 
@@ -181,7 +181,9 @@ class StandardMetadata:
     readme: Readme | None = None
     requires_python: packaging.specifiers.SpecifierSet | None = None
     dependencies: list[Requirement] = dataclasses.field(default_factory=list)
-    optional_dependencies: dict[str, list[Requirement]] = dataclasses.field(default_factory=dict)
+    optional_dependencies: dict[str, list[Requirement]] = dataclasses.field(
+        default_factory=dict
+    )
     entrypoints: dict[str, dict[str, str]] = dataclasses.field(default_factory=dict)
     authors: list[tuple[str, str]] = dataclasses.field(default_factory=list)
     maintainers: list[tuple[str, str]] = dataclasses.field(default_factory=list)
@@ -256,7 +258,9 @@ class StandardMetadata:
             description,
             cls._get_license(fetcher, project_dir),
             cls._get_readme(fetcher, project_dir),
-            packaging.specifiers.SpecifierSet(requires_python_string) if requires_python_string else None,
+            packaging.specifiers.SpecifierSet(requires_python_string)
+            if requires_python_string
+            else None,
             cls._get_dependencies(fetcher),
             cls._get_optional_dependencies(fetcher),
             cls._get_entrypoints(fetcher),
@@ -322,7 +326,9 @@ class StandardMetadata:
             norm_extra = extra.replace('.', '-').replace('_', '-').lower()
             message['Provides-Extra'] = norm_extra
             for requirement in requirements:
-                message['Requires-Dist'] = str(self._build_extra_req(norm_extra, requirement))
+                message['Requires-Dist'] = str(
+                    self._build_extra_req(norm_extra, requirement)
+                )
         if self.readme:
             if self.readme.content_type:
                 message['Description-Content-Type'] = self.readme.content_type
@@ -336,17 +342,11 @@ class StandardMetadata:
                 message['Dynamic'] = field
 
     def _name_list(self, people: list[tuple[str, str]]) -> str:
-        return ', '.join(
-            name
-            for name, email_ in people
-            if not email_
-        )
+        return ', '.join(name for name, email_ in people if not email_)
 
     def _email_list(self, people: list[tuple[str, str]]) -> str:
         return ', '.join(
-            email.utils.formataddr((name, _email))
-            for name, _email in people
-            if _email
+            email.utils.formataddr((name, _email)) for name, _email in people if _email
         )
 
     def _build_extra_req(
@@ -472,7 +472,9 @@ class StandardMetadata:
         return requirements
 
     @staticmethod
-    def _get_optional_dependencies(fetcher: DataFetcher) -> dict[str, list[Requirement]]:
+    def _get_optional_dependencies(
+        fetcher: DataFetcher,
+    ) -> dict[str, list[Requirement]]:
         try:
             val = fetcher.get('project.optional-dependencies')
         except KeyError:
@@ -502,7 +504,9 @@ class StandardMetadata:
                     )
                     raise ConfigurationError(msg)
                 try:
-                    requirements_dict[extra].append(packaging.requirements.Requirement(req))
+                    requirements_dict[extra].append(
+                        packaging.requirements.Requirement(req)
+                    )
                 except packaging.requirements.InvalidRequirement as e:
                     msg = (
                         f'Field "project.optional-dependencies.{extra}" contains '

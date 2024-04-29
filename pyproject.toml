@@ -85,10 +85,13 @@ extend-select = [
   "NPY",         # NumPy specific rules
   "PD",          # pandas-vet
 ]
-isort.known-first-party = ["pyproject-metadata"]
+ignore = ["ISC001"]  # conflicts with formatter
 isort.lines-after-imports = 2
 isort.lines-between-types = 1
 pylint.max-branches = 15
+
+[tool.ruff.format]
+quote-style = "single"
 
 
 [tool.coverage]
