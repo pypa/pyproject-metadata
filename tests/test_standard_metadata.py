@@ -584,6 +584,18 @@ from .conftest import cd_package
                 'numbers, period, underscore and hyphen. It must start and end with a letter or number'
             ),
         ),
+        (
+            textwrap.dedent("""
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                [project.entry-points.bad-name]
+            """),
+            (
+                'Field "project.entry-points" has an invalid value, expecting a name containing only '
+                'alphanumeric, underscore, or dot characters (got "bad-name")'
+            ),
+        ),
     ],
 )
 @pytest.mark.usefixtures('package')

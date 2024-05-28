@@ -542,6 +542,12 @@ class StandardMetadata:
             raise ConfigurationError(msg)
         for section, entrypoints in val.items():
             assert isinstance(section, str)
+            if not re.match(r'^\w+(\.\w+)*$', section):
+                msg = (
+                    'Field "project.entry-points" has an invalid value, expecting a name '
+                    f'containing only alphanumeric, underscore, or dot characters (got "{section}")'
+                )
+                raise ConfigurationError(msg)
             if not isinstance(entrypoints, dict):
                 msg = (
                     f'Field "project.entry-points.{section}" has an invalid type, expecting a '
