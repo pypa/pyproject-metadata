@@ -10,7 +10,7 @@ nox.options.sessions = ['mypy', 'test']
 nox.options.reuse_existing_virtualenvs = True
 
 
-@nox.session(python='3.7')
+@nox.session(python='3.8')
 def mypy(session):
     session.install('.', 'mypy')
 
