@@ -357,7 +357,7 @@ class StandardMetadata:
     def _name_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(name for name, email_ in people if not email_)
 
-    def _email_list(self, people: list[tuple[str, str]]) -> str:
+    def _email_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(
             email.utils.formataddr((name, _email)) for name, _email in people if _email
         )
