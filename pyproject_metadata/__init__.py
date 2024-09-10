@@ -140,7 +140,7 @@ class DataFetcher:
         except KeyError:
             return {}
 
-    def get_people(self, key: str) -> list[tuple[str, str]]:
+    def get_people(self, key: str) -> list[tuple[str, str | None]]:
         try:
             val = self.get(key)
             if not (
@@ -186,8 +186,8 @@ class StandardMetadata:
         default_factory=dict
     )
     entrypoints: dict[str, dict[str, str]] = dataclasses.field(default_factory=dict)
-    authors: list[tuple[str, str]] = dataclasses.field(default_factory=list)
-    maintainers: list[tuple[str, str]] = dataclasses.field(default_factory=list)
+    authors: list[tuple[str, str | None]] = dataclasses.field(default_factory=list)
+    maintainers: list[tuple[str, str | None]] = dataclasses.field(default_factory=list)
     urls: dict[str, str] = dataclasses.field(default_factory=dict)
     classifiers: list[str] = dataclasses.field(default_factory=list)
     keywords: list[str] = dataclasses.field(default_factory=list)
@@ -354,10 +354,10 @@ class StandardMetadata:
                     raise ConfigurationError(msg)
                 message['Dynamic'] = field
 
-    def _name_list(self, people: list[tuple[str, str]]) -> str:
+    def _name_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(name for name, email_ in people if not email_)
 
-    def _email_list(self, people: list[tuple[str, str]]) -> str:
+    def _email_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(
             email.utils.formataddr((name, _email)) for name, _email in people if _email
         )
