@@ -97,9 +97,7 @@ class DataFetcher:
     def __init__(self, data: Mapping[str, Any]) -> None:
         self._data = data
 
-    def __contains__(self, key: Any) -> bool:
-        if not isinstance(key, str):
-            return False
+    def __contains__(self, key: str) -> bool:
         val = self._data
         try:
             for part in key.split('.'):
