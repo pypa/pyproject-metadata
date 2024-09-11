@@ -17,7 +17,7 @@ import warnings
 
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Generator, Iterable, Mapping
     from typing import Any
 
     from packaging.requirements import Requirement
@@ -36,7 +36,8 @@ import packaging.version
 
 __version__ = '0.8.0'
 
-KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
+KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3', '2.4'}
+PRE_SPDX_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
 KNOWN_TOPLEVEL_FIELDS = {'build-system', 'project', 'tool'}
 KNOWN_BUILD_SYSTEM_FIELDS = {'backend-path', 'build-backend', 'requires'}
@@ -50,6 +51,7 @@ KNOWN_PROJECT_FIELDS = {
     'gui-scripts',
     'keywords',
     'license',
+    'license-files',
     'maintainers',
     'name',
     'optional-dependencies',
@@ -176,7 +178,7 @@ class DataFetcher:
         except KeyError:
             return None
 
-    def get_list(self, key: str) -> list[str]:
+    def get_list(self, key: str) -> list[str] | None:
         try:
             val = self.get(key)
             if not isinstance(val, list):
@@ -188,7 +190,7 @@ class DataFetcher:
                     raise ConfigurationError(msg, key=key)
             return val
         except KeyError:
-            return []
+            return None
 
     def get_dict(self, key: str) -> dict[str, str]:
         try:
@@ -227,11 +229,20 @@ class DataFetcher:
 
 
 class ProjectFetcher(DataFetcher):
-    def get_license(self, project_dir: pathlib.Path) -> License | None:
+    def get_license(self, project_dir: pathlib.Path) -> License | str | None:
         if 'project.license' not in self:
             return None
 
-        _license = self.get_dict('project.license')
+        val = self.get('project.license')
+        if isinstance(val, str):
+            return self.get_str('project.license')
+
+        if isinstance(val, dict):
+            _license = self.get_dict('project.license')
+        else:
+            msg = f'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "{val}")'
+            raise ConfigurationError(msg)
+
         for field in _license:
             if field not in ('file', 'text'):
                 msg = f'Unexpected field "project.license.{field}"'
@@ -254,6 +265,13 @@ class ProjectFetcher(DataFetcher):
 
         assert text is not None
         return License(text, file)
+
+    def get_license_files(self, project_dir: pathlib.Path) -> list[pathlib.Path] | None:
+        license_files = self.get_list('project.license-files')
+        if license_files is None:
+            return None
+
+        return list(_get_files_from_globs(project_dir, license_files))
 
     def get_readme(self, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901
         if 'project.readme' not in self:
@@ -309,7 +327,7 @@ class ProjectFetcher(DataFetcher):
         return Readme(text, file, content_type)
 
     def get_dependencies(self) -> list[Requirement]:
-        requirement_strings = self.get_list('project.dependencies')
+        requirement_strings = self.get_list('project.dependencies') or []
 
         requirements: list[Requirement] = []
         for req in requirement_strings:
@@ -418,7 +436,8 @@ class StandardMetadata:
     name: str
     version: packaging.version.Version | None = None
     description: str | None = None
-    license: License | None = None
+    license: License | str | None = None
+    license_files: list[pathlib.Path] | None = None
     readme: Readme | None = None
     requires_python: packaging.specifiers.SpecifierSet | None = None
     dependencies: list[Requirement] = dataclasses.field(default_factory=list)
@@ -440,7 +459,7 @@ class StandardMetadata:
     def __post_init__(self) -> None:
         self.validate()
 
-    def validate(self) -> None:
+    def validate(self, *, warn: bool = True) -> None:
         if (
             self._metadata_version
             and self._metadata_version not in KNOWN_METADATA_VERSIONS
@@ -459,10 +478,52 @@ class StandardMetadata:
             )
             raise ConfigurationError(msg)
 
+        if self.license_files is not None and isinstance(self.license, License):
+            msg = '"project.license-files" must not be used when "project.license" is not a SPDX license expression'
+            raise ConfigurationError(msg)
+
+        if isinstance(self.license, str) and any(
+            c.startswith('License ::') for c in self.classifiers
+        ):
+            msg = 'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers'
+            raise ConfigurationError(msg)
+
+        if warn and self.metadata_version not in PRE_SPDX_METADATA_VERSIONS:
+            if isinstance(self.license, License):
+                warnings.warn(
+                    'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+                    ConfigurationWarning,
+                    stacklevel=2,
+                )
+            elif any(c.startswith('License ::') for c in self.classifiers):
+                warnings.warn(
+                    '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
+                    ConfigurationWarning,
+                    stacklevel=2,
+                )
+
+        if (
+            isinstance(self.license, str)
+            and self._metadata_version in PRE_SPDX_METADATA_VERSIONS
+        ):
+            msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
+            raise ConfigurationError(msg)
+
+        if (
+            self.license_files is not None
+            and self._metadata_version in PRE_SPDX_METADATA_VERSIONS
+        ):
+            msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
+            raise ConfigurationError(msg)
+
     @property
     def metadata_version(self) -> str:
         if self._metadata_version is None:
-            return '2.2' if self.dynamic else '2.1'
+            if isinstance(self.license, str) or self.license_files is not None:
+                return '2.4'
+            if self.dynamic:
+                return '2.2'
+            return '2.1'
         return self._metadata_version
 
     @property
@@ -493,7 +554,7 @@ class StandardMetadata:
         elif not allow_extra_keys:
             validate_project(data)
 
-        dynamic = fetcher.get_list('project.dynamic')
+        dynamic = fetcher.get_list('project.dynamic') or []
         if 'name' in dynamic:
             msg = 'Unsupported field "name" in "project.dynamic"'
             raise ConfigurationError(msg)
@@ -526,6 +587,7 @@ class StandardMetadata:
             version,
             description,
             fetcher.get_license(project_dir),
+            fetcher.get_license_files(project_dir),
             fetcher.get_readme(project_dir),
             packaging.specifiers.SpecifierSet(requires_python_string)
             if requires_python_string
@@ -536,8 +598,8 @@ class StandardMetadata:
             fetcher.get_people('project.authors'),
             fetcher.get_people('project.maintainers'),
             fetcher.get_dict('project.urls'),
-            fetcher.get_list('project.classifiers'),
-            fetcher.get_list('project.keywords'),
+            fetcher.get_list('project.classifiers') or [],
+            fetcher.get_list('project.keywords') or [],
             fetcher.get_dict('project.scripts'),
             fetcher.get_dict('project.gui-scripts'),
             dynamic,
@@ -560,7 +622,7 @@ class StandardMetadata:
         return message
 
     def write_to_rfc822(self, message: email.message.EmailMessage) -> None:  # noqa: C901
-        self.validate()
+        self.validate(warn=False)
 
         smart_message = _SmartMessageSetter(message)
 
@@ -582,8 +644,16 @@ class StandardMetadata:
         smart_message['Author-Email'] = self._email_list(self.authors)
         smart_message['Maintainer'] = self._name_list(self.maintainers)
         smart_message['Maintainer-Email'] = self._email_list(self.maintainers)
-        if self.license:
+
+        if isinstance(self.license, License):
             smart_message['License'] = self.license.text
+        elif isinstance(self.license, str):
+            smart_message['License-Expression'] = self.license
+
+        if self.license_files is not None:
+            for license_file in sorted(set(self.license_files)):
+                smart_message['License-File'] = os.fspath(license_file.as_posix())
+
         for classifier in self.classifiers:
             smart_message['Classifier'] = classifier
         # skip 'Provides-Dist'
@@ -641,3 +711,18 @@ class StandardMetadata:
         else:
             requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
         return requirement
+
+
+def _get_files_from_globs(
+    project_dir: pathlib.Path, globs: Iterable[str]
+) -> Generator[pathlib.Path, None, None]:
+    for glob in globs:
+        if glob.startswith(('..', '/')):
+            msg = f'"{glob}" is an invalid "project.license-files" glob: the pattern must match files within the project directory'
+            raise ConfigurationError(msg)
+        files = [f for f in project_dir.glob(glob) if f.is_file()]
+        if not files:
+            msg = f'Every pattern in "project.license-files" must match at least one file: "{glob}" did not match any'
+            raise ConfigurationError(msg)
+        for f in files:
+            yield f.relative_to(project_dir)
