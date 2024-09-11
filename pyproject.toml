@@ -96,6 +96,7 @@ quote-style = "single"
 
 
 [tool.coverage]
+run.dynamic_context = "test_function"
 html.show_contexts = true
 report.exclude_also = [
     "if typing.TYPE_CHECKING:",
