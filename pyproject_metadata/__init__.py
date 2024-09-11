@@ -198,6 +198,16 @@ class StandardMetadata:
     _metadata_version: str | None = None
 
     def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
+        if (
+            self._metadata_version
+            and self._metadata_version not in KNOWN_METADATA_VERSIONS
+        ):
+            msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
+            raise ConfigurationError(msg)
+
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
         # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
         if not re.match(
@@ -261,10 +271,6 @@ class StandardMetadata:
         # so leave it up to the users for now.
         description = fetcher.get_str('project.description')
 
-        if metadata_version and metadata_version not in KNOWN_METADATA_VERSIONS:
-            msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
-            raise ConfigurationError(msg)
-
         return cls(
             name,
             version,
@@ -304,6 +310,8 @@ class StandardMetadata:
         return message
 
     def write_to_rfc822(self, message: RFC822Message) -> None:  # noqa: C901
+        self.validate()
+
         message['Metadata-Version'] = self.metadata_version
         message['Name'] = self.name
         if not self.version:
