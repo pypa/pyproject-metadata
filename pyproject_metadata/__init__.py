@@ -36,6 +36,18 @@ __version__ = '0.8.0'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
+__all__ = [
+    'ConfigurationError',
+    'RFC822Message',
+    'License',
+    'Readme',
+    'StandardMetadata',
+]
+
+
+def __dir__() -> list[str]:
+    return __all__
+
 
 class ConfigurationError(Exception):
     """Error in the backend metadata."""
@@ -162,6 +174,185 @@ class DataFetcher:
             return []
 
 
+class ProjectFetcher(DataFetcher):
+    def get_license(self, project_dir: pathlib.Path) -> License | None:
+        if 'project.license' not in self:
+            return None
+
+        _license = self.get_dict('project.license')
+        for field in _license:
+            if field not in ('file', 'text'):
+                msg = f'Unexpected field "project.license.{field}"'
+                raise ConfigurationError(msg, key=f'project.license.{field}')
+
+        file: pathlib.Path | None = None
+        filename = self.get_str('project.license.file')
+        text = self.get_str('project.license.text')
+
+        if (filename and text) or (not filename and not text):
+            msg = f'Invalid "project.license" value, expecting either "file" or "text" (got "{_license}")'
+            raise ConfigurationError(msg, key='project.license')
+
+        if filename:
+            file = project_dir.joinpath(filename)
+            if not file.is_file():
+                msg = f'License file not found ("{filename}")'
+                raise ConfigurationError(msg, key='project.license.file')
+            text = file.read_text(encoding='utf-8')
+
+        assert text is not None
+        return License(text, file)
+
+    def get_readme(self, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901
+        if 'project.readme' not in self:
+            return None
+
+        filename: str | None
+        file: pathlib.Path | None = None
+        text: str | None
+        content_type: str | None
+
+        readme = self.get('project.readme')
+        if isinstance(readme, str):
+            # readme is a file
+            text = None
+            filename = readme
+            if filename.endswith('.md'):
+                content_type = 'text/markdown'
+            elif filename.endswith('.rst'):
+                content_type = 'text/x-rst'
+            else:
+                msg = f'Could not infer content type for readme file "{filename}"'
+                raise ConfigurationError(msg, key='project.readme')
+        elif isinstance(readme, dict):
+            # readme is a dict containing either 'file' or 'text', and content-type
+            for field in readme:
+                if field not in ('content-type', 'file', 'text'):
+                    msg = f'Unexpected field "project.readme.{field}"'
+                    raise ConfigurationError(msg, key=f'project.readme.{field}')
+            content_type = self.get_str('project.readme.content-type')
+            filename = self.get_str('project.readme.file')
+            text = self.get_str('project.readme.text')
+            if (filename and text) or (not filename and not text):
+                msg = f'Invalid "project.readme" value, expecting either "file" or "text" (got "{readme}")'
+                raise ConfigurationError(msg, key='project.readme')
+            if not content_type:
+                msg = 'Field "project.readme.content-type" missing'
+                raise ConfigurationError(msg, key='project.readme.content-type')
+        else:
+            msg = (
+                f'Field "project.readme" has an invalid type, expecting either, '
+                f'a string or dictionary of strings (got "{readme}")'
+            )
+            raise ConfigurationError(msg, key='project.readme')
+
+        if filename:
+            file = project_dir.joinpath(filename)
+            if not file.is_file():
+                msg = f'Readme file not found ("{filename}")'
+                raise ConfigurationError(msg, key='project.readme.file')
+            text = file.read_text(encoding='utf-8')
+
+        assert text is not None
+        return Readme(text, file, content_type)
+
+    def get_dependencies(self) -> list[Requirement]:
+        try:
+            requirement_strings = self.get_list('project.dependencies')
+        except KeyError:
+            return []
+
+        requirements: list[Requirement] = []
+        for req in requirement_strings:
+            try:
+                requirements.append(packaging.requirements.Requirement(req))
+            except packaging.requirements.InvalidRequirement as e:
+                msg = (
+                    'Field "project.dependencies" contains an invalid PEP 508 '
+                    f'requirement string "{req}" ("{e}")'
+                )
+                raise ConfigurationError(msg) from None
+        return requirements
+
+    def get_optional_dependencies(
+        self,
+    ) -> dict[str, list[Requirement]]:
+        try:
+            val = self.get('project.optional-dependencies')
+        except KeyError:
+            return {}
+
+        requirements_dict: dict[str, list[Requirement]] = {}
+        if not isinstance(val, dict):
+            msg = (
+                'Field "project.optional-dependencies" has an invalid type, expecting a '
+                f'dictionary of PEP 508 requirement strings (got "{val}")'
+            )
+            raise ConfigurationError(msg)
+        for extra, requirements in val.copy().items():
+            assert isinstance(extra, str)
+            if not isinstance(requirements, list):
+                msg = (
+                    f'Field "project.optional-dependencies.{extra}" has an invalid type, expecting a '
+                    f'dictionary PEP 508 requirement strings (got "{requirements}")'
+                )
+                raise ConfigurationError(msg)
+            requirements_dict[extra] = []
+            for req in requirements:
+                if not isinstance(req, str):
+                    msg = (
+                        f'Field "project.optional-dependencies.{extra}" has an invalid type, '
+                        f'expecting a PEP 508 requirement string (got "{req}")'
+                    )
+                    raise ConfigurationError(msg)
+                try:
+                    requirements_dict[extra].append(
+                        packaging.requirements.Requirement(req)
+                    )
+                except packaging.requirements.InvalidRequirement as e:
+                    msg = (
+                        f'Field "project.optional-dependencies.{extra}" contains '
+                        f'an invalid PEP 508 requirement string "{req}" ("{e}")'
+                    )
+                    raise ConfigurationError(msg) from None
+        return dict(requirements_dict)
+
+    def get_entrypoints(self) -> dict[str, dict[str, str]]:
+        try:
+            val = self.get('project.entry-points')
+        except KeyError:
+            return {}
+        if not isinstance(val, dict):
+            msg = (
+                'Field "project.entry-points" has an invalid type, expecting a '
+                f'dictionary of entrypoint sections (got "{val}")'
+            )
+            raise ConfigurationError(msg)
+        for section, entrypoints in val.items():
+            assert isinstance(section, str)
+            if not re.match(r'^\w+(\.\w+)*$', section):
+                msg = (
+                    'Field "project.entry-points" has an invalid value, expecting a name '
+                    f'containing only alphanumeric, underscore, or dot characters (got "{section}")'
+                )
+                raise ConfigurationError(msg)
+            if not isinstance(entrypoints, dict):
+                msg = (
+                    f'Field "project.entry-points.{section}" has an invalid type, expecting a '
+                    f'dictionary of entrypoints (got "{entrypoints}")'
+                )
+                raise ConfigurationError(msg)
+            for name, entrypoint in entrypoints.items():
+                assert isinstance(name, str)
+                if not isinstance(entrypoint, str):
+                    msg = (
+                        f'Field "project.entry-points.{section}.{name}" has an invalid type, '
+                        f'expecting a string (got "{entrypoint}")'
+                    )
+                    raise ConfigurationError(msg)
+        return val
+
+
 class License(typing.NamedTuple):
     text: str
     file: pathlib.Path | None
@@ -226,7 +417,7 @@ class StandardMetadata:
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
     ) -> Self:
-        fetcher = DataFetcher(data)
+        fetcher = ProjectFetcher(data)
         project_dir = pathlib.Path(project_dir)
 
         if 'project' not in fetcher:
@@ -269,14 +460,14 @@ class StandardMetadata:
             name,
             version,
             description,
-            cls._get_license(fetcher, project_dir),
-            cls._get_readme(fetcher, project_dir),
+            fetcher.get_license(project_dir),
+            fetcher.get_readme(project_dir),
             packaging.specifiers.SpecifierSet(requires_python_string)
             if requires_python_string
             else None,
-            cls._get_dependencies(fetcher),
-            cls._get_optional_dependencies(fetcher),
-            cls._get_entrypoints(fetcher),
+            fetcher.get_dependencies(),
+            fetcher.get_optional_dependencies(),
+            fetcher.get_entrypoints(),
             fetcher.get_people('project.authors'),
             fetcher.get_people('project.maintainers'),
             fetcher.get_dict('project.urls'),
@@ -381,185 +572,3 @@ class StandardMetadata:
         else:
             requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
         return requirement
-
-    @staticmethod
-    def _get_license(fetcher: DataFetcher, project_dir: pathlib.Path) -> License | None:
-        if 'project.license' not in fetcher:
-            return None
-
-        _license = fetcher.get_dict('project.license')
-        for field in _license:
-            if field not in ('file', 'text'):
-                msg = f'Unexpected field "project.license.{field}"'
-                raise ConfigurationError(msg, key=f'project.license.{field}')
-
-        file: pathlib.Path | None = None
-        filename = fetcher.get_str('project.license.file')
-        text = fetcher.get_str('project.license.text')
-
-        if (filename and text) or (not filename and not text):
-            msg = f'Invalid "project.license" value, expecting either "file" or "text" (got "{_license}")'
-            raise ConfigurationError(msg, key='project.license')
-
-        if filename:
-            file = project_dir.joinpath(filename)
-            if not file.is_file():
-                msg = f'License file not found ("{filename}")'
-                raise ConfigurationError(msg, key='project.license.file')
-            text = file.read_text(encoding='utf-8')
-
-        assert text is not None
-        return License(text, file)
-
-    @staticmethod
-    def _get_readme(fetcher: DataFetcher, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901
-        if 'project.readme' not in fetcher:
-            return None
-
-        filename: str | None
-        file: pathlib.Path | None = None
-        text: str | None
-        content_type: str | None
-
-        readme = fetcher.get('project.readme')
-        if isinstance(readme, str):
-            # readme is a file
-            text = None
-            filename = readme
-            if filename.endswith('.md'):
-                content_type = 'text/markdown'
-            elif filename.endswith('.rst'):
-                content_type = 'text/x-rst'
-            else:
-                msg = f'Could not infer content type for readme file "{filename}"'
-                raise ConfigurationError(msg, key='project.readme')
-        elif isinstance(readme, dict):
-            # readme is a dict containing either 'file' or 'text', and content-type
-            for field in readme:
-                if field not in ('content-type', 'file', 'text'):
-                    msg = f'Unexpected field "project.readme.{field}"'
-                    raise ConfigurationError(msg, key=f'project.readme.{field}')
-            content_type = fetcher.get_str('project.readme.content-type')
-            filename = fetcher.get_str('project.readme.file')
-            text = fetcher.get_str('project.readme.text')
-            if (filename and text) or (not filename and not text):
-                msg = f'Invalid "project.readme" value, expecting either "file" or "text" (got "{readme}")'
-                raise ConfigurationError(msg, key='project.readme')
-            if not content_type:
-                msg = 'Field "project.readme.content-type" missing'
-                raise ConfigurationError(msg, key='project.readme.content-type')
-        else:
-            msg = (
-                f'Field "project.readme" has an invalid type, expecting either, '
-                f'a string or dictionary of strings (got "{readme}")'
-            )
-            raise ConfigurationError(msg, key='project.readme')
-
-        if filename:
-            file = project_dir.joinpath(filename)
-            if not file.is_file():
-                msg = f'Readme file not found ("{filename}")'
-                raise ConfigurationError(msg, key='project.readme.file')
-            text = file.read_text(encoding='utf-8')
-
-        assert text is not None
-        return Readme(text, file, content_type)
-
-    @staticmethod
-    def _get_dependencies(fetcher: DataFetcher) -> list[Requirement]:
-        try:
-            requirement_strings = fetcher.get_list('project.dependencies')
-        except KeyError:
-            return []
-
-        requirements: list[Requirement] = []
-        for req in requirement_strings:
-            try:
-                requirements.append(packaging.requirements.Requirement(req))
-            except packaging.requirements.InvalidRequirement as e:
-                msg = (
-                    'Field "project.dependencies" contains an invalid PEP 508 '
-                    f'requirement string "{req}" ("{e}")'
-                )
-                raise ConfigurationError(msg) from None
-        return requirements
-
-    @staticmethod
-    def _get_optional_dependencies(
-        fetcher: DataFetcher,
-    ) -> dict[str, list[Requirement]]:
-        try:
-            val = fetcher.get('project.optional-dependencies')
-        except KeyError:
-            return {}
-
-        requirements_dict: dict[str, list[Requirement]] = {}
-        if not isinstance(val, dict):
-            msg = (
-                'Field "project.optional-dependencies" has an invalid type, expecting a '
-                f'dictionary of PEP 508 requirement strings (got "{val}")'
-            )
-            raise ConfigurationError(msg)
-        for extra, requirements in val.copy().items():
-            assert isinstance(extra, str)
-            if not isinstance(requirements, list):
-                msg = (
-                    f'Field "project.optional-dependencies.{extra}" has an invalid type, expecting a '
-                    f'dictionary PEP 508 requirement strings (got "{requirements}")'
-                )
-                raise ConfigurationError(msg)
-            requirements_dict[extra] = []
-            for req in requirements:
-                if not isinstance(req, str):
-                    msg = (
-                        f'Field "project.optional-dependencies.{extra}" has an invalid type, '
-                        f'expecting a PEP 508 requirement string (got "{req}")'
-                    )
-                    raise ConfigurationError(msg)
-                try:
-                    requirements_dict[extra].append(
-                        packaging.requirements.Requirement(req)
-                    )
-                except packaging.requirements.InvalidRequirement as e:
-                    msg = (
-                        f'Field "project.optional-dependencies.{extra}" contains '
-                        f'an invalid PEP 508 requirement string "{req}" ("{e}")'
-                    )
-                    raise ConfigurationError(msg) from None
-        return dict(requirements_dict)
-
-    @staticmethod
-    def _get_entrypoints(fetcher: DataFetcher) -> dict[str, dict[str, str]]:
-        try:
-            val = fetcher.get('project.entry-points')
-        except KeyError:
-            return {}
-        if not isinstance(val, dict):
-            msg = (
-                'Field "project.entry-points" has an invalid type, expecting a '
-                f'dictionary of entrypoint sections (got "{val}")'
-            )
-            raise ConfigurationError(msg)
-        for section, entrypoints in val.items():
-            assert isinstance(section, str)
-            if not re.match(r'^\w+(\.\w+)*$', section):
-                msg = (
-                    'Field "project.entry-points" has an invalid value, expecting a name '
-                    f'containing only alphanumeric, underscore, or dot characters (got "{section}")'
-                )
-                raise ConfigurationError(msg)
-            if not isinstance(entrypoints, dict):
-                msg = (
-                    f'Field "project.entry-points.{section}" has an invalid type, expecting a '
-                    f'dictionary of entrypoints (got "{entrypoints}")'
-                )
-                raise ConfigurationError(msg)
-            for name, entrypoint in entrypoints.items():
-                assert isinstance(name, str)
-                if not isinstance(entrypoint, str):
-                    msg = (
-                        f'Field "project.entry-points.{section}.{name}" has an invalid type, '
-                        f'expecting a string (got "{entrypoint}")'
-                    )
-                    raise ConfigurationError(msg)
-        return val
