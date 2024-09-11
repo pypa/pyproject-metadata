@@ -255,10 +255,7 @@ class ProjectFetcher(DataFetcher):
         return Readme(text, file, content_type)
 
     def get_dependencies(self) -> list[Requirement]:
-        try:
-            requirement_strings = self.get_list('project.dependencies')
-        except KeyError:
-            return []
+        requirement_strings = self.get_list('project.dependencies')
 
         requirements: list[Requirement] = []
         for req in requirement_strings:
