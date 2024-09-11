@@ -2,6 +2,7 @@
 
 import pathlib
 import re
+import sys
 import textwrap
 
 import packaging.specifiers
@@ -9,14 +10,15 @@ import packaging.version
 import pytest
 
 
-try:
-    import tomllib
-except ImportError:
+if sys.version_info < (3, 11):
     import tomli as tomllib
+else:
+    import tomllib
 
 import pyproject_metadata
 
-from .conftest import cd_package
+
+DIR = pathlib.Path(__file__).parent.resolve()
 
 
 @pytest.mark.parametrize(
@@ -598,15 +600,15 @@ from .conftest import cd_package
         ),
     ],
 )
-@pytest.mark.usefixtures('package')
-def test_load(data, error):
+def test_load(data: str, error: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
     with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.loads(data))
 
 
 @pytest.mark.parametrize('after_rfc', [False, True])
-@pytest.mark.usefixtures('package')
-def test_value(after_rfc):
+def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
@@ -618,8 +620,10 @@ def test_value(after_rfc):
     assert metadata.canonical_name == 'full-metadata'
     assert metadata.version == packaging.version.Version('3.2.1')
     assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
+    assert isinstance(metadata.license, pyproject_metadata.License)
     assert metadata.license.file is None
     assert metadata.license.text == 'some license text'
+    assert isinstance(metadata.readme, pyproject_metadata.Readme)
     assert metadata.readme.file == pathlib.Path('README.md')
     assert metadata.readme.text == pathlib.Path('README.md').read_text(encoding='utf-8')
     assert metadata.readme.content_type == 'text/markdown'
@@ -668,11 +672,12 @@ def test_value(after_rfc):
     ]
 
 
-@pytest.mark.usefixtures('package2')
-def test_read_license():
+def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata2')
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
+    assert isinstance(metadata.license, pyproject_metadata.License)
     assert metadata.license.file == pathlib.Path('LICENSE')
     assert metadata.license.text == 'Some license! 👋\n'
 
@@ -684,15 +689,20 @@ def test_read_license():
         ('full-metadata2', 'text/x-rst'),
     ],
 )
-def test_readme_content_type(package, content_type):
-    with cd_package(package), open('pyproject.toml', 'rb') as f:
+def test_readme_content_type(
+    package: str, content_type: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(DIR / 'packages' / package)
+    with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
+    assert isinstance(metadata.readme, pyproject_metadata.Readme)
     assert metadata.readme.content_type == content_type
 
 
-def test_readme_content_type_unknown():
-    with cd_package('unknown-readme-type'), pytest.raises(
+def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/unknown-readme-type')
+    with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match=re.escape(
             'Could not infer content type for readme file "README.just-made-this-up-now"'
@@ -701,8 +711,9 @@ def test_readme_content_type_unknown():
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
-@pytest.mark.usefixtures('package')
-def test_as_rfc822():
+def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
+
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
@@ -744,8 +755,9 @@ def test_as_rfc822():
     assert core_metadata.body == 'some readme 👋\n'
 
 
-@pytest.mark.usefixtures('package_dynamic_description')
-def test_as_rfc822_dynamic():
+def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/dynamic-description')
+
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
@@ -758,7 +770,7 @@ def test_as_rfc822_dynamic():
 
 
 @pytest.mark.parametrize('metadata_version', ['2.1', '2.2', '2.3'])
-def test_as_rfc822_set_metadata(metadata_version):
+def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {
@@ -789,7 +801,7 @@ def test_as_rfc822_set_metadata(metadata_version):
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
 
 
-def test_as_rfc822_set_metadata_invalid():
+def test_as_rfc822_set_metadata_invalid() -> None:
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match='The metadata_version must be one of',
@@ -808,7 +820,7 @@ def test_as_rfc822_set_metadata_invalid():
     assert '2.3' in str(err.value)
 
 
-def test_as_rfc822_invalid_dynamic():
+def test_as_rfc822_invalid_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
@@ -825,7 +837,7 @@ def test_as_rfc822_invalid_dynamic():
         metadata.as_rfc822()
 
 
-def test_as_rfc822_missing_version():
+def test_as_rfc822_missing_version() -> None:
     metadata = pyproject_metadata.StandardMetadata(name='something')
     with pytest.raises(
         pyproject_metadata.ConfigurationError, match='Missing version field'
@@ -833,7 +845,7 @@ def test_as_rfc822_missing_version():
         metadata.as_rfc822()
 
 
-def test_stically_defined_dynamic_field():
+def test_stically_defined_dynamic_field() -> None:
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match='Field "project.version" declared as dynamic in "project.dynamic" but is defined',
@@ -860,7 +872,7 @@ def test_stically_defined_dynamic_field():
         '~=3.10,!=3.10.3',
     ],
 )
-def test_requires_python(value):
+def test_requires_python(value: str) -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {
@@ -872,7 +884,7 @@ def test_requires_python(value):
     )
 
 
-def test_version_dynamic():
+def test_version_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {

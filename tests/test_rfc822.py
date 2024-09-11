@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import textwrap
 
 import pytest
@@ -92,7 +94,7 @@ import pyproject_metadata
         ),
     ],
 )
-def test_headers(items, data):
+def test_headers(items: list[tuple[str, str]], data: str) -> None:
     message = pyproject_metadata.RFC822Message()
 
     for name, value in items:
@@ -103,7 +105,7 @@ def test_headers(items, data):
     assert bytes(message) == data.encode()
 
 
-def test_body():
+def test_body() -> None:
     message = pyproject_metadata.RFC822Message()
 
     message['ItemA'] = 'ValueA'
@@ -146,7 +148,7 @@ def test_body():
     """)
 
 
-def test_convert_optional_dependencies():
+def test_convert_optional_dependencies() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {
@@ -169,7 +171,7 @@ def test_convert_optional_dependencies():
     ]
 
 
-def test_convert_author_email():
+def test_convert_author_email() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {
