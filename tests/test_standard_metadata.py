@@ -572,7 +572,7 @@ from .conftest import cd_package
                 'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")'
             ),
         ),
-        # invalid mame
+        # invalid name
         (
             textwrap.dedent("""
                 [project]
