@@ -96,9 +96,10 @@ import pyproject_metadata
 )
 def test_headers(items: list[tuple[str, str]], data: str) -> None:
     message = pyproject_metadata.RFC822Message()
+    smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
-        message[name] = value
+        smart_message[name] = value
 
     data = textwrap.dedent(data) + '\n'
     assert str(message) == data
