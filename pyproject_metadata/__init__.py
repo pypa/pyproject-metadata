@@ -116,25 +116,34 @@ class ConfigurationWarning(UserWarning):
 class RFC822Message:
     """Python-flavored RFC 822 message implementation."""
 
-    __slots__ = ('headers', '_body')
+    __slots__ = ('_headers', '_body')
 
     def __init__(self) -> None:
-        self.headers: dict[str, list[str]] = {}
+        self._headers: list[tuple[str, str]] = []
         self._body: str | None = None
+
+    def items(self) -> list[tuple[str, str]]:
+        return self._headers.copy()
+
+    @property
+    def headers(self) -> dict[str, list[str]]:
+        d: dict[str, list[str]] = {}
+        for k, v in self.items():
+            d.setdefault(k, []).append(v)
+        return d
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
             return
-        self.headers.setdefault(name, []).append(value)
+        self._headers.append((name, value))
 
     def __str__(self) -> str:
         text = ''
-        for name, entries in self.headers.items():
-            for entry in entries:
-                lines = entry.strip('\n').split('\n')
-                text += f'{name}: {lines[0]}\n'
-                for line in lines[1:]:
-                    text += ' ' * 8 + line + '\n'
+        for name, entry in self.items():
+            lines = entry.strip('\n').split('\n')
+            text += f'{name}: {lines[0]}\n'
+            for line in lines[1:]:
+                text += ' ' * 8 + line + '\n'
         text += '\n'
         if self._body:
             text += self._body

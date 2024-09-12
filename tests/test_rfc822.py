@@ -73,9 +73,9 @@ import pyproject_metadata
             ],
             """\
             ItemA: ValueA1
-            ItemA: ValueA2
             ItemB: ValueB
             ItemC: ValueC
+            ItemA: ValueA2
             """,
         ),
         (
