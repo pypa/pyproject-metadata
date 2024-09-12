@@ -166,7 +166,7 @@ def test_convert_optional_dependencies() -> None:
         }
     )
     message = metadata.as_rfc822()
-    requires = message.headers['Requires-Dist']
+    requires = message.get_all('Requires-Dist')
     assert requires == [
         'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
         'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
@@ -193,6 +193,6 @@ def test_convert_author_email() -> None:
         }
     )
     message = metadata.as_rfc822()
-    assert message.headers['Author-Email'] == [
+    assert message.get_all('Author-Email') == [
         '"John Doe, Inc." <johndoe@example.com>, "Kate Doe, LLC." <katedoe@example.com>'
     ]

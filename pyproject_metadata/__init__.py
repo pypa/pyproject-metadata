@@ -125,12 +125,8 @@ class RFC822Message:
     def items(self) -> list[tuple[str, str]]:
         return self._headers.copy()
 
-    @property
-    def headers(self) -> dict[str, list[str]]:
-        d: dict[str, list[str]] = {}
-        for k, v in self.items():
-            d.setdefault(k, []).append(v)
-        return d
+    def get_all(self, name: str) -> None | list[str]:
+        return [v for k, v in self.items() if k == name]
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:

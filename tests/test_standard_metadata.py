@@ -713,41 +713,38 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
-    assert core_metadata.headers == {
-        'Metadata-Version': ['2.1'],
-        'Name': ['full_metadata'],
-        'Summary': ['A package with all the metadata :)'],
-        'Version': ['3.2.1'],
-        'Keywords': ['trampolim,is,interesting'],
-        'Home-page': ['example.com'],
-        'Author': ['Example!'],
-        'Author-Email': ['Unknown <example@example.com>'],
-        'Maintainer-Email': ['Other Example <other@example.com>'],
-        'License': ['some license text'],
-        'Classifier': [
-            'Development Status :: 4 - Beta',
-            'Programming Language :: Python',
-        ],
-        'Project-URL': [
-            'Homepage, example.com',
-            'Documentation, readthedocs.org',
-            'Repository, github.com/some/repo',
-            'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst',
-        ],
-        'Requires-Python': ['>=3.8'],
-        'Provides-Extra': ['test'],
-        'Requires-Dist': [
-            'dependency1',
-            'dependency2>1.0.0',
-            'dependency3[extra]',
-            'dependency4; os_name != "nt"',
-            'dependency5[other-extra]>1.0; os_name == "nt"',
-            'test_dependency; extra == "test"',
-            'test_dependency[test_extra]; extra == "test"',
+    assert core_metadata.items() == [
+        ('Metadata-Version', '2.1'),
+        ('Name', 'full_metadata'),
+        ('Version', '3.2.1'),
+        ('Summary', 'A package with all the metadata :)'),
+        ('Keywords', 'trampolim,is,interesting'),
+        ('Home-page', 'example.com'),
+        ('Author', 'Example!'),
+        ('Author-Email', 'Unknown <example@example.com>'),
+        ('Maintainer-Email', 'Other Example <other@example.com>'),
+        ('License', 'some license text'),
+        ('Classifier', 'Development Status :: 4 - Beta'),
+        ('Classifier', 'Programming Language :: Python'),
+        ('Project-URL', 'Homepage, example.com'),
+        ('Project-URL', 'Documentation, readthedocs.org'),
+        ('Project-URL', 'Repository, github.com/some/repo'),
+        ('Project-URL', 'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst'),
+        ('Requires-Python', '>=3.8'),
+        ('Requires-Dist', 'dependency1'),
+        ('Requires-Dist', 'dependency2>1.0.0'),
+        ('Requires-Dist', 'dependency3[extra]'),
+        ('Requires-Dist', 'dependency4; os_name != "nt"'),
+        ('Requires-Dist', 'dependency5[other-extra]>1.0; os_name == "nt"'),
+        ('Provides-Extra', 'test'),
+        ('Requires-Dist', 'test_dependency; extra == "test"'),
+        ('Requires-Dist', 'test_dependency[test_extra]; extra == "test"'),
+        (
+            'Requires-Dist',
             'test_dependency[test_extra2]>3.0; os_name == "nt" and extra == "test"',
-        ],
-        'Description-Content-Type': ['text/markdown'],
-    }
+        ),
+        ('Description-Content-Type', 'text/markdown'),
+    ]
     assert core_metadata.get_payload() == 'some readme 👋\n'
 
 
@@ -757,12 +754,12 @@ def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
-    assert dict(core_metadata.headers) == {
-        'Metadata-Version': ['2.2'],
-        'Name': ['dynamic-description'],
-        'Version': ['1.0.0'],
-        'Dynamic': ['description'],
-    }
+    assert core_metadata.items() == [
+        ('Metadata-Version', '2.2'),
+        ('Name', 'dynamic-description'),
+        ('Version', '1.0.0'),
+        ('Dynamic', 'description'),
+    ]
 
 
 @pytest.mark.parametrize('metadata_version', ['2.1', '2.2', '2.3'])
