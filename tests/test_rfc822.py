@@ -112,7 +112,8 @@ def test_body() -> None:
     message['ItemB'] = 'ValueB'
     message['ItemC'] = 'ValueC'
 
-    message.body = textwrap.dedent("""
+    message.set_payload(
+        textwrap.dedent("""
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
         fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
         In porttitor congue luctus. Vivamus eu dignissim orci. Donec egestas mi ac
@@ -126,6 +127,7 @@ def test_body() -> None:
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
     """)
+    )
 
     assert str(message) == textwrap.dedent("""\
         ItemA: ValueA

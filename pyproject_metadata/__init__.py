@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import collections
 import copy
 import dataclasses
 import email.utils
@@ -117,18 +116,16 @@ class ConfigurationWarning(UserWarning):
 class RFC822Message:
     """Python-flavored RFC 822 message implementation."""
 
+    __slots__ = ('headers', '_body')
+
     def __init__(self) -> None:
-        self.headers: collections.OrderedDict[str, list[str]] = (
-            collections.OrderedDict()
-        )
-        self.body: str | None = None
+        self.headers: dict[str, list[str]] = {}
+        self._body: str | None = None
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
             return
-        if name not in self.headers:
-            self.headers[name] = []
-        self.headers[name].append(value)
+        self.headers.setdefault(name, []).append(value)
 
     def __str__(self) -> str:
         text = ''
@@ -139,12 +136,18 @@ class RFC822Message:
                 for line in lines[1:]:
                     text += ' ' * 8 + line + '\n'
         text += '\n'
-        if self.body:
-            text += self.body
+        if self._body:
+            text += self._body
         return text
 
     def __bytes__(self) -> bytes:
         return str(self).encode()
+
+    def get_payload(self) -> str | None:
+        return self._body
+
+    def set_payload(self, body: str) -> None:
+        self._body = body
 
 
 class DataFetcher:
@@ -603,7 +606,7 @@ class StandardMetadata:
         if self.readme:
             if self.readme.content_type:
                 message['Description-Content-Type'] = self.readme.content_type
-            message.body = self.readme.text
+            message.set_payload(self.readme.text)
         # Core Metadata 2.2
         if self.metadata_version != '2.1':
             for field in self.dynamic:

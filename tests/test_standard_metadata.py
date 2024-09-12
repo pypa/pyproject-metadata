@@ -748,7 +748,7 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ],
         'Description-Content-Type': ['text/markdown'],
     }
-    assert core_metadata.body == 'some readme 👋\n'
+    assert core_metadata.get_payload() == 'some readme 👋\n'
 
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
