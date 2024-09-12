@@ -25,6 +25,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
     permissions:
       id-token: write
+      attestations: write
 
     steps:
       - name: Download packages built by build-and-inspect-python-package
@@ -32,6 +33,11 @@ jobs:
         with:
           name: Packages
           path: dist
+
+      - name: Generate artifact attestation for sdist and wheel
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-path: "dist/pyproject*"
 
       - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
