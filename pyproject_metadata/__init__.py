@@ -36,17 +36,64 @@ __version__ = '0.8.0'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
+KNOWN_TOPLEVEL_FIELDS = {'build-system', 'project', 'tool'}
+KNOWN_BUILD_SYSTEM_FIELDS = {'backend-path', 'build-backend', 'requires'}
+KNOWN_PROJECT_FIELDS = {
+    'authors',
+    'classifiers',
+    'dependencies',
+    'description',
+    'dynamic',
+    'entry-points',
+    'gui-scripts',
+    'keywords',
+    'license',
+    'maintainers',
+    'name',
+    'optional-dependencies',
+    'readme',
+    'requires-python',
+    'scripts',
+    'urls',
+    'version',
+}
+
+
 __all__ = [
     'ConfigurationError',
     'RFC822Message',
     'License',
     'Readme',
     'StandardMetadata',
+    'validate_top_level',
+    'validate_build_system',
+    'validate_project',
 ]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def validate_top_level(pyproject: Mapping[str, Any]) -> None:
+    extra_keys = set(pyproject) - KNOWN_TOPLEVEL_FIELDS
+    if extra_keys:
+        msg = f'Extra keys present in pyproject.toml: {extra_keys}'
+        raise ConfigurationError(msg)
+
+
+def validate_build_system(pyproject: Mapping[str, Any]) -> None:
+    extra_keys = set(pyproject.get('build-system', [])) - KNOWN_BUILD_SYSTEM_FIELDS
+    if extra_keys:
+        msg = f'Extra keys present in "build-system": {extra_keys}'
+        raise ConfigurationError(msg)
+
+
+def validate_project(pyproject: Mapping[str, Any]) -> None:
+    extra_keys = set(pyproject.get('project', [])) - KNOWN_PROJECT_FIELDS
+    if extra_keys:
+        msg = f'Extra keys present in "project": {extra_keys}'
+        raise ConfigurationError(msg)
 
 
 class ConfigurationError(Exception):
@@ -421,6 +468,8 @@ class StandardMetadata:
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
+        *,
+        allow_extra_keys: bool = True,
     ) -> Self:
         fetcher = ProjectFetcher(data)
         project_dir = pathlib.Path(project_dir)
@@ -428,6 +477,9 @@ class StandardMetadata:
         if 'project' not in fetcher:
             msg = 'Section "project" missing in pyproject.toml'
             raise ConfigurationError(msg)
+
+        if not allow_extra_keys:
+            validate_project(data)
 
         dynamic = fetcher.get_list('project.dynamic')
         if 'name' in dynamic:

@@ -26,7 +26,7 @@ you can use it as a library in your scripts and programs:
 from pyproject_metadata import StandardMetadata
 
 parsed_pyproject = { ... }  # you can use parsers like `tomli` to obtain this dict
-metadata = StandardMetadata.from_pyproject(parsed_pyproject)
+metadata = StandardMetadata.from_pyproject(parsed_pyproject, allow_extra_keys = False)
 print(metadata.entrypoints)  # same fields as defined in PEP 621
 
 pkg_info = metadata.as_rfc822()
