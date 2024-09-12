@@ -31,6 +31,7 @@ def test(session: nox.Session) -> None:
         '--cov',
         f'--cov-report=html:{htmlcov_output}',
         f'--cov-report=xml:{xmlcov_output}',
+        '--cov-report=term-missing',
         'tests/',
         *session.posargs,
     )
