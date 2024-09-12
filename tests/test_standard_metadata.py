@@ -781,7 +781,7 @@ def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     )
     assert metadata.metadata_version == metadata_version
 
-    rfc822 = str(metadata.as_rfc822())
+    rfc822 = bytes(metadata.as_rfc822()).decode('utf-8')
 
     assert f'Metadata-Version: {metadata_version}' in rfc822
 
