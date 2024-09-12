@@ -85,8 +85,9 @@ class RFC822Message:
                 text += f'{name}: {lines[0]}\n'
                 for line in lines[1:]:
                     text += ' ' * 8 + line + '\n'
+        text += '\n'
         if self.body:
-            text += '\n' + self.body
+            text += self.body
         return text
 
     def __bytes__(self) -> bytes:
