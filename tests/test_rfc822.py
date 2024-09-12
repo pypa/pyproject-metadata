@@ -100,7 +100,7 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
     for name, value in items:
         message[name] = value
 
-    data = textwrap.dedent(data)
+    data = textwrap.dedent(data) + "\n"
     assert str(message) == data
     assert bytes(message) == data.encode()
 
