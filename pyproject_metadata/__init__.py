@@ -12,6 +12,7 @@ import pathlib
 import re
 import sys
 import typing
+import warnings
 
 
 if typing.TYPE_CHECKING:
@@ -61,6 +62,7 @@ KNOWN_PROJECT_FIELDS = {
 
 __all__ = [
     'ConfigurationError',
+    'ConfigurationWarning',
     'RFC822Message',
     'License',
     'Readme',
@@ -106,6 +108,10 @@ class ConfigurationError(Exception):
     @property
     def key(self) -> str | None:  # pragma: no cover
         return self._key
+
+
+class ConfigurationWarning(UserWarning):
+    """Warnings about backend metadata."""
 
 
 class RFC822Message:
@@ -469,7 +475,7 @@ class StandardMetadata:
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
         *,
-        allow_extra_keys: bool = True,
+        allow_extra_keys: bool | None = None,
     ) -> Self:
         fetcher = ProjectFetcher(data)
         project_dir = pathlib.Path(project_dir)
@@ -478,7 +484,12 @@ class StandardMetadata:
             msg = 'Section "project" missing in pyproject.toml'
             raise ConfigurationError(msg)
 
-        if not allow_extra_keys:
+        if allow_extra_keys is None:
+            try:
+                validate_project(data)
+            except ConfigurationError as err:
+                warnings.warn(str(err), ConfigurationWarning, stacklevel=2)
+        elif not allow_extra_keys:
             validate_project(data)
 
         dynamic = fetcher.get_list('project.dynamic')

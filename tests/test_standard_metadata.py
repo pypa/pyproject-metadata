@@ -895,6 +895,22 @@ def test_version_dynamic() -> None:
     assert 'version' not in metadata.dynamic
 
 
+def test_missing_keys_warns() -> None:
+    with pytest.warns(
+        pyproject_metadata.ConfigurationWarning,
+        match=re.escape("""Extra keys present in "project": {'not-real-key'}"""),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                    'not-real-key': True,
+                },
+            }
+        )
+
+
 def test_missing_keys_okay() -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
