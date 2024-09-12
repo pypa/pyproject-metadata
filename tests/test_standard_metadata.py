@@ -46,6 +46,14 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
+                not-real-key = true
+            """,
+            'Extra keys present in "project": {\'not-real-key\'}',
+            id='Invalid project key',
+        ),
+        pytest.param(
+            """
+                [project]
                 name = true
                 version = '0.1.0'
                 dynamic = [
@@ -589,7 +597,8 @@ def test_load(data: str, error: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / 'packages/full-metadata')
     with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
         pyproject_metadata.StandardMetadata.from_pyproject(
-            tomllib.loads(textwrap.dedent(data))
+            tomllib.loads(textwrap.dedent(data)),
+            allow_extra_keys=False,
         )
 
 
@@ -884,3 +893,70 @@ def test_version_dynamic() -> None:
     )
     metadata.version = packaging.version.Version('1.2.3')
     assert 'version' not in metadata.dynamic
+
+
+def test_missing_keys_warns() -> None:
+    with pytest.warns(
+        pyproject_metadata.ConfigurationWarning,
+        match=re.escape("""Extra keys present in "project": {'not-real-key'}"""),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                    'not-real-key': True,
+                },
+            }
+        )
+
+
+def test_missing_keys_okay() -> None:
+    pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
+        },
+        allow_extra_keys=True,
+    )
+
+
+def test_extra_top_level() -> None:
+    pyproject_metadata.validate_top_level(
+        {
+            'project': {},
+        }
+    )
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=r"Extra keys present in pyproject.toml: \{'(also-|)not-real', '(also-|)not-real'\}",
+    ):
+        pyproject_metadata.validate_top_level(
+            {
+                'not-real': {},
+                'also-not-real': {},
+            }
+        )
+
+
+def test_extra_build_system() -> None:
+    pyproject_metadata.validate_build_system(
+        {
+            'build-system': {
+                'build-backend': 'one',
+                'requires': ['two'],
+                'backend-path': 'local',
+            },
+        }
+    )
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=r"""Extra keys present in "build-system": \{'(also-|)not-real', '(also-|)not-real'\}""",
+    ):
+        pyproject_metadata.validate_build_system(
+            {
+                'build-system': {
+                    'not-real': {},
+                    'also-not-real': {},
+                }
+            }
+        )
