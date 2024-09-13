@@ -623,10 +623,14 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> RFC822Message:  # noqa: C901
+    def as_rfc822(self) -> RFC822Message:
+        message = RFC822Message()
+        self.write_to_rfc822(message)
+        return message
+
+    def write_to_rfc822(self, message: email.message.EmailMessage) -> None:  # noqa: C901
         self.validate(warn=False)
 
-        message = RFC822Message()
         smart_message = _SmartMessageSetter(message)
 
         smart_message['Metadata-Version'] = self.metadata_version
@@ -686,8 +690,6 @@ class StandardMetadata:
                     msg = f'Field cannot be dynamic: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
-
-        return message
 
     def _name_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(name for name, email_ in people if not email_)
