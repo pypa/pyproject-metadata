@@ -30,7 +30,7 @@ metadata = StandardMetadata.from_pyproject(parsed_pyproject, allow_extra_keys = 
 print(metadata.entrypoints)  # same fields as defined in PEP 621
 
 pkg_info = metadata.as_rfc822()
-print(str(pkg_info))  # core metadata
+print(bytes(pkg_info).decode("utf-8"))  # core metadata
 ```
 
 

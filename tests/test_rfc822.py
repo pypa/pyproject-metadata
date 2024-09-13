@@ -73,9 +73,9 @@ import pyproject_metadata
             ],
             """\
             ItemA: ValueA1
-            ItemA: ValueA2
             ItemB: ValueB
             ItemC: ValueC
+            ItemA: ValueA2
             """,
         ),
         (
@@ -112,7 +112,8 @@ def test_body() -> None:
     message['ItemB'] = 'ValueB'
     message['ItemC'] = 'ValueC'
 
-    message.body = textwrap.dedent("""
+    message.set_payload(
+        textwrap.dedent("""
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
         fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
         In porttitor congue luctus. Vivamus eu dignissim orci. Donec egestas mi ac
@@ -126,6 +127,7 @@ def test_body() -> None:
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
     """)
+    )
 
     assert str(message) == textwrap.dedent("""\
         ItemA: ValueA
@@ -164,7 +166,7 @@ def test_convert_optional_dependencies() -> None:
         }
     )
     message = metadata.as_rfc822()
-    requires = message.headers['Requires-Dist']
+    requires = message.get_all('Requires-Dist')
     assert requires == [
         'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
         'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
@@ -191,6 +193,6 @@ def test_convert_author_email() -> None:
         }
     )
     message = metadata.as_rfc822()
-    assert message.headers['Author-Email'] == [
+    assert message.get_all('Author-Email') == [
         '"John Doe, Inc." <johndoe@example.com>, "Kate Doe, LLC." <katedoe@example.com>'
     ]
