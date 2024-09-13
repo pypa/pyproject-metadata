@@ -67,11 +67,13 @@ __all__ = [
     'ConfigurationError',
     'ConfigurationWarning',
     'License',
+    'RFC822Message',
+    'RFC822Policy',
     'Readme',
     'StandardMetadata',
-    'validate_top_level',
     'validate_build_system',
     'validate_project',
+    'validate_top_level',
 ]
 
 
@@ -126,7 +128,7 @@ class _SmartMessageSetter:
     If a value contains a newline, indent it (may produce a warning in the future).
     """
 
-    message: email.message.Message
+    message: email.message.EmailMessage
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
@@ -134,14 +136,36 @@ class _SmartMessageSetter:
         self.message[name] = value
 
 
-class MetadataPolicy(email.policy.Compat32):
-    def fold(self, name: str, value: str) -> str:
+class RFC822Policy(email.policy.EmailPolicy):
+    """
+    This is `email.policy.EmailPolicy`, but with a simple ``header_store_parse``
+    implementation that handles multiline values, and some nice defaults.
+    """
+
+    utf8 = True
+    mangle_from_ = False
+    max_line_length = 0
+
+    def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
         size = len(name) + 2
         value = value.replace('\n', '\n' + ' ' * size)
-        return f'{name}: {value}\n'
+        return (name, value)
 
-    def fold_binary(self, name: str, value: str) -> bytes:
-        return self.fold(name, value).encode('utf-8')
+
+class RFC822Message(email.message.EmailMessage):
+    """
+    This is `email.message.EmailMessage` with two small changes: it defaults to
+    our `RFC822Policy`, and it correctly writes unicode when being called
+    with `bytes()`.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(policy=RFC822Policy())
+
+    def as_bytes(
+        self, unixfrom: bool = False, policy: email.policy.Policy | None = None
+    ) -> bytes:
+        return self.as_string(unixfrom, policy=policy).encode('utf-8')
 
 
 class DataFetcher:
@@ -611,10 +635,14 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> email.message.Message:  # noqa: C901
+    def as_rfc822(self) -> RFC822Message:
+        message = RFC822Message()
+        self.write_to_rfc822(message)
+        return message
+
+    def write_to_rfc822(self, message: email.message.EmailMessage) -> None:  # noqa: C901
         self.validate(warn=False)
 
-        message = email.message.Message(policy=MetadataPolicy())
         smart_message = _SmartMessageSetter(message)
 
         smart_message['Metadata-Version'] = self.metadata_version
@@ -674,8 +702,6 @@ class StandardMetadata:
                     msg = f'Field cannot be dynamic: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
-
-        return message
 
     def _name_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(name for name, email_ in people if not email_)

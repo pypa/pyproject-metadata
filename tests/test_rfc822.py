@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import email.message
+import inspect
 import textwrap
 
 import pytest
@@ -38,6 +39,12 @@ import pyproject_metadata
                 ('Foo', 'Unicøde'),
             ],
             'Foo: Unicøde\n',
+        ),
+        (
+            [
+                ('Foo', '🕵️'),
+            ],
+            'Foo: 🕵️\n',
         ),
         # None
         (
@@ -103,7 +110,7 @@ import pyproject_metadata
     ],
 )
 def test_headers(items: list[tuple[str, str]], data: str) -> None:
-    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
+    message = pyproject_metadata.RFC822Message()
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
@@ -119,14 +126,12 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
 
 
 def test_body() -> None:
-    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
+    message = pyproject_metadata.RFC822Message()
 
     message['ItemA'] = 'ValueA'
     message['ItemB'] = 'ValueB'
     message['ItemC'] = 'ValueC'
-
-    message.set_payload(
-        textwrap.dedent("""
+    body = inspect.cleandoc("""
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
         fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
         In porttitor congue luctus. Vivamus eu dignissim orci. Donec egestas mi ac
@@ -139,32 +144,23 @@ def test_body() -> None:
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
-    """)
-    )
-
-    assert str(message) == textwrap.dedent("""\
+        """)
+    headers = inspect.cleandoc("""
         ItemA: ValueA
         ItemB: ValueB
         ItemC: ValueC
+        """)
+    full = f'{headers}\n\n{body}'
 
+    message.set_payload(textwrap.dedent(body))
 
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
-        fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
-        In porttitor congue luctus. Vivamus eu dignissim orci. Donec egestas mi ac
-        ipsum volutpat, vel elementum sapien consectetur. Praesent dictum finibus
-        fringilla. Sed vel feugiat leo. Nulla a pharetra augue, at tristique metus.
-
-        Aliquam fermentum elit at risus sagittis, vel pretium augue congue. Donec leo
-        risus, faucibus vel posuere efficitur, feugiat ut leo. Aliquam vestibulum vel
-        dolor id elementum. Ut bibendum nunc interdum neque interdum, vel tincidunt
-        lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
-        finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
-        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
-    """)
+    assert str(message) == full
 
     new_message = email.message_from_string(str(message))
     assert new_message.items() == message.items()
     assert new_message.get_payload() == message.get_payload()
+
+    assert bytes(message) == full.encode('utf-8')
 
 
 def test_convert_optional_dependencies() -> None:
