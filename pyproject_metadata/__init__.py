@@ -119,14 +119,14 @@ class ConfigurationWarning(UserWarning):
 @dataclasses.dataclass
 class _SmartMessageSetter:
     """
-    This provides a nice internal API for setting values in an EmailMessage to
+    This provides a nice internal API for setting values in an Message to
     reduce boilerplate.
 
     If a value is None, do nothing.
     If a value contains a newline, indent it (may produce a warning in the future).
     """
 
-    message: email.message.EmailMessage
+    message: email.message.Message
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
@@ -135,8 +135,6 @@ class _SmartMessageSetter:
 
 
 class MetadataPolicy(email.policy.Compat32):
-    utf8 = True
-
     def fold(self, name: str, value: str) -> str:
         size = len(name) + 2
         value = value.replace('\n', '\n' + ' ' * size)
@@ -613,10 +611,10 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> email.message.EmailMessage:  # noqa: C901
+    def as_rfc822(self) -> email.message.Message:  # noqa: C901
         self.validate(warn=False)
 
-        message = email.message.EmailMessage(policy=MetadataPolicy())
+        message = email.message.Message(policy=MetadataPolicy())
         smart_message = _SmartMessageSetter(message)
 
         smart_message['Metadata-Version'] = self.metadata_version

@@ -103,7 +103,7 @@ import pyproject_metadata
     ],
 )
 def test_headers(items: list[tuple[str, str]], data: str) -> None:
-    message = email.message.EmailMessage(policy=pyproject_metadata.MetadataPolicy())
+    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
@@ -119,7 +119,7 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
 
 
 def test_body() -> None:
-    message = email.message.EmailMessage(policy=pyproject_metadata.MetadataPolicy())
+    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
 
     message['ItemA'] = 'ValueA'
     message['ItemB'] = 'ValueB'
