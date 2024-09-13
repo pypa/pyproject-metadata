@@ -68,11 +68,12 @@ __all__ = [
     'ConfigurationWarning',
     'License',
     'RFC822Message',
+    'RFC822Policy',
     'Readme',
     'StandardMetadata',
-    'validate_top_level',
     'validate_build_system',
     'validate_project',
+    'validate_top_level',
 ]
 
 
@@ -135,7 +136,12 @@ class _SmartMessageSetter:
         self.message[name] = value
 
 
-class MetadataPolicy(email.policy.EmailPolicy):
+class RFC822Policy(email.policy.EmailPolicy):
+    """
+    This is `email.policy.EmailPolicy`, but with a simple ``header_store_parse``
+    implementation that handles multiline values, and some nice defaults.
+    """
+
     utf8 = True
     mangle_from_ = False
     max_line_length = 0
@@ -147,8 +153,14 @@ class MetadataPolicy(email.policy.EmailPolicy):
 
 
 class RFC822Message(email.message.EmailMessage):
+    """
+    This is `email.message.EmailMessage` with two small changes: it defaults to
+    our `RFC822Policy`, and it correctly writes unicode when being called
+    with `bytes()`.
+    """
+
     def __init__(self) -> None:
-        super().__init__(policy=MetadataPolicy())
+        super().__init__(policy=RFC822Policy())
 
     def as_bytes(
         self, unixfrom: bool = False, policy: email.policy.Policy | None = None
