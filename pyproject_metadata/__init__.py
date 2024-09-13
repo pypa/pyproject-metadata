@@ -67,6 +67,7 @@ __all__ = [
     'ConfigurationError',
     'ConfigurationWarning',
     'License',
+    'RFC822Message',
     'Readme',
     'StandardMetadata',
     'validate_top_level',
@@ -126,7 +127,7 @@ class _SmartMessageSetter:
     If a value contains a newline, indent it (may produce a warning in the future).
     """
 
-    message: email.message.Message
+    message: email.message.EmailMessage
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
@@ -134,14 +135,25 @@ class _SmartMessageSetter:
         self.message[name] = value
 
 
-class MetadataPolicy(email.policy.Compat32):
-    def fold(self, name: str, value: str) -> str:
+class MetadataPolicy(email.policy.EmailPolicy):
+    utf8 = True
+    mangle_from_ = False
+    max_line_length = 0
+
+    def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
         size = len(name) + 2
         value = value.replace('\n', '\n' + ' ' * size)
-        return f'{name}: {value}\n'
+        return (name, value)
 
-    def fold_binary(self, name: str, value: str) -> bytes:
-        return self.fold(name, value).encode('utf-8')
+
+class RFC822Message(email.message.EmailMessage):
+    def __init__(self) -> None:
+        super().__init__(policy=MetadataPolicy())
+
+    def as_bytes(
+        self, unixfrom: bool = False, policy: email.policy.Policy | None = None
+    ) -> bytes:
+        return self.as_string(unixfrom, policy=policy).encode('utf-8')
 
 
 class DataFetcher:
@@ -611,10 +623,10 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> email.message.Message:  # noqa: C901
+    def as_rfc822(self) -> RFC822Message:  # noqa: C901
         self.validate(warn=False)
 
-        message = email.message.Message(policy=MetadataPolicy())
+        message = RFC822Message()
         smart_message = _SmartMessageSetter(message)
 
         smart_message['Metadata-Version'] = self.metadata_version
