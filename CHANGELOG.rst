@@ -2,6 +2,49 @@
 Changelog
 +++++++++
 
+0.9.0 beta 1 (13-09-2024)
+=========================
+
+This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
+and adds a lot of validation (including warnings and opt-in errors). The beta
+release is intended for backend authors to try out the changes before a final
+release.
+
+Features:
+
+- Added PEP 639 support for SPDX license and license files, METADATA 2.4
+- Validate extra keys (warning, opt-in error)
+- Validate project name
+- Validate entrypoint group names
+- Add multiline warning
+
+Fixes:
+
+- Correct typing for emails
+- Match EmailMessage spacing
+
+
+Refactoring:
+
+- Move fetcher methods
+- Put validation in function
+- Prepare for EmailMessage
+- Use EmailMessage class
+
+
+Internal and CI:
+
+- Add 3.13 to testing
+- Add ruff-format
+- Actions and dependabot
+- Better changelog auto-generation
+- Generate attestations for releases
+- ``macos-latest`` now points at ``macos-14``
+- Refactor and cleanup tests
+- Add human readable IDs to tests
+- Fix coverage context
+
+
 0.8.0 (17-04-2024)
 ==================
 
