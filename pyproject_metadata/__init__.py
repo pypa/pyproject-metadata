@@ -137,13 +137,13 @@ class _SmartMessageSetter:
 class MetadataPolicy(email.policy.Compat32):
     utf8 = True
 
-    def fold(self, name, value):
+    def fold(self, name: str, value: str) -> str:
         size = len(name) + 2
-        value = value.replace('\n', '\n' + ' '*size)
-        return f"{name}: {value}\n"
+        value = value.replace('\n', '\n' + ' ' * size)
+        return f'{name}: {value}\n'
 
-    def fold_binary(self, name, value):
-        return self.fold(name, value).encode("utf-8")
+    def fold_binary(self, name: str, value: str) -> bytes:
+        return self.fold(name, value).encode('utf-8')
 
 
 class DataFetcher:
@@ -613,7 +613,7 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> email.message.EmailMessage:
+    def as_rfc822(self) -> email.message.EmailMessage:  # noqa: C901
         self.validate(warn=False)
 
         message = email.message.EmailMessage(policy=MetadataPolicy())

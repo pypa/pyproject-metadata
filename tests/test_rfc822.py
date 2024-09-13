@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import re
+import email.message
 import textwrap
 
 import pytest
 
 import pyproject_metadata
-import email.message
 
 
 @pytest.mark.parametrize(
@@ -114,6 +113,10 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
     assert str(message) == data
     assert bytes(message) == data.encode()
 
+    assert email.message_from_string(str(message)).items() == [
+        (a, '\n       '.join(b.splitlines())) for a, b in items if b is not None
+    ]
+
 
 def test_body() -> None:
     message = email.message.EmailMessage(policy=pyproject_metadata.MetadataPolicy())
@@ -158,6 +161,10 @@ def test_body() -> None:
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
         Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
     """)
+
+    new_message = email.message_from_string(str(message))
+    assert new_message.items() == message.items()
+    assert new_message.get_payload() == message.get_payload()
 
 
 def test_convert_optional_dependencies() -> None:
