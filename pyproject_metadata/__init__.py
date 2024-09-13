@@ -34,7 +34,7 @@ import packaging.utils
 import packaging.version
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.0b1'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3', '2.4'}
 PRE_SPDX_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
