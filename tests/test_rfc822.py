@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import re
+import email.message
 import textwrap
 
 import pytest
@@ -31,6 +31,13 @@ import pyproject_metadata
             Foo: Bar
             Foo2: Bar2
             """,
+        ),
+        # Unicode
+        (
+            [
+                ('Foo', 'Unicøde'),
+            ],
+            'Foo: Unicøde\n',
         ),
         # None
         (
@@ -88,34 +95,31 @@ import pyproject_metadata
             """\
             ItemA: ValueA
             ItemB: ValueB1
-                    ValueB2
-                    ValueB3
+                   ValueB2
+                   ValueB3
             ItemC: ValueC
             """,
         ),
     ],
 )
 def test_headers(items: list[tuple[str, str]], data: str) -> None:
-    message = pyproject_metadata.RFC822Message()
+    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
-        if value and '\n' in value:
-            msg = '"ItemB" should not be multiline; indenting to avoid breakage'
-            with pytest.warns(
-                pyproject_metadata.ConfigurationWarning, match=re.escape(msg)
-            ):
-                smart_message[name] = value
-        else:
-            smart_message[name] = value
+        smart_message[name] = value
 
     data = textwrap.dedent(data) + '\n'
     assert str(message) == data
     assert bytes(message) == data.encode()
 
+    assert email.message_from_string(str(message)).items() == [
+        (a, '\n       '.join(b.splitlines())) for a, b in items if b is not None
+    ]
+
 
 def test_body() -> None:
-    message = pyproject_metadata.RFC822Message()
+    message = email.message.Message(policy=pyproject_metadata.MetadataPolicy())
 
     message['ItemA'] = 'ValueA'
     message['ItemB'] = 'ValueB'
@@ -134,7 +138,7 @@ def test_body() -> None:
         dolor id elementum. Ut bibendum nunc interdum neque interdum, vel tincidunt
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
-        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
+        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
     """)
     )
 
@@ -155,8 +159,12 @@ def test_body() -> None:
         dolor id elementum. Ut bibendum nunc interdum neque interdum, vel tincidunt
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
-        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
+        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
     """)
+
+    new_message = email.message_from_string(str(message))
+    assert new_message.items() == message.items()
+    assert new_message.get_payload() == message.get_payload()
 
 
 def test_convert_optional_dependencies() -> None:
