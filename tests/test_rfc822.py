@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import textwrap
 
 import pytest
@@ -99,7 +100,14 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
-        smart_message[name] = value
+        if value and '\n' in value:
+            msg = '"ItemB" should not be multiline; indenting to avoid breakage'
+            with pytest.warns(
+                pyproject_metadata.ConfigurationWarning, match=re.escape(msg)
+            ):
+                smart_message[name] = value
+        else:
+            smart_message[name] = value
 
     data = textwrap.dedent(data) + '\n'
     assert str(message) == data
