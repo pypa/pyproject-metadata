@@ -133,6 +133,8 @@ class _SmartMessageSetter:
         if not value:
             return
         if '\n' in value:
+            msg = f'"{name}" should not be multiline; indenting to avoid breakage'
+            warnings.warn(msg, ConfigurationWarning, stacklevel=2)
             value = value.replace('\n', '\n        ')
         self.message[name] = value
 
