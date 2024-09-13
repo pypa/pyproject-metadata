@@ -33,5 +33,21 @@ pkg_info = metadata.as_rfc822()
 print(bytes(pkg_info).decode("utf-8"))  # core metadata
 ```
 
+## METADATA 2.4
+
+If `project.license` is a string or `project.license-files` is present, then
+METADATA 2.4+ will be used. A user is expected to validate and normalize
+`metadata.license` with an SPDX validation tool, such as the one being added to
+`packaging`. Add something like this:
+
+```python
+if isinstance(metadata.license, str):
+    metadata.license = packaging.licenses.normalize_license_expression(metadata.license)
+```
+
+A backend is also expected to copy entries from `project.licence_files`, which
+are paths relative to the project directory, into the `dist-info/licenses`
+folder, preserving the original source structure.
+
 
 [core metadata]: https://packaging.python.org/specifications/core-metadata/

@@ -2,6 +2,7 @@
 
 import pathlib
 import re
+import shutil
 import sys
 import textwrap
 
@@ -87,7 +88,7 @@ DIR = pathlib.Path(__file__).parent.resolve()
                 version = '0.1.0'
                 license = true
             """,
-            'Field "project.license" has an invalid type, expecting a dictionary of strings (got "True")',
+            'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "True")',
             id='License invalid type',
         ),
         pytest.param(
@@ -591,6 +592,49 @@ DIR = pathlib.Path(__file__).parent.resolve()
             ),
             id='Invalid entry-points name',
         ),
+        # both license files and classic license are not allowed
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license-files = []
+                license.text = "stuff"
+            """,
+            '"project.license-files" must not be used when "project.license" is not a SPDX license expression',
+            id='Both license files and classic license',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license-files = ["../LICENSE"]
+            """,
+            '"../LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
+            id='Parent license-files glob',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license-files = ["/LICENSE"]
+            """,
+            '"/LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
+            id='Aboslute license-files glob',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license = "MIT"
+                classifiers = ["License :: OSI Approved :: MIT License"]
+            """,
+            'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers',
+            id='SPDX license and License trove classifiers',
+        ),
     ],
 )
 def test_load(data: str, error: str, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -599,6 +643,80 @@ def test_load(data: str, error: str, monkeypatch: pytest.MonkeyPatch) -> None:
         pyproject_metadata.StandardMetadata.from_pyproject(
             tomllib.loads(textwrap.dedent(data)),
             allow_extra_keys=False,
+        )
+
+
+@pytest.mark.parametrize(
+    ('data', 'error', 'metadata_version'),
+    [
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license = "MIT"
+            """,
+            'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4',
+            '2.3',
+            id='SPDX with metadata_version 2.3',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license-files = ["README.md"]
+            """,
+            '"project.license-files" is supported only when emitting metadata version >= 2.4',
+            '2.3',
+            id='license-files with metadata_version 2.3',
+        ),
+    ],
+)
+def test_load_with_metadata_version(
+    data: str, error: str, metadata_version: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            tomllib.loads(textwrap.dedent(data)), metadata_version=metadata_version
+        )
+
+
+@pytest.mark.parametrize(
+    ('data', 'error', 'metadata_version'),
+    [
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license.text = "MIT"
+            """,
+            'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+            '2.4',
+            id='Classic license with metadata 2.4',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                classifiers = ["License :: OSI Approved :: MIT License"]
+            """,
+            '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
+            '2.4',
+            id='License trove classfiers with metadata 2.4',
+        ),
+    ],
+)
+def test_load_with_metadata_version_warnings(
+    data: str, error: str, metadata_version: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    with pytest.warns(pyproject_metadata.ConfigurationWarning, match=re.escape(error)):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            tomllib.loads(textwrap.dedent(data)), metadata_version=metadata_version
         )
 
 
@@ -746,6 +864,42 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ('Description-Content-Type', 'text/markdown'),
     ]
     assert core_metadata.get_payload() == 'some readme 👋\n'
+
+
+def test_as_rfc822_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/spdx')
+
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ('Metadata-Version', '2.4'),
+        ('Name', 'example'),
+        ('Version', '1.2.3'),
+        ('License-Expression', 'MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)'),
+        ('License-File', 'AUTHORS.txt'),
+        ('License-File', 'LICENSE.md'),
+        ('License-File', 'LICENSE.txt'),
+        ('License-File', 'licenses/LICENSE.MIT'),
+    ]
+
+    assert core_metadata.get_payload() is None
+
+
+def test_as_rfc822_spdx_empty_glob(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+) -> None:
+    shutil.copytree(DIR / 'packages/spdx', tmp_path / 'spdx')
+    monkeypatch.chdir(tmp_path / 'spdx')
+
+    pathlib.Path('AUTHORS.txt').unlink()
+    msg = 'Every pattern in "project.license-files" must match at least one file: "AUTHORS*" did not match any'
+
+    with open('pyproject.toml', 'rb') as f, pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(msg),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:

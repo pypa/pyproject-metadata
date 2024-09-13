@@ -88,7 +88,7 @@ extend-select = [
 ignore = ["ISC001"]  # conflicts with formatter
 isort.lines-after-imports = 2
 isort.lines-between-types = 1
-pylint.max-branches = 15
+pylint.max-branches = 25
 
 [tool.ruff.format]
 quote-style = "single"
