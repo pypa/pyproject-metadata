@@ -44,28 +44,8 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
-      - name: Pick environment to run
-        run: |
-          import platform; import os; import sys; import codecs
-          base = '.'.join(map(str, sys.version_info[:2]))
-          env = f'BASE={base}\n'
-          print(f'Picked:\n{env}for{sys.version}')
-          with codecs.open(os.environ['GITHUB_ENV'], 'a', 'utf-8') as file_handler:
-               file_handler.write(env)
-        shell: python
-
-      - name: Set up Python for nox
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-
-      - name: Install nox
-        run: |
-            python -m pip install nox
-            nox --version
-
       - name: Run tests
-        run: nox -s test-${{ env.BASE }}
+        run: pipx run nox -s test-${{ matrix.python }}
 
       - name: Send coverage report
         uses: codecov/codecov-action@v4
