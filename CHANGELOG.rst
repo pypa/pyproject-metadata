@@ -2,29 +2,8 @@
 Changelog
 +++++++++
 
-0.9.0 beta 3 (13-09-2024)
-=========================
-
-- Support unicode METADATA in the description again
-- Restore ``RFC822Message`` with support for unicode
-- Restore ``write_to_rfc822`` with support for any Message
-- Restore recommendation to use string instead of bytes
-
-
-0.9.0 beta 2 (13-09-2024)
-=========================
-
-- Support unicode METADATA again
-- Remove the custom ``RFC822Message`` entirely, replaced with a custom Policy (which also handles multilines)
-- Handle multiline the way setuptools does with smart indentation
-- Remove ``write_to_rfc822``
-- Remove the multiline warning for all metadata
-- Add some unicode and reading tests
-- Swap ``EmailMessage`` for ``Message``
-- Add PyPI attestations
-
-0.9.0 beta 1 (13-09-2024)
-=========================
+0.9.0 (beta 3: 13-09-2024)
+==========================
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
 and adds a lot of validation (including warnings and opt-in errors). The beta
@@ -37,20 +16,19 @@ Features:
 - Validate extra keys (warning, opt-in error)
 - Validate project name
 - Validate entrypoint group names
-- Add multiline warning (removed in beta 2)
 
 Fixes:
 
 - Correct typing for emails
 - Match EmailMessage spacing
+- Handle multilines the way setuptools does with smart indentation
 
 
 Refactoring:
 
 - Move fetcher methods
-- Put validation in function
-- Prepare for EmailMessage
-- Use EmailMessage class
+- Put validation in method
+- Make ``RFC822Message`` compatible with and subclass of ``EmailMessage`` class with support for Unicode
 
 
 Internal and CI:
@@ -59,7 +37,8 @@ Internal and CI:
 - Add ruff-format
 - Actions and dependabot
 - Better changelog auto-generation
-- Generate attestations for releases
+- Generate GitHub attestations for releases
+- Add PyPI attestations
 - ``macos-latest`` now points at ``macos-14``
 - Refactor and cleanup tests
 - Add human readable IDs to tests
