@@ -2,6 +2,18 @@
 Changelog
 +++++++++
 
+0.9.0 beta 2 (13-09-2024)
+=========================
+
+- Support unicode METADATA again
+- Remove the custom ``RFC822Message`` entirely, replaced with a custom Policy (which also handles multilines)
+- Handle multiline the way setuptools does with smart indentation
+- Remove ``write_to_rfc822``
+- Remove the multiline warning for all metadata
+- Add some unicode and reading tests
+- Swap ``EmailMessage`` for ``Message``
+- Add PyPI attestations
+
 0.9.0 beta 1 (13-09-2024)
 =========================
 
@@ -16,7 +28,7 @@ Features:
 - Validate extra keys (warning, opt-in error)
 - Validate project name
 - Validate entrypoint group names
-- Add multiline warning
+- Add multiline warning (removed in beta 2)
 
 Fixes:
 
