@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import dataclasses
-import email.headerregistry
 import email.message
 import email.policy
 import email.utils
@@ -115,7 +114,6 @@ class ConfigurationError(Exception):
 
 class ConfigurationWarning(UserWarning):
     """Warnings about backend metadata."""
-
 
 
 @dataclasses.dataclass
