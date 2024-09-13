@@ -32,6 +32,13 @@ import pyproject_metadata
             Foo2: Bar2
             """,
         ),
+        # Unicode
+        (
+            [
+                ('Foo', 'Unicøde'),
+            ],
+            'Foo: Unicøde\n',
+        ),
         # None
         (
             [
@@ -87,9 +94,7 @@ import pyproject_metadata
             ],
             """\
             ItemA: ValueA
-            ItemB: ValueB1
-                    ValueB2
-                    ValueB3
+            ItemB: ValueB1 ValueB2 ValueB3
             ItemC: ValueC
             """,
         ),
@@ -101,7 +106,7 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
 
     for name, value in items:
         if value and '\n' in value:
-            msg = '"ItemB" should not be multiline; indenting to avoid breakage'
+            msg = '"ItemB" should not be multiline; joining to avoid breakage'
             with pytest.warns(
                 pyproject_metadata.ConfigurationWarning, match=re.escape(msg)
             ):
@@ -134,7 +139,7 @@ def test_body() -> None:
         dolor id elementum. Ut bibendum nunc interdum neque interdum, vel tincidunt
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
-        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
+        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
     """)
     )
 
@@ -155,7 +160,7 @@ def test_body() -> None:
         dolor id elementum. Ut bibendum nunc interdum neque interdum, vel tincidunt
         lacus blandit. Ut volutpat sollicitudin dapibus. Integer vitae lacinia ex, eget
         finibus nulla. Donec sit amet ante in neque pulvinar faucibus sed nec justo.
-        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis.
+        Fusce hendrerit massa libero, sit amet pulvinar magna tempor quis. ø
     """)
 
 

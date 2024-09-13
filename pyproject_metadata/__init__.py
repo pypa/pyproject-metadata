@@ -132,10 +132,11 @@ class _SmartMessageSetter:
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
             return
-        if '\n' in value:
-            msg = f'"{name}" should not be multiline; indenting to avoid breakage'
+        lines = value.splitlines()
+        if len(lines) > 1:
+            msg = f'"{name}" should not be multiline; joining to avoid breakage'
             warnings.warn(msg, ConfigurationWarning, stacklevel=2)
-            value = value.replace('\n', '\n        ')
+            value = ' '.join(lines)
         self.message[name] = value
 
 
@@ -145,10 +146,8 @@ class RFC822Message(email.message.EmailMessage):
     __slots__ = ()
 
     def __init__(self) -> None:
-        super().__init__(email.policy.compat32)
-
-    def __str__(self) -> str:
-        return bytes(self).decode('utf-8')
+        policy = email.policy.EmailPolicy(max_line_length=0, utf8=True)
+        super().__init__(policy)
 
 
 class DataFetcher:
