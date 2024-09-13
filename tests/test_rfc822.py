@@ -8,6 +8,7 @@ import textwrap
 import pytest
 
 import pyproject_metadata
+import email.message
 
 
 @pytest.mark.parametrize(
@@ -94,25 +95,20 @@ import pyproject_metadata
             ],
             """\
             ItemA: ValueA
-            ItemB: ValueB1 ValueB2 ValueB3
+            ItemB: ValueB1
+                   ValueB2
+                   ValueB3
             ItemC: ValueC
             """,
         ),
     ],
 )
 def test_headers(items: list[tuple[str, str]], data: str) -> None:
-    message = pyproject_metadata.RFC822Message()
+    message = email.message.EmailMessage(policy=pyproject_metadata.MetadataPolicy())
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     for name, value in items:
-        if value and '\n' in value:
-            msg = '"ItemB" should not be multiline; joining to avoid breakage'
-            with pytest.warns(
-                pyproject_metadata.ConfigurationWarning, match=re.escape(msg)
-            ):
-                smart_message[name] = value
-        else:
-            smart_message[name] = value
+        smart_message[name] = value
 
     data = textwrap.dedent(data) + '\n'
     assert str(message) == data
@@ -120,7 +116,7 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
 
 
 def test_body() -> None:
-    message = pyproject_metadata.RFC822Message()
+    message = email.message.EmailMessage(policy=pyproject_metadata.MetadataPolicy())
 
     message['ItemA'] = 'ValueA'
     message['ItemB'] = 'ValueB'

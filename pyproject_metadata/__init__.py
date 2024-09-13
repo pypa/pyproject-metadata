@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import email.headerregistry
 import email.message
 import email.policy
 import email.utils
@@ -66,7 +67,6 @@ KNOWN_PROJECT_FIELDS = {
 __all__ = [
     'ConfigurationError',
     'ConfigurationWarning',
-    'RFC822Message',
     'License',
     'Readme',
     'StandardMetadata',
@@ -117,10 +117,11 @@ class ConfigurationWarning(UserWarning):
     """Warnings about backend metadata."""
 
 
+
 @dataclasses.dataclass
 class _SmartMessageSetter:
     """
-    This provides a nice internal API for setting values in an RFC822Message to
+    This provides a nice internal API for setting values in an EmailMessage to
     reduce boilerplate.
 
     If a value is None, do nothing.
@@ -132,22 +133,19 @@ class _SmartMessageSetter:
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
             return
-        lines = value.splitlines()
-        if len(lines) > 1:
-            msg = f'"{name}" should not be multiline; joining to avoid breakage'
-            warnings.warn(msg, ConfigurationWarning, stacklevel=2)
-            value = ' '.join(lines)
         self.message[name] = value
 
 
-class RFC822Message(email.message.EmailMessage):
-    """Python-flavored RFC 822 message implementation."""
+class MetadataPolicy(email.policy.Compat32):
+    utf8 = True
 
-    __slots__ = ()
+    def fold(self, name, value):
+        size = len(name) + 2
+        value = value.replace('\n', '\n' + ' '*size)
+        return f"{name}: {value}\n"
 
-    def __init__(self) -> None:
-        policy = email.policy.EmailPolicy(max_line_length=0, utf8=True)
-        super().__init__(policy)
+    def fold_binary(self, name, value):
+        return self.fold(name, value).encode("utf-8")
 
 
 class DataFetcher:
@@ -617,14 +615,10 @@ class StandardMetadata:
             self._update_dynamic(value)
         super().__setattr__(name, value)
 
-    def as_rfc822(self) -> RFC822Message:
-        message = RFC822Message()
-        self.write_to_rfc822(message)
-        return message
-
-    def write_to_rfc822(self, message: email.message.EmailMessage) -> None:  # noqa: C901
+    def as_rfc822(self) -> email.message.EmailMessage:
         self.validate(warn=False)
 
+        message = email.message.EmailMessage(policy=MetadataPolicy())
         smart_message = _SmartMessageSetter(message)
 
         smart_message['Metadata-Version'] = self.metadata_version
@@ -684,6 +678,8 @@ class StandardMetadata:
                     msg = f'Field cannot be dynamic: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
+
+        return message
 
     def _name_list(self, people: list[tuple[str, str | None]]) -> str:
         return ', '.join(name for name, email_ in people if not email_)
