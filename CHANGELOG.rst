@@ -2,6 +2,15 @@
 Changelog
 +++++++++
 
+0.9.0 beta 3 (13-09-2024)
+=========================
+
+- Support unicode METADATA in the description again
+- Restore ``RFC822Message`` with support for unicode
+- Restore ``write_to_rfc822`` with support for any Message
+- Restore recommendation to use string instead of bytes
+
+
 0.9.0 beta 2 (13-09-2024)
 =========================
 

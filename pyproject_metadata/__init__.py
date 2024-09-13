@@ -34,7 +34,7 @@ import packaging.utils
 import packaging.version
 
 
-__version__ = '0.9.0b2'
+__version__ = '0.9.0b3'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3', '2.4'}
 PRE_SPDX_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
@@ -128,7 +128,7 @@ class _SmartMessageSetter:
     If a value contains a newline, indent it (may produce a warning in the future).
     """
 
-    message: email.message.EmailMessage
+    message: email.message.Message
 
     def __setitem__(self, name: str, value: str | None) -> None:
         if not value:
@@ -640,7 +640,7 @@ class StandardMetadata:
         self.write_to_rfc822(message)
         return message
 
-    def write_to_rfc822(self, message: email.message.EmailMessage) -> None:  # noqa: C901
+    def write_to_rfc822(self, message: email.message.Message) -> None:  # noqa: C901
         self.validate(warn=False)
 
         smart_message = _SmartMessageSetter(message)
