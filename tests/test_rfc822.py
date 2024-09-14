@@ -14,16 +14,19 @@ import pyproject_metadata
 @pytest.mark.parametrize(
     ('items', 'data'),
     [
-        # empty
-        ([], ''),
-        # simple
-        (
+        pytest.param(
+            [],
+            '',
+            id='empty',
+        ),
+        pytest.param(
             [
                 ('Foo', 'Bar'),
             ],
             'Foo: Bar\n',
+            id='simple',
         ),
-        (
+        pytest.param(
             [
                 ('Foo', 'Bar'),
                 ('Foo2', 'Bar2'),
@@ -32,29 +35,30 @@ import pyproject_metadata
             Foo: Bar
             Foo2: Bar2
             """,
+            id='multiple',
         ),
-        # Unicode
-        (
+        pytest.param(
             [
                 ('Foo', 'Unicøde'),
             ],
             'Foo: Unicøde\n',
+            id='unicode',
         ),
-        (
+        pytest.param(
             [
                 ('Foo', '🕵️'),
             ],
             'Foo: 🕵️\n',
+            id='emoji',
         ),
-        # None
-        (
+        pytest.param(
             [
                 ('Item', None),
             ],
             '',
+            id='none',
         ),
-        # order
-        (
+        pytest.param(
             [
                 ('ItemA', 'ValueA'),
                 ('ItemB', 'ValueB'),
@@ -65,8 +69,9 @@ import pyproject_metadata
             ItemB: ValueB
             ItemC: ValueC
             """,
+            id='order 1',
         ),
-        (
+        pytest.param(
             [
                 ('ItemB', 'ValueB'),
                 ('ItemC', 'ValueC'),
@@ -77,9 +82,9 @@ import pyproject_metadata
             ItemC: ValueC
             ItemA: ValueA
             """,
+            id='order 2',
         ),
-        # multiple keys
-        (
+        pytest.param(
             [
                 ('ItemA', 'ValueA1'),
                 ('ItemB', 'ValueB'),
@@ -92,8 +97,9 @@ import pyproject_metadata
             ItemC: ValueC
             ItemA: ValueA2
             """,
+            id='multiple keys',
         ),
-        (
+        pytest.param(
             [
                 ('ItemA', 'ValueA'),
                 ('ItemB', 'ValueB1\nValueB2\nValueB3'),
@@ -106,6 +112,7 @@ import pyproject_metadata
                    ValueB3
             ItemC: ValueC
             """,
+            id='multiline',
         ),
     ],
 )
