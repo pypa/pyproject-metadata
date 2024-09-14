@@ -474,11 +474,20 @@ class StandardMetadata:
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     dynamic: list[str] = dataclasses.field(default_factory=list)
+    """
+    This field is used to track dynamic fields. You can't set a field not in this list.
+    """
+    metadata_dynamic: list[str] = dataclasses.field(default_factory=list)
+    """
+    This is a list of METADATA fields that can change inbetween SDist and wheel. Requires metadata_version 2.2+.
+    """
 
     metadata_version: str | None = None
+    _initialized: bool = False
 
     def __post_init__(self) -> None:
         self.validate()
+        self._initialized = True
 
     def validate(self, *, warn: bool = True) -> None:
         if self.auto_metadata_version not in KNOWN_METADATA_VERSIONS:
@@ -541,7 +550,7 @@ class StandardMetadata:
 
         if isinstance(self.license, str) or self.license_files is not None:
             return '2.4'
-        if self.dynamic:
+        if self.metadata_dynamic:
             return '2.2'
         return '2.1'
 
@@ -555,6 +564,7 @@ class StandardMetadata:
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
+        metadata_dynamic: list[str] | None = None,
         *,
         allow_extra_keys: bool | None = None,
     ) -> Self:
@@ -626,17 +636,19 @@ class StandardMetadata:
             scripts=fetcher.get_dict('project.scripts'),
             gui_scripts=fetcher.get_dict('project.gui-scripts'),
             dynamic=dynamic,
+            metadata_dynamic=metadata_dynamic or [],
             metadata_version=metadata_version,
         )
 
-    def _update_dynamic(self, value: Any) -> None:
-        if value and 'version' in self.dynamic:
-            self.dynamic.remove('version')
-
     def __setattr__(self, name: str, value: Any) -> None:
-        # update dynamic when version is set
-        if name == 'version' and hasattr(self, 'dynamic'):
-            self._update_dynamic(value)
+        # Only allow setting dynamic fields
+        if self._initialized and name not in set(self.dynamic) | {
+            'metadata_version',
+            'metadata_dynamic',
+        }:
+            msg = f'Field "{name}" is not dynamic'
+            raise AttributeError(msg)
+
         super().__setattr__(name, value)
 
     def as_rfc822(self) -> RFC822Message:
@@ -701,9 +713,9 @@ class StandardMetadata:
             message.set_payload(self.readme.text)
         # Core Metadata 2.2
         if self.auto_metadata_version != '2.1':
-            for field in self.dynamic:
-                if field in ('name', 'version'):
-                    msg = f'Field cannot be dynamic: {field}'
+            for field in self.metadata_dynamic:
+                if field.lower() in {'name', 'version'}:
+                    msg = f'Field cannot be set as dynamic metadata: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
 
