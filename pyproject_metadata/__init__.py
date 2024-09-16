@@ -603,28 +603,32 @@ class StandardMetadata:
         # so leave it up to the users for now.
         description = fetcher.get_str('project.description')
 
-        return cls(
-            name,
-            version,
-            description,
-            fetcher.get_license(project_dir),
-            fetcher.get_license_files(project_dir),
-            fetcher.get_readme(project_dir),
+        requires_python = (
             packaging.specifiers.SpecifierSet(requires_python_string)
             if requires_python_string
-            else None,
-            fetcher.get_dependencies(),
-            fetcher.get_optional_dependencies(),
-            fetcher.get_entrypoints(),
-            fetcher.get_people('project.authors'),
-            fetcher.get_people('project.maintainers'),
-            fetcher.get_dict('project.urls'),
-            fetcher.get_list('project.classifiers') or [],
-            fetcher.get_list('project.keywords') or [],
-            fetcher.get_dict('project.scripts'),
-            fetcher.get_dict('project.gui-scripts'),
-            dynamic,
-            metadata_version,
+            else None
+        )
+
+        return cls(
+            name=name,
+            version=version,
+            description=description,
+            license=fetcher.get_license(project_dir),
+            license_files=fetcher.get_license_files(project_dir),
+            readme=fetcher.get_readme(project_dir),
+            requires_python=requires_python,
+            dependencies=fetcher.get_dependencies(),
+            optional_dependencies=fetcher.get_optional_dependencies(),
+            entrypoints=fetcher.get_entrypoints(),
+            authors=fetcher.get_people('project.authors'),
+            maintainers=fetcher.get_people('project.maintainers'),
+            urls=fetcher.get_dict('project.urls'),
+            classifiers=fetcher.get_list('project.classifiers') or [],
+            keywords=fetcher.get_list('project.keywords') or [],
+            scripts=fetcher.get_dict('project.scripts'),
+            gui_scripts=fetcher.get_dict('project.gui-scripts'),
+            dynamic=dynamic,
+            _metadata_version=metadata_version,
         )
 
     def _update_dynamic(self, value: Any) -> None:
