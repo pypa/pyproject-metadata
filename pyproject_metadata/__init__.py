@@ -475,16 +475,13 @@ class StandardMetadata:
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     dynamic: list[str] = dataclasses.field(default_factory=list)
 
-    _metadata_version: str | None = None
+    metadata_version: str | None = None
 
     def __post_init__(self) -> None:
         self.validate()
 
     def validate(self, *, warn: bool = True) -> None:
-        if (
-            self._metadata_version
-            and self._metadata_version not in KNOWN_METADATA_VERSIONS
-        ):
+        if self.auto_metadata_version not in KNOWN_METADATA_VERSIONS:
             msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
             raise ConfigurationError(msg)
 
@@ -509,7 +506,7 @@ class StandardMetadata:
             msg = 'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers'
             raise ConfigurationError(msg)
 
-        if warn and self.metadata_version not in PRE_SPDX_METADATA_VERSIONS:
+        if warn and self.auto_metadata_version not in PRE_SPDX_METADATA_VERSIONS:
             if isinstance(self.license, License):
                 warnings.warn(
                     'Set "project.license" to an SPDX license expression for metadata >= 2.4',
@@ -525,27 +522,28 @@ class StandardMetadata:
 
         if (
             isinstance(self.license, str)
-            and self._metadata_version in PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in PRE_SPDX_METADATA_VERSIONS
         ):
             msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
 
         if (
             self.license_files is not None
-            and self._metadata_version in PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in PRE_SPDX_METADATA_VERSIONS
         ):
             msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
 
     @property
-    def metadata_version(self) -> str:
-        if self._metadata_version is None:
-            if isinstance(self.license, str) or self.license_files is not None:
-                return '2.4'
-            if self.dynamic:
-                return '2.2'
-            return '2.1'
-        return self._metadata_version
+    def auto_metadata_version(self) -> str:
+        if self.metadata_version is not None:
+            return self.metadata_version
+
+        if isinstance(self.license, str) or self.license_files is not None:
+            return '2.4'
+        if self.dynamic:
+            return '2.2'
+        return '2.1'
 
     @property
     def canonical_name(self) -> str:
@@ -628,7 +626,7 @@ class StandardMetadata:
             scripts=fetcher.get_dict('project.scripts'),
             gui_scripts=fetcher.get_dict('project.gui-scripts'),
             dynamic=dynamic,
-            _metadata_version=metadata_version,
+            metadata_version=metadata_version,
         )
 
     def _update_dynamic(self, value: Any) -> None:
@@ -651,7 +649,7 @@ class StandardMetadata:
 
         smart_message = _SmartMessageSetter(message)
 
-        smart_message['Metadata-Version'] = self.metadata_version
+        smart_message['Metadata-Version'] = self.auto_metadata_version
         smart_message['Name'] = self.name
         if not self.version:
             msg = 'Missing version field'
@@ -702,7 +700,7 @@ class StandardMetadata:
                 smart_message['Description-Content-Type'] = self.readme.content_type
             message.set_payload(self.readme.text)
         # Core Metadata 2.2
-        if self.metadata_version != '2.1':
+        if self.auto_metadata_version != '2.1':
             for field in self.dynamic:
                 if field in ('name', 'version'):
                     msg = f'Field cannot be dynamic: {field}'
