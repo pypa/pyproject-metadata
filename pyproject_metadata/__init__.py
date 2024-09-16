@@ -439,12 +439,14 @@ class ProjectFetcher(DataFetcher):
         return val
 
 
-class License(typing.NamedTuple):
+@dataclasses.dataclass(frozen=True)
+class License:
     text: str
     file: pathlib.Path | None
 
 
-class Readme(typing.NamedTuple):
+@dataclasses.dataclass(frozen=True)
+class Readme:
     text: str
     file: pathlib.Path | None
     content_type: str
