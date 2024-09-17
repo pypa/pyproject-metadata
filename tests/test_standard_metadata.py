@@ -907,7 +907,7 @@ def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
-    metadata.metadata_dynamic = ['description']
+    metadata.dynamic_metadata = ['description']
     core_metadata = metadata.as_rfc822()
     assert core_metadata.items() == [
         ('Metadata-Version', '2.2'),
@@ -972,20 +972,20 @@ def test_as_rfc822_invalid_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
-        metadata_dynamic=['name'],
+        dynamic_metadata=['name'],
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match='Field cannot be set as dynamic metadata: name',
     ):
         metadata.as_rfc822()
-    metadata.metadata_dynamic = ['version']
+    metadata.dynamic_metadata = ['version']
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match='Field cannot be set as dynamic metadata: version',
     ):
         metadata.as_rfc822()
-    metadata.metadata_dynamic = ['unknown']
+    metadata.dynamic_metadata = ['unknown']
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match='Field is not known: unknown',
@@ -997,7 +997,7 @@ def test_as_rfc822_mapped_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
-        metadata_dynamic=list(pyproject_metadata.field_to_metadata('description')),
+        dynamic_metadata=list(pyproject_metadata.field_to_metadata('description')),
     )
     assert (
         str(metadata.as_rfc822())

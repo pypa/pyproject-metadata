@@ -523,7 +523,7 @@ class StandardMetadata:
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
     """
-    metadata_dynamic: list[str] = dataclasses.field(default_factory=list)
+    dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
     This is a list of METADATA fields that can change inbetween SDist and wheel. Requires metadata_version 2.2+.
     """
@@ -594,7 +594,7 @@ class StandardMetadata:
 
         if isinstance(self.license, str) or self.license_files is not None:
             return '2.4'
-        if self.metadata_dynamic:
+        if self.dynamic_metadata:
             return '2.2'
         return '2.1'
 
@@ -608,7 +608,7 @@ class StandardMetadata:
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
-        metadata_dynamic: list[str] | None = None,
+        dynamic_metadata: list[str] | None = None,
         *,
         allow_extra_keys: bool | None = None,
     ) -> Self:
@@ -680,7 +680,7 @@ class StandardMetadata:
             scripts=fetcher.get_dict('project.scripts'),
             gui_scripts=fetcher.get_dict('project.gui-scripts'),
             dynamic=dynamic,
-            metadata_dynamic=metadata_dynamic or [],
+            dynamic_metadata=dynamic_metadata or [],
             metadata_version=metadata_version,
         )
 
@@ -746,7 +746,7 @@ class StandardMetadata:
             message.set_payload(self.readme.text)
         # Core Metadata 2.2
         if self.auto_metadata_version != '2.1':
-            for field in self.metadata_dynamic:
+            for field in self.dynamic_metadata:
                 if field.lower() in {'name', 'version', 'dynamic'}:
                     msg = f'Field cannot be set as dynamic metadata: {field}'
                     raise ConfigurationError(msg)
