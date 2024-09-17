@@ -985,6 +985,24 @@ def test_as_rfc822_invalid_dynamic() -> None:
         match='Field cannot be set as dynamic metadata: version',
     ):
         metadata.as_rfc822()
+    metadata.metadata_dynamic = ['unknown']
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match='Field is not known: unknown',
+    ):
+        metadata.as_rfc822()
+
+
+def test_as_rfc822_mapped_dynamic() -> None:
+    metadata = pyproject_metadata.StandardMetadata(
+        name='something',
+        version=packaging.version.Version('1.0.0'),
+        metadata_dynamic=list(pyproject_metadata.field_to_metadata('description')),
+    )
+    assert (
+        str(metadata.as_rfc822())
+        == 'Metadata-Version: 2.2\nName: something\nVersion: 1.0.0\nDynamic: Summary\n\n'
+    )
 
 
 def test_as_rfc822_missing_version() -> None:
