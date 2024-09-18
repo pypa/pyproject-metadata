@@ -2,6 +2,26 @@
 Changelog
 +++++++++
 
+0.9.0 (beta 4: 20-09-2024)
+==========================
+
+
+Features:
+
+* Setting a non-dynamic field is an error
+
+Fixes:
+
+- Warn on multiline Summary (``project.description``)
+
+Refactoring:
+
+* Remove indirection accessing metadata_version, add ``auto_metadata_version``
+* Rework how dynamic works, add ``dynamic_metadata``
+* Use dataclass instead of named tuple
+* chore: use named arguments instead of positional
+
+
 0.9.0 (beta 3: 13-09-2024)
 ==========================
 
