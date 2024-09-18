@@ -1150,3 +1150,21 @@ def test_extra_build_system() -> None:
                 }
             }
         )
+
+
+def test_multiline_description_warns() -> None:
+    with pytest.warns(
+        pyproject_metadata.ConfigurationWarning,
+        match=re.escape(
+            'The one-line summary "project.description" should not contain more than one line. Backends will truncate or merge lines.'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                    'description': 'this\nis multiline',
+                },
+            }
+        )
