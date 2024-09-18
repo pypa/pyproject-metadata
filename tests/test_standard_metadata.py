@@ -1066,6 +1066,25 @@ def test_version_dynamic() -> None:
     metadata.version = packaging.version.Version('1.2.3')
 
 
+def test_modify_dynamic() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'example',
+                'version': '1.2.3',
+                'dynamic': [
+                    'requires-python',
+                ],
+            },
+        }
+    )
+    metadata.requires_python = packaging.specifiers.SpecifierSet('>=3.12')
+    with pytest.raises(
+        AttributeError, match=re.escape('Field "version" is not dynamic')
+    ):
+        metadata.version = packaging.version.Version('1.2.3')
+
+
 def test_missing_keys_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,

@@ -529,9 +529,19 @@ class StandardMetadata:
     """
 
     metadata_version: str | None = None
+    _locked_metadata: bool = False
 
     def __post_init__(self) -> None:
         self.validate()
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if self._locked_metadata and name.replace('_', '-') not in set(self.dynamic) | {
+            'metadata-version',
+            'dynamic-metadata',
+        }:
+            msg = f'Field "{name}" is not dynamic'
+            raise AttributeError(msg)
+        super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:
         if self.auto_metadata_version not in KNOWN_METADATA_VERSIONS:
@@ -661,7 +671,7 @@ class StandardMetadata:
             else None
         )
 
-        return cls(
+        self = cls(
             name=name,
             version=version,
             description=description,
@@ -683,6 +693,8 @@ class StandardMetadata:
             dynamic_metadata=dynamic_metadata or [],
             metadata_version=metadata_version,
         )
+        self._locked_metadata = True
+        return self
 
     def as_rfc822(self) -> RFC822Message:
         message = RFC822Message()
