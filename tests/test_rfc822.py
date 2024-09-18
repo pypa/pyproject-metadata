@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import email.message
 import inspect
+import re
 import textwrap
 
 import pytest
@@ -116,9 +117,15 @@ import pyproject_metadata
         ),
     ],
 )
-def test_headers(items: list[tuple[str, str]], data: str) -> None:
+def test_headers(
+    items: list[tuple[str, str]], data: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     message = pyproject_metadata.RFC822Message()
     smart_message = pyproject_metadata._SmartMessageSetter(message)
+
+    monkeypatch.setattr(
+        pyproject_metadata, 'KNOWN_METADATA_FIELDS', {x.lower() for x, _ in items}
+    )
 
     for name, value in items:
         smart_message[name] = value
@@ -132,7 +139,10 @@ def test_headers(items: list[tuple[str, str]], data: str) -> None:
     ]
 
 
-def test_body() -> None:
+def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        pyproject_metadata, 'KNOWN_METADATA_FIELDS', {'itema', 'itemb', 'itemc'}
+    )
     message = pyproject_metadata.RFC822Message()
 
     message['ItemA'] = 'ValueA'
@@ -168,6 +178,21 @@ def test_body() -> None:
     assert new_message.get_payload() == message.get_payload()
 
     assert bytes(message) == full.encode('utf-8')
+
+
+def test_unknown_field() -> None:
+    message = pyproject_metadata.RFC822Message()
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape('Unknown field "Unknown"'),
+    ):
+        message['Unknown'] = 'Value'
+
+
+def test_known_field() -> None:
+    message = pyproject_metadata.RFC822Message()
+    message['Platform'] = 'Value'
+    assert str(message) == 'Platform: Value\n\n'
 
 
 def test_convert_optional_dependencies() -> None:

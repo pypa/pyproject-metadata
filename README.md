@@ -33,7 +33,7 @@ pkg_info = metadata.as_rfc822()
 print(str(pkg_info)))  # core metadata
 ```
 
-## METADATA 2.4
+## SPDX licenses (METADATA 2.4+)
 
 If `project.license` is a string or `project.license-files` is present, then
 METADATA 2.4+ will be used. A user is expected to validate and normalize
@@ -51,3 +51,13 @@ folder, preserving the original source structure.
 
 
 [core metadata]: https://packaging.python.org/specifications/core-metadata/
+
+
+## Dynamic Metadata (METADATA 2.2+)
+
+Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA fields in `dynamic_metadata`. If you want to convert `pyproject.toml` field names to METADATA field(s), use `pyproject_metadata.pyproject_to_metadata("field-name")`, which will return a frozenset of metadata names that are touched by that field.
+
+
+## Adding extra fields
+
+You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.

@@ -907,6 +907,7 @@ def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with open('pyproject.toml', 'rb') as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    metadata.dynamic_metadata = ['description']
     core_metadata = metadata.as_rfc822()
     assert core_metadata.items() == [
         ('Metadata-Version', '2.2'),
@@ -971,17 +972,37 @@ def test_as_rfc822_invalid_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
         name='something',
         version=packaging.version.Version('1.0.0'),
+        dynamic_metadata=['name'],
     )
-    metadata.dynamic = ['name']
     with pytest.raises(
-        pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: name'
+        pyproject_metadata.ConfigurationError,
+        match='Field cannot be set as dynamic metadata: name',
     ):
         metadata.as_rfc822()
-    metadata.dynamic = ['version']
+    metadata.dynamic_metadata = ['version']
     with pytest.raises(
-        pyproject_metadata.ConfigurationError, match='Field cannot be dynamic: version'
+        pyproject_metadata.ConfigurationError,
+        match='Field cannot be set as dynamic metadata: version',
     ):
         metadata.as_rfc822()
+    metadata.dynamic_metadata = ['unknown']
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match='Field is not known: unknown',
+    ):
+        metadata.as_rfc822()
+
+
+def test_as_rfc822_mapped_dynamic() -> None:
+    metadata = pyproject_metadata.StandardMetadata(
+        name='something',
+        version=packaging.version.Version('1.0.0'),
+        dynamic_metadata=list(pyproject_metadata.field_to_metadata('description')),
+    )
+    assert (
+        str(metadata.as_rfc822())
+        == 'Metadata-Version: 2.2\nName: something\nVersion: 1.0.0\nDynamic: Summary\n\n'
+    )
 
 
 def test_as_rfc822_missing_version() -> None:
@@ -1043,7 +1064,6 @@ def test_version_dynamic() -> None:
         }
     )
     metadata.version = packaging.version.Version('1.2.3')
-    assert 'version' not in metadata.dynamic
 
 
 def test_missing_keys_warns() -> None:
