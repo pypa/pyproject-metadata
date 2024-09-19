@@ -572,7 +572,7 @@ class StandardMetadata:
         if warn:
             if self.description and '\n' in self.description:
                 warnings.warn(
-                    'The one-line summary "project.description" should not contain more than one line. Backends will truncate or merge lines.',
+                    'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.',
                     ConfigurationWarning,
                     stacklevel=2,
                 )
