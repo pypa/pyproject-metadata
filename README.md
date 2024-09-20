@@ -74,7 +74,7 @@ invalid_classifiers = set(metadata.classifiers) - trove_classifiers.classifiers
 
 # Also the deprecated dict if you want it
 dep_names = set(metadata.classifiers) & set(trove_classifiers.deprecated_classifiers)
-deprecated_classifiers = {k: trove_classifiers.deprecated_classifiers[k] for k in dep_names)
+deprecated_classifiers = {k: trove_classifiers.deprecated_classifiers[k] for k in dep_names}
 ```
 
 If you are writing a build backend, you should not validate classifiers with a `Private ::` prefix; these are only restricted for upload to PyPI (such as `Private :: Do Not Upload`).
