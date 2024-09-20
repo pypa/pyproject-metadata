@@ -1156,7 +1156,7 @@ def test_multiline_description_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,
         match=re.escape(
-            'The one-line summary "project.description" should not contain more than one line. Backends will truncate or merge lines.'
+            'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.'
         ),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
