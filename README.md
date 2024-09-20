@@ -69,7 +69,7 @@ If you want to validate classifiers, then install the `trove_classifiers` librar
 ```python
 import trove_classifiers
 
-metadata_classifieres = {c for c in metadata.classifiers if not c.startswith("Private ::")
+metadata_classifieres = {c for c in metadata.classifiers if not c.startswith("Private ::")}
 invalid_classifiers = set(metadata.classifiers) - trove_classifiers.classifiers
 
 # Also the deprecated dict if you want it
