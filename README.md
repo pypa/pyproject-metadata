@@ -61,3 +61,22 @@ Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA f
 ## Adding extra fields
 
 You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.
+
+## Validating classifiers
+
+If you want to validate classifiers, then install the `trove_classifiers` library (the canonical source for classifiers), and run:
+
+```python
+import trove_classifiers
+
+metadata_classifieres = {c for c in metadata.classifiers if not c.startswith("Private ::")}
+invalid_classifiers = set(metadata.classifiers) - trove_classifiers.classifiers
+
+# Also the deprecated dict if you want it
+dep_names = set(metadata.classifiers) & set(trove_classifiers.deprecated_classifiers)
+deprecated_classifiers = {k: trove_classifiers.deprecated_classifiers[k] for k in dep_names}
+```
+
+If you are writing a build backend, you should not validate classifiers with a `Private ::` prefix; these are only restricted for upload to PyPI (such as `Private :: Do Not Upload`).
+
+Since classifiers are a moving target, it is probably best for build backends (which may be shipped by third party distributors like Debian or Fedora) to either ignore or have optional classifier validation.
