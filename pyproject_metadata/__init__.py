@@ -338,7 +338,7 @@ class ProjectFetcher(DataFetcher):
 
         return list(_get_files_from_globs(project_dir, license_files))
 
-    def get_readme(self, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901
+    def get_readme(self, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901, PLR0912
         if 'project.readme' not in self:
             return None
 
@@ -543,7 +543,7 @@ class StandardMetadata:
             raise AttributeError(msg)
         super().__setattr__(name, value)
 
-    def validate(self, *, warn: bool = True) -> None:
+    def validate(self, *, warn: bool = True) -> None:  # noqa: C901
         if self.auto_metadata_version not in KNOWN_METADATA_VERSIONS:
             msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
             raise ConfigurationError(msg)
@@ -569,19 +569,26 @@ class StandardMetadata:
             msg = 'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers'
             raise ConfigurationError(msg)
 
-        if warn and self.auto_metadata_version not in PRE_SPDX_METADATA_VERSIONS:
-            if isinstance(self.license, License):
+        if warn:
+            if self.description and '\n' in self.description:
                 warnings.warn(
-                    'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+                    'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.',
                     ConfigurationWarning,
                     stacklevel=2,
                 )
-            elif any(c.startswith('License ::') for c in self.classifiers):
-                warnings.warn(
-                    '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
-                    ConfigurationWarning,
-                    stacklevel=2,
-                )
+            if self.auto_metadata_version not in PRE_SPDX_METADATA_VERSIONS:
+                if isinstance(self.license, License):
+                    warnings.warn(
+                        'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
+                elif any(c.startswith('License ::') for c in self.classifiers):
+                    warnings.warn(
+                        '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
 
         if (
             isinstance(self.license, str)
@@ -701,7 +708,7 @@ class StandardMetadata:
         self.write_to_rfc822(message)
         return message
 
-    def write_to_rfc822(self, message: email.message.Message) -> None:  # noqa: C901
+    def write_to_rfc822(self, message: email.message.Message) -> None:  # noqa: C901, PLR0912
         self.validate(warn=False)
 
         smart_message = _SmartMessageSetter(message)
