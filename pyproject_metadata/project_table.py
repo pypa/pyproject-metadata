@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Dict, List, Union
 
 
 if sys.version_info < (3, 11):
@@ -53,20 +53,20 @@ ProjectTable = TypedDict(
         'version': str,
         'description': str,
         'license': Union[LicenseTable, str],
-        'license-files': Sequence[str],
+        'license-files': List[str],
         'readme': Union[str, ReadmeTable],
         'requires-python': str,
-        'dependencies': Sequence[str],
-        'optional-dependencies': Mapping[str, Sequence[str]],
-        'entrypoints': Mapping[str, Mapping[str, str]],
-        'authors': Sequence[ContactTable],
-        'maintainers': Sequence[ContactTable],
-        'urls': Mapping[str, str],
-        'classifiers': Sequence[str],
-        'keywords': Sequence[str],
-        'scripts': Mapping[str, str],
-        'gui-scripts': Mapping[str, str],
-        'dynamic': Sequence[
+        'dependencies': List[str],
+        'optional-dependencies': Dict[str, List[str]],
+        'entry-points': Dict[str, Dict[str, str]],
+        'authors': List[ContactTable],
+        'maintainers': List[ContactTable],
+        'urls': Dict[str, str],
+        'classifiers': List[str],
+        'keywords': List[str],
+        'scripts': Dict[str, str],
+        'gui-scripts': Dict[str, str],
+        'dynamic': List[
             Literal[
                 'authors',
                 'classifiers',
@@ -94,8 +94,8 @@ BuildSystemTable = TypedDict(
     'BuildSystemTable',
     {
         'build-backend': str,
-        'requires': Sequence[str],
-        'backend-path': Sequence[str],
+        'requires': List[str],
+        'backend-path': List[str],
     },
     total=False,
 )
@@ -105,7 +105,7 @@ PyProjectTable = TypedDict(
     {
         'build-system': BuildSystemTable,
         'project': ProjectTable,
-        'tool': Mapping[str, Any],
+        'tool': Dict[str, Any],
     },
     total=False,
 )
