@@ -15,9 +15,13 @@ import sys
 import typing
 import warnings
 
+from . import constants, pyproject
+from .errors import ConfigurationError, ConfigurationWarning
+from .pyproject import License, Readme
+
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Mapping, Sequence
+    from collections.abc import Mapping
     from typing import Any
 
     from packaging.requirements import Requirement
@@ -27,78 +31,15 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import ContactTable, ProjectTable, PyProjectTable
+    from .project_table import PyProjectTable
 
 import packaging.markers
-import packaging.requirements
 import packaging.specifiers
 import packaging.utils
 import packaging.version
 
 
 __version__ = '0.9.0b4'
-
-KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3', '2.4'}
-PRE_SPDX_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
-
-PROJECT_TO_METADATA = {
-    'authors': frozenset(['Author', 'Author-Email']),
-    'classifiers': frozenset(['Classifier']),
-    'dependencies': frozenset(['Requires-Dist']),
-    'description': frozenset(['Summary']),
-    'dynamic': frozenset(),
-    'entry-points': frozenset(),
-    'gui-scripts': frozenset(),
-    'keywords': frozenset(['Keywords']),
-    'license': frozenset(['License', 'License-Expression']),
-    'license-files': frozenset(['License-File']),
-    'maintainers': frozenset(['Maintainer', 'Maintainer-Email']),
-    'name': frozenset(['Name']),
-    'optional-dependencies': frozenset(['Provides-Extra', 'Requires-Dist']),
-    'readme': frozenset(['Description', 'Description-Content-Type']),
-    'requires-python': frozenset(['Requires-Python']),
-    'scripts': frozenset(),
-    'urls': frozenset(['Project-URL']),
-    'version': frozenset(['Version']),
-}
-
-KNOWN_TOPLEVEL_FIELDS = {'build-system', 'project', 'tool'}
-KNOWN_BUILD_SYSTEM_FIELDS = {'backend-path', 'build-backend', 'requires'}
-KNOWN_PROJECT_FIELDS = set(PROJECT_TO_METADATA)
-
-KNOWN_METADATA_FIELDS = {
-    'author',
-    'author-email',
-    'classifier',
-    'description',
-    'description-content-type',
-    'download-urL',  # Not specified via pyproject standards
-    'dynamic',  # Can't be in dynamic
-    'home-page',  # Not specified via pyproject standards
-    'keywords',
-    'license',
-    'license-expression',
-    'license-file',
-    'maintainer',
-    'maintainer-email',
-    'metadata-version',
-    'name',  # Can't be in dynamic
-    'obsoletes',  # Deprecated
-    'obsoletes-dist',  # Rarly used
-    'platform',  # Not specified via pyproject standards
-    'project-url',
-    'provides',  # Deprecated
-    'provides-dist',  # Rarly used
-    'provides-extra',
-    'requires',  # Deprecated
-    'requires-dist',
-    'requires-external',  # Not specified via pyproject standards
-    'requires-python',
-    'summary',
-    'supported-platform',  # Not specified via pyproject standards
-    'version',  # Can't be in dynamic
-}
-
 
 __all__ = [
     'ConfigurationError',
@@ -123,44 +64,33 @@ def field_to_metadata(field: str) -> frozenset[str]:
     """
     Return the METADATA fields that correspond to a project field.
     """
-    return frozenset(PROJECT_TO_METADATA[field])
+    return frozenset(constants.PROJECT_TO_METADATA[field])
 
 
-def validate_top_level(pyproject: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject) - KNOWN_TOPLEVEL_FIELDS
+def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
+    extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
     if extra_keys:
         msg = f'Extra keys present in pyproject.toml: {extra_keys}'
         raise ConfigurationError(msg)
 
 
-def validate_build_system(pyproject: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject.get('build-system', [])) - KNOWN_BUILD_SYSTEM_FIELDS
+def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
+    extra_keys = (
+        set(pyproject_table.get('build-system', []))
+        - constants.KNOWN_BUILD_SYSTEM_FIELDS
+    )
     if extra_keys:
         msg = f'Extra keys present in "build-system": {extra_keys}'
         raise ConfigurationError(msg)
 
 
-def validate_project(pyproject: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject.get('project', [])) - KNOWN_PROJECT_FIELDS
+def validate_project(pyproject_table: Mapping[str, Any]) -> None:
+    extra_keys = (
+        set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
+    )
     if extra_keys:
         msg = f'Extra keys present in "project": {extra_keys}'
         raise ConfigurationError(msg)
-
-
-class ConfigurationError(Exception):
-    """Error in the backend metadata."""
-
-    def __init__(self, msg: str, *, key: str | None = None):
-        super().__init__(msg)
-        self._key = key
-
-    @property
-    def key(self) -> str | None:  # pragma: no cover
-        return self._key
-
-
-class ConfigurationWarning(UserWarning):
-    """Warnings about backend metadata."""
 
 
 @dataclasses.dataclass
@@ -192,7 +122,7 @@ class RFC822Policy(email.policy.EmailPolicy):
     max_line_length = 0
 
     def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
-        if name.lower() not in KNOWN_METADATA_FIELDS:
+        if name.lower() not in constants.KNOWN_METADATA_FIELDS:
             msg = f'Unknown field "{name}"'
             raise ConfigurationError(msg, key=name)
         size = len(name) + 2
@@ -214,287 +144,6 @@ class RFC822Message(email.message.EmailMessage):
         self, unixfrom: bool = False, policy: email.policy.Policy | None = None
     ) -> bytes:
         return self.as_string(unixfrom, policy=policy).encode('utf-8')
-
-
-def ensure_str(value: str | None, key: str) -> str | None:
-    if isinstance(value, str):
-        return value
-    if value is None:
-        return None
-
-    msg = f'Field "{key}" has an invalid type, expecting a string (got "{value}")'
-    raise ConfigurationError(msg, key=key)
-
-
-def ensure_list(val: list[str] | None, key: str) -> list[str] | None:
-    if val is None:
-        return None
-    if not isinstance(val, list):
-        msg = f'Field "{key}" has an invalid type, expecting a list of strings (got "{val}")'
-        raise ConfigurationError(msg, key=val)
-    for item in val:
-        if not isinstance(item, str):
-            msg = f'Field "{key}" contains item with invalid type, expecting a string (got "{item}")'
-            raise ConfigurationError(msg, key=key)
-    return val
-
-
-def ensure_dict(val: dict[str, str] | None, key: str) -> dict[str, str]:
-    if val is None:
-        return {}
-    if not isinstance(val, dict):
-        msg = f'Field "{key}" has an invalid type, expecting a dictionary of strings (got "{val}")'
-        raise ConfigurationError(msg, key=key)
-    for subkey, item in val.items():
-        if not isinstance(item, str):
-            msg = f'Field "{key}.{subkey}" has an invalid type, expecting a string (got "{item}")'
-            raise ConfigurationError(msg, key=f'{key}.{subkey}')
-    return val
-
-
-def ensure_people(
-    val: Sequence[ContactTable], key: str
-) -> list[tuple[str, str | None]]:
-    if not (
-        isinstance(val, list)
-        and all(isinstance(x, dict) for x in val)
-        and all(
-            isinstance(item, str)
-            for items in [_dict.values() for _dict in val]
-            for item in items
-        )
-    ):
-        msg = (
-            f'Field "{key}" has an invalid type, expecting a list of '
-            f'dictionaries containing the "name" and/or "email" keys (got "{val}")'
-        )
-        raise ConfigurationError(msg, key=key)
-    return [(entry.get('name', 'Unknown'), entry.get('email')) for entry in val]
-
-
-def get_license(
-    project: ProjectTable, project_dir: pathlib.Path
-) -> License | str | None:
-    val = project.get('license')
-    if val is None:
-        return None
-    if isinstance(val, str):
-        return val
-
-    if isinstance(val, dict):
-        _license = ensure_dict(val, 'project.license')  # type: ignore[arg-type]
-    else:
-        msg = f'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "{val}")'
-        raise ConfigurationError(msg)
-
-    for field in _license:
-        if field not in ('file', 'text'):
-            msg = f'Unexpected field "project.license.{field}"'
-            raise ConfigurationError(msg, key=f'project.license.{field}')
-
-    file: pathlib.Path | None = None
-    filename = _license.get('file')
-    text = _license.get('text')
-
-    if (filename and text) or (not filename and not text):
-        msg = f'Invalid "project.license" value, expecting either "file" or "text" (got "{_license}")'
-        raise ConfigurationError(msg, key='project.license')
-
-    if filename:
-        file = project_dir.joinpath(filename)
-        if not file.is_file():
-            msg = f'License file not found ("{filename}")'
-            raise ConfigurationError(msg, key='project.license.file')
-        text = file.read_text(encoding='utf-8')
-
-    assert text is not None
-    return License(text, file)
-
-
-def get_license_files(
-    project: ProjectTable, project_dir: pathlib.Path
-) -> list[pathlib.Path] | None:
-    license_files = project.get('license-files')
-    if license_files is None:
-        return None
-    ensure_list(license_files, 'project.license-files')
-
-    return list(_get_files_from_globs(project_dir, license_files))
-
-
-def get_readme(project: ProjectTable, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901, PLR0912
-    if 'readme' not in project:
-        return None
-
-    filename: str | None
-    file: pathlib.Path | None = None
-    text: str | None
-    content_type: str | None
-
-    readme = project['readme']
-    if isinstance(readme, str):
-        # readme is a file
-        text = None
-        filename = readme
-        if filename.endswith('.md'):
-            content_type = 'text/markdown'
-        elif filename.endswith('.rst'):
-            content_type = 'text/x-rst'
-        else:
-            msg = f'Could not infer content type for readme file "{filename}"'
-            raise ConfigurationError(msg, key='project.readme')
-    elif isinstance(readme, dict):
-        # readme is a dict containing either 'file' or 'text', and content-type
-        for field in readme:
-            if field not in ('content-type', 'file', 'text'):
-                msg = f'Unexpected field "project.readme.{field}"'
-                raise ConfigurationError(msg, key=f'project.readme.{field}')
-        content_type = ensure_str(
-            readme.get('content-type'), 'project.readme.content-type'
-        )
-        filename = ensure_str(readme.get('file'), 'project.readme.file')
-        text = ensure_str(readme.get('text'), 'project.readme.text')
-        if (filename and text) or (not filename and not text):
-            msg = f'Invalid "project.readme" value, expecting either "file" or "text" (got "{readme}")'
-            raise ConfigurationError(msg, key='project.readme')
-        if not content_type:
-            msg = 'Field "project.readme.content-type" missing'
-            raise ConfigurationError(msg, key='project.readme.content-type')
-    else:
-        msg = (
-            f'Field "project.readme" has an invalid type, expecting either, '
-            f'a string or dictionary of strings (got "{readme}")'
-        )
-        raise ConfigurationError(msg, key='project.readme')
-
-    if filename:
-        file = project_dir.joinpath(filename)
-        if not file.is_file():
-            msg = f'Readme file not found ("{filename}")'
-            raise ConfigurationError(msg, key='project.readme.file')
-        text = file.read_text(encoding='utf-8')
-
-    assert text is not None
-    return Readme(text, file, content_type)
-
-
-def get_dependencies(project: ProjectTable) -> list[Requirement]:
-    requirement_strings = (
-        ensure_list(project.get('dependencies'), 'project.dependencies') or []
-    )
-
-    requirements: list[Requirement] = []
-    for req in requirement_strings:
-        try:
-            requirements.append(packaging.requirements.Requirement(req))
-        except packaging.requirements.InvalidRequirement as e:
-            msg = (
-                'Field "project.dependencies" contains an invalid PEP 508 '
-                f'requirement string "{req}" ("{e}")'
-            )
-            raise ConfigurationError(msg) from None
-    return requirements
-
-
-def get_optional_dependencies(
-    project: ProjectTable,
-) -> dict[str, list[Requirement]]:
-    val = project.get('optional-dependencies')
-    if not val:
-        return {}
-
-    requirements_dict: dict[str, list[Requirement]] = {}
-    if not isinstance(val, dict):
-        msg = (
-            'Field "project.optional-dependencies" has an invalid type, expecting a '
-            f'dictionary of PEP 508 requirement strings (got "{val}")'
-        )
-        raise ConfigurationError(msg)
-    for extra, requirements in val.copy().items():
-        assert isinstance(extra, str)
-        if not isinstance(requirements, list):
-            msg = (
-                f'Field "project.optional-dependencies.{extra}" has an invalid type, expecting a '
-                f'dictionary PEP 508 requirement strings (got "{requirements}")'
-            )
-            raise ConfigurationError(msg)
-        requirements_dict[extra] = []
-        for req in requirements:
-            if not isinstance(req, str):
-                msg = (
-                    f'Field "project.optional-dependencies.{extra}" has an invalid type, '
-                    f'expecting a PEP 508 requirement string (got "{req}")'
-                )
-                raise ConfigurationError(msg)
-            try:
-                requirements_dict[extra].append(packaging.requirements.Requirement(req))
-            except packaging.requirements.InvalidRequirement as e:
-                msg = (
-                    f'Field "project.optional-dependencies.{extra}" contains '
-                    f'an invalid PEP 508 requirement string "{req}" ("{e}")'
-                )
-                raise ConfigurationError(msg) from None
-    return dict(requirements_dict)
-
-
-def get_entrypoints(project: ProjectTable) -> dict[str, dict[str, str]]:
-    val = project.get('entry-points', None)
-    if val is None:
-        return {}
-    if not isinstance(val, dict):
-        msg = (
-            'Field "project.entry-points" has an invalid type, expecting a '
-            f'dictionary of entrypoint sections (got "{val}")'
-        )
-        raise ConfigurationError(msg)
-    for section, entrypoints in val.items():
-        assert isinstance(section, str)
-        if not re.match(r'^\w+(\.\w+)*$', section):
-            msg = (
-                'Field "project.entry-points" has an invalid value, expecting a name '
-                f'containing only alphanumeric, underscore, or dot characters (got "{section}")'
-            )
-            raise ConfigurationError(msg)
-        if not isinstance(entrypoints, dict):
-            msg = (
-                f'Field "project.entry-points.{section}" has an invalid type, expecting a '
-                f'dictionary of entrypoints (got "{entrypoints}")'
-            )
-            raise ConfigurationError(msg)
-        for name, entrypoint in entrypoints.items():
-            assert isinstance(name, str)
-            if not isinstance(entrypoint, str):
-                msg = (
-                    f'Field "project.entry-points.{section}.{name}" has an invalid type, '
-                    f'expecting a string (got "{entrypoint}")'
-                )
-                raise ConfigurationError(msg)
-    return val
-
-
-def get_dynamic(project: ProjectTable) -> list[str]:
-    dynamic: list[str] = project.get('dynamic', [])  # type: ignore[assignment]
-
-    ensure_list(dynamic, 'project.dynamic')
-
-    if 'name' in dynamic:
-        msg = 'Unsupported field "name" in "project.dynamic"'
-        raise ConfigurationError(msg)
-
-    return dynamic
-
-
-@dataclasses.dataclass(frozen=True)
-class License:
-    text: str
-    file: pathlib.Path | None
-
-
-@dataclasses.dataclass(frozen=True)
-class Readme:
-    text: str
-    file: pathlib.Path | None
-    content_type: str
 
 
 @dataclasses.dataclass
@@ -543,8 +192,8 @@ class StandardMetadata:
         super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
-        if self.auto_metadata_version not in KNOWN_METADATA_VERSIONS:
-            msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
+        if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
+            msg = f'The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)'
             raise ConfigurationError(msg)
 
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
@@ -575,7 +224,7 @@ class StandardMetadata:
                     ConfigurationWarning,
                     stacklevel=2,
                 )
-            if self.auto_metadata_version not in PRE_SPDX_METADATA_VERSIONS:
+            if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
                 if isinstance(self.license, License):
                     warnings.warn(
                         'Set "project.license" to an SPDX license expression for metadata >= 2.4',
@@ -591,14 +240,14 @@ class StandardMetadata:
 
         if (
             isinstance(self.license, str)
-            and self.auto_metadata_version in PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
 
         if (
             self.license_files is not None
-            and self.auto_metadata_version in PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
@@ -644,19 +293,19 @@ class StandardMetadata:
         elif not allow_extra_keys:
             validate_project(data)
 
-        dynamic = get_dynamic(project)
+        dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
             if field in data['project']:
                 msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
                 raise ConfigurationError(msg)
 
-        name = ensure_str(project.get('name'), 'project.name')
+        name = pyproject.ensure_str(project.get('name'), 'project.name')
         if not name:
             msg = 'Field "project.name" missing'
             raise ConfigurationError(msg)
 
-        version_string = ensure_str(project.get('version'), 'project.version')
+        version_string = pyproject.ensure_str(project.get('version'), 'project.version')
         version = packaging.version.Version(version_string) if version_string else None
 
         if version is None and 'version' not in dynamic:
@@ -666,9 +315,11 @@ class StandardMetadata:
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
-        description = ensure_str(project.get('description'), 'project.description')
+        description = pyproject.ensure_str(
+            project.get('description'), 'project.description'
+        )
 
-        requires_python_string = ensure_str(
+        requires_python_string = pyproject.ensure_str(
             project.get('requires-python'), 'project.requires-python'
         )
         requires_python = (
@@ -681,23 +332,30 @@ class StandardMetadata:
             name=name,
             version=version,
             description=description,
-            license=get_license(project, project_dir),
-            license_files=get_license_files(project, project_dir),
-            readme=get_readme(project, project_dir),
+            license=pyproject.get_license(project, project_dir),
+            license_files=pyproject.get_license_files(project, project_dir),
+            readme=pyproject.get_readme(project, project_dir),
             requires_python=requires_python,
-            dependencies=get_dependencies(project),
-            optional_dependencies=get_optional_dependencies(project),
-            entrypoints=get_entrypoints(project),
-            authors=ensure_people(project.get('authors', []), 'project.authors'),
-            maintainers=ensure_people(
+            dependencies=pyproject.get_dependencies(project),
+            optional_dependencies=pyproject.get_optional_dependencies(project),
+            entrypoints=pyproject.get_entrypoints(project),
+            authors=pyproject.ensure_people(
+                project.get('authors', []), 'project.authors'
+            ),
+            maintainers=pyproject.ensure_people(
                 project.get('maintainers', []), 'project.maintainers'
             ),
-            urls=ensure_dict(project.get('urls'), 'project.urls'),
-            classifiers=ensure_list(project.get('classifiers'), 'project.classifiers')
+            urls=pyproject.ensure_dict(project.get('urls'), 'project.urls'),
+            classifiers=pyproject.ensure_list(
+                project.get('classifiers'), 'project.classifiers'
+            )
             or [],
-            keywords=ensure_list(project.get('keywords'), 'project.keywords') or [],
-            scripts=ensure_dict(project.get('scripts'), 'project.scripts'),
-            gui_scripts=ensure_dict(project.get('gui-scripts'), 'project.gui-scripts'),
+            keywords=pyproject.ensure_list(project.get('keywords'), 'project.keywords')
+            or [],
+            scripts=pyproject.ensure_dict(project.get('scripts'), 'project.scripts'),
+            gui_scripts=pyproject.ensure_dict(
+                project.get('gui-scripts'), 'project.gui-scripts'
+            ),
             dynamic=dynamic,
             dynamic_metadata=dynamic_metadata or [],
             metadata_version=metadata_version,
@@ -771,7 +429,7 @@ class StandardMetadata:
                 if field.lower() in {'name', 'version', 'dynamic'}:
                     msg = f'Field cannot be set as dynamic metadata: {field}'
                     raise ConfigurationError(msg)
-                if field.lower() not in KNOWN_METADATA_FIELDS:
+                if field.lower() not in constants.KNOWN_METADATA_FIELDS:
                     msg = f'Field is not known: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
@@ -803,18 +461,3 @@ class StandardMetadata:
         else:
             requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
         return requirement
-
-
-def _get_files_from_globs(
-    project_dir: pathlib.Path, globs: Iterable[str]
-) -> Generator[pathlib.Path, None, None]:
-    for glob in globs:
-        if glob.startswith(('..', '/')):
-            msg = f'"{glob}" is an invalid "project.license-files" glob: the pattern must match files within the project directory'
-            raise ConfigurationError(msg)
-        files = [f for f in project_dir.glob(glob) if f.is_file()]
-        if not files:
-            msg = f'Every pattern in "project.license-files" must match at least one file: "{glob}" did not match any'
-            raise ConfigurationError(msg)
-        for f in files:
-            yield f.relative_to(project_dir)
