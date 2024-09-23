@@ -10,6 +10,7 @@ import textwrap
 import pytest
 
 import pyproject_metadata
+import pyproject_metadata.constants
 
 
 @pytest.mark.parametrize(
@@ -124,7 +125,9 @@ def test_headers(
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     monkeypatch.setattr(
-        pyproject_metadata, 'KNOWN_METADATA_FIELDS', {x.lower() for x, _ in items}
+        pyproject_metadata.constants,
+        'KNOWN_METADATA_FIELDS',
+        {x.lower() for x, _ in items},
     )
 
     for name, value in items:
@@ -141,7 +144,9 @@ def test_headers(
 
 def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        pyproject_metadata, 'KNOWN_METADATA_FIELDS', {'itema', 'itemb', 'itemc'}
+        pyproject_metadata.constants,
+        'KNOWN_METADATA_FIELDS',
+        {'itema', 'itemb', 'itemc'},
     )
     message = pyproject_metadata.RFC822Message()
 
