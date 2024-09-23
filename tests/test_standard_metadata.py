@@ -67,6 +67,18 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
+                name = true
+                version = '0.1.0'
+                dynamic = [
+                    3,
+                ]
+            """,
+            'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
+            id='Unsupported type in project.dynamic',
+        ),
+        pytest.param(
+            """
+                [project]
                 name = 'test'
                 version = true
             """,
@@ -613,6 +625,16 @@ DIR = pathlib.Path(__file__).parent.resolve()
             """,
             '"../LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
             id='Parent license-files glob',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                license-files = ["this", 12]
+            """,
+            'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+            id='Parent license-files invalid type',
         ),
         pytest.param(
             """
