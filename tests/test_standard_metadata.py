@@ -847,6 +847,51 @@ def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
+def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
+
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    core_metadata = metadata.as_json()
+
+    assert core_metadata == {
+        'author': 'Example!',
+        'author_email': 'Unknown <example@example.com>',
+        'classifier': [
+            'Development Status :: 4 - Beta',
+            'Programming Language :: Python',
+        ],
+        'description': 'some readme 👋\n',
+        'description_content_type': 'text/markdown',
+        'home_page': 'example.com',
+        'keywords': ['trampolim', 'is', 'interesting'],
+        'license': 'some license text',
+        'maintainer_email': 'Other Example <other@example.com>',
+        'metadata_version': '2.1',
+        'name': 'full_metadata',
+        'project_url': [
+            'Homepage, example.com',
+            'Documentation, readthedocs.org',
+            'Repository, github.com/some/repo',
+            'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst',
+        ],
+        'provides_extra': ['test'],
+        'requires_dist': [
+            'dependency1',
+            'dependency2>1.0.0',
+            'dependency3[extra]',
+            'dependency4; os_name != "nt"',
+            'dependency5[other-extra]>1.0; os_name == "nt"',
+            'test_dependency; extra == "test"',
+            'test_dependency[test_extra]; extra == "test"',
+            'test_dependency[test_extra2]>3.0; os_name == "nt" and ' 'extra == "test"',
+        ],
+        'requires_python': '>=3.8',
+        'summary': 'A package with all the metadata :)',
+        'version': '3.2.1',
+    }
+
+
 def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / 'packages/full-metadata')
 
@@ -886,6 +931,26 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ('Description-Content-Type', 'text/markdown'),
     ]
     assert core_metadata.get_payload() == 'some readme 👋\n'
+
+
+def test_as_json_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / 'packages/spdx')
+
+    with open('pyproject.toml', 'rb') as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    core_metadata = metadata.as_json()
+    assert core_metadata == {
+        'license_expression': 'MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)',
+        'license_file': [
+            'AUTHORS.txt',
+            'LICENSE.md',
+            'LICENSE.txt',
+            'licenses/LICENSE.MIT',
+        ],
+        'metadata_version': '2.4',
+        'name': 'example',
+        'version': '1.2.3',
+    }
 
 
 def test_as_rfc822_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -969,6 +1034,39 @@ def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     assert 'Requires-Dist: some_package; extra == "under-score"' in rfc822
     assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
+
+
+def test_as_json_set_metadata() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'hi',
+                'version': '1.2',
+                'optional-dependencies': {
+                    'under_score': ['some_package'],
+                    'da-sh': ['some-package'],
+                    'do.t': ['some.package'],
+                    'empty': [],
+                },
+            }
+        },
+        metadata_version='2.1',
+    )
+    assert metadata.metadata_version == '2.1'
+
+    json = metadata.as_json()
+
+    assert json == {
+        'metadata_version': '2.1',
+        'name': 'hi',
+        'provides_extra': ['under-score', 'da-sh', 'do-t', 'empty'],
+        'requires_dist': [
+            'some_package; extra == "under-score"',
+            'some-package; extra == "da-sh"',
+            'some.package; extra == "do-t"',
+        ],
+        'version': '1.2',
+    }
 
 
 def test_as_rfc822_set_metadata_invalid() -> None:

@@ -2,14 +2,15 @@ from __future__ import annotations
 
 
 __all__ = [
+    'KNOWN_BUILD_SYSTEM_FIELDS',
+    'KNOWN_METADATA_FIELDS',
     'KNOWN_METADATA_VERSIONS',
     'KNOWN_METADATA_VERSIONS',
+    'KNOWN_MULTIUSE',
+    'KNOWN_PROJECT_FIELDS',
+    'KNOWN_TOPLEVEL_FIELDS',
     'PRE_SPDX_METADATA_VERSIONS',
     'PROJECT_TO_METADATA',
-    'KNOWN_TOPLEVEL_FIELDS',
-    'KNOWN_BUILD_SYSTEM_FIELDS',
-    'KNOWN_PROJECT_FIELDS',
-    'KNOWN_METADATA_FIELDS',
 ]
 
 
@@ -51,8 +52,8 @@ KNOWN_METADATA_FIELDS = {
     'classifier',
     'description',
     'description-content-type',
-    'download-url',  # Not specified via pyproject standards 'dynamic',  # Can't be in dynamic
-    'dynamic',
+    'download-url',  # Not specified via pyproject standards
+    'dynamic',  # Can't be in dynamic
     'home-page',  # Not specified via pyproject standards
     'keywords',
     'license',
@@ -63,11 +64,11 @@ KNOWN_METADATA_FIELDS = {
     'metadata-version',
     'name',  # Can't be in dynamic
     'obsoletes',  # Deprecated
-    'obsoletes-dist',  # Rarly used
+    'obsoletes-dist',  # Rarely used
     'platform',  # Not specified via pyproject standards
     'project-url',
     'provides',  # Deprecated
-    'provides-dist',  # Rarly used
+    'provides-dist',  # Rarely used
     'provides-extra',
     'requires',  # Deprecated
     'requires-dist',
@@ -76,4 +77,21 @@ KNOWN_METADATA_FIELDS = {
     'summary',
     'supported-platform',  # Not specified via pyproject standards
     'version',  # Can't be in dynamic
+}
+
+KNOWN_MULTIUSE = {
+    'dynamic',
+    'platform',
+    'provides-extra',
+    'supported-platform',
+    'license-file',
+    'classifier',
+    'requires-dist',
+    'requires-external',
+    'project-url',
+    'provides-dist',
+    'obsoletes-dist',
+    'requires',  # Deprecated
+    'obsoletes',  # Deprecated
+    'provides',  # Deprecated
 }

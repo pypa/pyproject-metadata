@@ -110,6 +110,39 @@ class _SmartMessageSetter:
             return
         self.message[name] = value
 
+    def set_payload(self, payload: str) -> None:
+        self.message.set_payload(payload)
+
+
+@dataclasses.dataclass
+class _JSonMessageSetter:
+    """
+    This provides an API to build a JSON message output. Line breaks are
+    preserved this way.
+    """
+
+    data: dict[str, str | list[str]]
+
+    def __setitem__(self, name: str, value: str | None) -> None:
+        name = name.lower()
+        key = name.replace('-', '_')
+
+        if value is None:
+            return
+
+        if name == 'keywords':
+            values = (x.strip() for x in value.split(','))
+            self.data[key] = [x for x in values if x]
+        elif name in constants.KNOWN_MULTIUSE:
+            entry = self.data.setdefault(key, [])
+            assert isinstance(entry, list)
+            entry.append(value)
+        else:
+            self.data[key] = value
+
+    def set_payload(self, payload: str) -> None:
+        self['description'] = payload
+
 
 class RFC822Policy(email.policy.EmailPolicy):
     """
@@ -365,13 +398,20 @@ class StandardMetadata:
 
     def as_rfc822(self) -> RFC822Message:
         message = RFC822Message()
-        self.write_to_rfc822(message)
+        smart_message = _SmartMessageSetter(message)
+        self._write_metadata(smart_message)
         return message
 
-    def write_to_rfc822(self, message: email.message.Message) -> None:  # noqa: C901, PLR0912
-        self.validate(warn=False)
+    def as_json(self) -> dict[str, str | list[str]]:
+        message: dict[str, str | list[str]] = {}
+        smart_message = _JSonMessageSetter(message)
+        self._write_metadata(smart_message)
+        return message
 
-        smart_message = _SmartMessageSetter(message)
+    def _write_metadata(  # noqa: PLR0912 C901
+        self, smart_message: _SmartMessageSetter | _JSonMessageSetter
+    ) -> None:
+        self.validate(warn=False)
 
         smart_message['Metadata-Version'] = self.auto_metadata_version
         smart_message['Name'] = self.name
@@ -383,7 +423,7 @@ class StandardMetadata:
         # skip 'Supported-Platform'
         if self.description:
             smart_message['Summary'] = self.description
-        smart_message['Keywords'] = ','.join(self.keywords)
+        smart_message['Keywords'] = ','.join(self.keywords) or None
         if 'homepage' in self.urls:
             smart_message['Home-page'] = self.urls['homepage']
         # skip 'Download-URL'
@@ -422,7 +462,7 @@ class StandardMetadata:
         if self.readme:
             if self.readme.content_type:
                 smart_message['Description-Content-Type'] = self.readme.content_type
-            message.set_payload(self.readme.text)
+            smart_message.set_payload(self.readme.text)
         # Core Metadata 2.2
         if self.auto_metadata_version != '2.1':
             for field in self.dynamic_metadata:
@@ -434,12 +474,17 @@ class StandardMetadata:
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field
 
-    def _name_list(self, people: list[tuple[str, str | None]]) -> str:
-        return ', '.join(name for name, email_ in people if not email_)
+    def _name_list(self, people: list[tuple[str, str | None]]) -> str | None:
+        return ', '.join(name for name, email_ in people if not email_) or None
 
-    def _email_list(self, people: list[tuple[str, str | None]]) -> str:
-        return ', '.join(
-            email.utils.formataddr((name, _email)) for name, _email in people if _email
+    def _email_list(self, people: list[tuple[str, str | None]]) -> str | None:
+        return (
+            ', '.join(
+                email.utils.formataddr((name, _email))
+                for name, _email in people
+                if _email
+            )
+            or None
         )
 
     def _build_extra_req(
