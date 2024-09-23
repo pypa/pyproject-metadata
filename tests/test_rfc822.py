@@ -10,7 +10,7 @@ import textwrap
 import pytest
 
 import pyproject_metadata
-import pyproject_metadata.constants
+import pyproject_metadata._constants
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def test_headers(
     smart_message = pyproject_metadata._SmartMessageSetter(message)
 
     monkeypatch.setattr(
-        pyproject_metadata.constants,
+        pyproject_metadata._constants,
         'KNOWN_METADATA_FIELDS',
         {x.lower() for x, _ in items},
     )
@@ -144,7 +144,7 @@ def test_headers(
 
 def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        pyproject_metadata.constants,
+        pyproject_metadata._constants,
         'KNOWN_METADATA_FIELDS',
         {'itema', 'itemb', 'itemc'},
     )

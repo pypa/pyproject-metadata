@@ -15,9 +15,9 @@ import sys
 import typing
 import warnings
 
-from . import constants, pyproject
+from . import _constants, _pyproject
+from ._pyproject import License, Readme
 from .errors import ConfigurationError, ConfigurationWarning
-from .pyproject import License, Readme
 
 
 if typing.TYPE_CHECKING:
@@ -64,11 +64,11 @@ def field_to_metadata(field: str) -> frozenset[str]:
     """
     Return the METADATA fields that correspond to a project field.
     """
-    return frozenset(constants.PROJECT_TO_METADATA[field])
+    return frozenset(_constants.PROJECT_TO_METADATA[field])
 
 
 def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
+    extra_keys = set(pyproject_table) - _constants.KNOWN_TOPLEVEL_FIELDS
     if extra_keys:
         msg = f'Extra keys present in pyproject.toml: {extra_keys}'
         raise ConfigurationError(msg)
@@ -77,7 +77,7 @@ def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
 def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
     extra_keys = (
         set(pyproject_table.get('build-system', []))
-        - constants.KNOWN_BUILD_SYSTEM_FIELDS
+        - _constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
     if extra_keys:
         msg = f'Extra keys present in "build-system": {extra_keys}'
@@ -86,7 +86,7 @@ def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
 
 def validate_project(pyproject_table: Mapping[str, Any]) -> None:
     extra_keys = (
-        set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
+        set(pyproject_table.get('project', [])) - _constants.KNOWN_PROJECT_FIELDS
     )
     if extra_keys:
         msg = f'Extra keys present in "project": {extra_keys}'
@@ -122,7 +122,7 @@ class RFC822Policy(email.policy.EmailPolicy):
     max_line_length = 0
 
     def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
-        if name.lower() not in constants.KNOWN_METADATA_FIELDS:
+        if name.lower() not in _constants.KNOWN_METADATA_FIELDS:
             msg = f'Unknown field "{name}"'
             raise ConfigurationError(msg, key=name)
         size = len(name) + 2
@@ -192,8 +192,8 @@ class StandardMetadata:
         super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
-        if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
-            msg = f'The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)'
+        if self.auto_metadata_version not in _constants.KNOWN_METADATA_VERSIONS:
+            msg = f'The metadata_version must be one of {_constants.KNOWN_METADATA_VERSIONS} or None (default)'
             raise ConfigurationError(msg)
 
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
@@ -224,7 +224,7 @@ class StandardMetadata:
                     ConfigurationWarning,
                     stacklevel=2,
                 )
-            if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
+            if self.auto_metadata_version not in _constants.PRE_SPDX_METADATA_VERSIONS:
                 if isinstance(self.license, License):
                     warnings.warn(
                         'Set "project.license" to an SPDX license expression for metadata >= 2.4',
@@ -240,14 +240,14 @@ class StandardMetadata:
 
         if (
             isinstance(self.license, str)
-            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in _constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
 
         if (
             self.license_files is not None
-            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
+            and self.auto_metadata_version in _constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
             raise ConfigurationError(msg)
@@ -293,19 +293,21 @@ class StandardMetadata:
         elif not allow_extra_keys:
             validate_project(data)
 
-        dynamic = pyproject.get_dynamic(project)
+        dynamic = _pyproject.get_dynamic(project)
 
         for field in dynamic:
             if field in data['project']:
                 msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
                 raise ConfigurationError(msg)
 
-        name = pyproject.ensure_str(project.get('name'), 'project.name')
+        name = _pyproject.ensure_str(project.get('name'), 'project.name')
         if not name:
             msg = 'Field "project.name" missing'
             raise ConfigurationError(msg)
 
-        version_string = pyproject.ensure_str(project.get('version'), 'project.version')
+        version_string = _pyproject.ensure_str(
+            project.get('version'), 'project.version'
+        )
         version = packaging.version.Version(version_string) if version_string else None
 
         if version is None and 'version' not in dynamic:
@@ -315,11 +317,11 @@ class StandardMetadata:
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
-        description = pyproject.ensure_str(
+        description = _pyproject.ensure_str(
             project.get('description'), 'project.description'
         )
 
-        requires_python_string = pyproject.ensure_str(
+        requires_python_string = _pyproject.ensure_str(
             project.get('requires-python'), 'project.requires-python'
         )
         requires_python = (
@@ -332,28 +334,28 @@ class StandardMetadata:
             name=name,
             version=version,
             description=description,
-            license=pyproject.get_license(project, project_dir),
-            license_files=pyproject.get_license_files(project, project_dir),
-            readme=pyproject.get_readme(project, project_dir),
+            license=_pyproject.get_license(project, project_dir),
+            license_files=_pyproject.get_license_files(project, project_dir),
+            readme=_pyproject.get_readme(project, project_dir),
             requires_python=requires_python,
-            dependencies=pyproject.get_dependencies(project),
-            optional_dependencies=pyproject.get_optional_dependencies(project),
-            entrypoints=pyproject.get_entrypoints(project),
-            authors=pyproject.ensure_people(
+            dependencies=_pyproject.get_dependencies(project),
+            optional_dependencies=_pyproject.get_optional_dependencies(project),
+            entrypoints=_pyproject.get_entrypoints(project),
+            authors=_pyproject.ensure_people(
                 project.get('authors', []), 'project.authors'
             ),
-            maintainers=pyproject.ensure_people(
+            maintainers=_pyproject.ensure_people(
                 project.get('maintainers', []), 'project.maintainers'
             ),
-            urls=pyproject.ensure_dict(project.get('urls'), 'project.urls'),
-            classifiers=pyproject.ensure_list(
+            urls=_pyproject.ensure_dict(project.get('urls'), 'project.urls'),
+            classifiers=_pyproject.ensure_list(
                 project.get('classifiers'), 'project.classifiers'
             )
             or [],
-            keywords=pyproject.ensure_list(project.get('keywords'), 'project.keywords')
+            keywords=_pyproject.ensure_list(project.get('keywords'), 'project.keywords')
             or [],
-            scripts=pyproject.ensure_dict(project.get('scripts'), 'project.scripts'),
-            gui_scripts=pyproject.ensure_dict(
+            scripts=_pyproject.ensure_dict(project.get('scripts'), 'project.scripts'),
+            gui_scripts=_pyproject.ensure_dict(
                 project.get('gui-scripts'), 'project.gui-scripts'
             ),
             dynamic=dynamic,
@@ -429,7 +431,7 @@ class StandardMetadata:
                 if field.lower() in {'name', 'version', 'dynamic'}:
                     msg = f'Field cannot be set as dynamic metadata: {field}'
                     raise ConfigurationError(msg)
-                if field.lower() not in constants.KNOWN_METADATA_FIELDS:
+                if field.lower() not in _constants.KNOWN_METADATA_FIELDS:
                     msg = f'Field is not known: {field}'
                     raise ConfigurationError(msg)
                 smart_message['Dynamic'] = field

@@ -3,16 +3,16 @@ import sys
 import pytest
 
 import pyproject_metadata
-import pyproject_metadata.constants
+import pyproject_metadata._constants
+import pyproject_metadata._pyproject
 import pyproject_metadata.errors
-import pyproject_metadata.pyproject
 
 
 def test_all() -> None:
     assert 'typing' not in dir(pyproject_metadata)
-    assert 'annotations' not in dir(pyproject_metadata.constants)
+    assert 'annotations' not in dir(pyproject_metadata._constants)
     assert 'annotations' not in dir(pyproject_metadata.errors)
-    assert 'annotations' not in dir(pyproject_metadata.pyproject)
+    assert 'annotations' not in dir(pyproject_metadata._pyproject)
 
 
 def test_project_table_all() -> None:
