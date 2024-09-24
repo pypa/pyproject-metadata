@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import pathlib
 import re
 import shutil
 import sys
 import textwrap
+import warnings
 
 import packaging.specifiers
 import packaging.version
@@ -22,6 +25,11 @@ import pyproject_metadata
 DIR = pathlib.Path(__file__).parent.resolve()
 
 
+@pytest.fixture(params=[False, True], ids=['one_error', 'all_errors'])
+def all_errors(request: pytest.FixtureRequest) -> bool:
+    return request.param  # type: ignore[no-any-return]
+
+
 @pytest.mark.parametrize(
     ('data', 'error'),
     [
@@ -29,11 +37,6 @@ DIR = pathlib.Path(__file__).parent.resolve()
             '',
             'Section "project" missing in pyproject.toml',
             id='Missing project section',
-        ),
-        pytest.param(
-            '[project]',
-            'Field "project.name" missing',
-            id='Missing project name',
         ),
         pytest.param(
             """
@@ -47,6 +50,8 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
+                name = 'test'
+                version = '0.1.0'
                 not-real-key = true
             """,
             'Extra keys present in "project": {\'not-real-key\'}',
@@ -55,7 +60,7 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
-                name = true
+                name = 'test'
                 version = '0.1.0'
                 dynamic = [
                     'name',
@@ -67,7 +72,7 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
-                name = true
+                name = 'test'
                 version = '0.1.0'
                 dynamic = [
                     3,
@@ -192,6 +197,16 @@ DIR = pathlib.Path(__file__).parent.resolve()
         pytest.param(
             """
                 [project]
+                name = "test"
+                version = '0.1.0'
+                readme = 'README.jpg'
+            """,
+            'Could not infer content type for readme file "README.jpg"',
+            id='Unsupported filename in readme',
+        ),
+        pytest.param(
+            """
+                [project]
                 name = 'test'
                 version = '0.1.0'
                 readme = { file = '...', text = '...' }
@@ -251,6 +266,16 @@ DIR = pathlib.Path(__file__).parent.resolve()
             """,
             'Field "project.readme.content-type" missing',
             id='Missing content-type for readme',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                readme = { file = "README.md", content-type = true }
+            """,
+            'Field "project.readme.content-type" has an invalid type, expecting a string (got "True")',
+            id='Wrong content-type type for readme',
         ),
         pytest.param(
             """
@@ -631,6 +656,16 @@ DIR = pathlib.Path(__file__).parent.resolve()
                 [project]
                 name = 'test'
                 version = '0.1.0'
+                license-files = [12]
+            """,
+            'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+            id='Parent license-files invalid type',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
                 license-files = ["this", 12]
             """,
             'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
@@ -659,13 +694,121 @@ DIR = pathlib.Path(__file__).parent.resolve()
         ),
     ],
 )
-def test_load(data: str, error: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load(
+    data: str, error: str, monkeypatch: pytest.MonkeyPatch, all_errors: bool
+) -> None:
     monkeypatch.chdir(DIR / 'packages/full-metadata')
-    with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
-        pyproject_metadata.StandardMetadata.from_pyproject(
-            tomllib.loads(textwrap.dedent(data)),
-            allow_extra_keys=False,
-        )
+    if not all_errors:
+        with pytest.raises(
+            pyproject_metadata.ConfigurationError, match=re.escape(error)
+        ):
+            pyproject_metadata.StandardMetadata.from_pyproject(
+                tomllib.loads(textwrap.dedent(data)),
+                allow_extra_keys=False,
+            )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter(
+                action='ignore', category=pyproject_metadata.ConfigurationWarning
+            )
+            with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
+                pyproject_metadata.StandardMetadata.from_pyproject(
+                    tomllib.loads(textwrap.dedent(data)),
+                    allow_extra_keys=False,
+                    all_errors=True,
+                )
+        exceptions = execinfo.value.exceptions
+        args = [e.args[0] for e in exceptions]
+        assert len(args) == 1
+        assert error in args[0]
+        assert 'Failed to parse pyproject.toml' in repr(execinfo.value)
+
+
+@pytest.mark.parametrize(
+    ('data', 'errors'),
+    [
+        pytest.param(
+            '[project]',
+            [
+                'Field "project.name" missing',
+                'Field "project.version" missing and "version" not specified in "project.dynamic"',
+            ],
+            id='Missing project name',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = true
+                version = '0.1.0'
+                dynamic = [
+                    'name',
+                ]
+            """,
+            [
+                'Unsupported field "name" in "project.dynamic"',
+                'Field "project.name" has an invalid type, expecting a string (got "True")',
+            ],
+            id='Unsupported field in project.dynamic',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = true
+                version = '0.1.0'
+                dynamic = [
+                    3,
+                ]
+            """,
+            [
+                'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
+                'Field "project.name" has an invalid type, expecting a string (got "True")',
+            ],
+            id='Unsupported type in project.dynamic',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = '0.1.0'
+                readme = 'README.jpg'
+                license-files = [12]
+            """,
+            [
+                'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+                'Could not infer content type for readme file "README.jpg"',
+            ],
+            id='Unsupported filename in readme',
+        ),
+    ],
+)
+def test_load_multierror(
+    data: str, errors: list[str], monkeypatch: pytest.MonkeyPatch, all_errors: bool
+) -> None:
+    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    if not all_errors:
+        with pytest.raises(
+            pyproject_metadata.ConfigurationError, match=re.escape(errors[0])
+        ):
+            pyproject_metadata.StandardMetadata.from_pyproject(
+                tomllib.loads(textwrap.dedent(data)),
+                allow_extra_keys=False,
+            )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter(
+                action='ignore', category=pyproject_metadata.ConfigurationWarning
+            )
+            with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
+                pyproject_metadata.StandardMetadata.from_pyproject(
+                    tomllib.loads(textwrap.dedent(data)),
+                    allow_extra_keys=False,
+                    all_errors=True,
+                )
+        exceptions = execinfo.value.exceptions
+        args = [e.args[0] for e in exceptions]
+        assert len(args) == len(errors)
+        assert args == errors
+        assert 'Failed to parse pyproject.toml' in repr(execinfo.value)
 
 
 @pytest.mark.parametrize(
@@ -974,7 +1117,7 @@ def test_as_rfc822_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_as_rfc822_spdx_empty_glob(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path, all_errors: bool
 ) -> None:
     shutil.copytree(DIR / 'packages/spdx', tmp_path / 'spdx')
     monkeypatch.chdir(tmp_path / 'spdx')
@@ -982,11 +1125,24 @@ def test_as_rfc822_spdx_empty_glob(
     pathlib.Path('AUTHORS.txt').unlink()
     msg = 'Every pattern in "project.license-files" must match at least one file: "AUTHORS*" did not match any'
 
-    with open('pyproject.toml', 'rb') as f, pytest.raises(
-        pyproject_metadata.ConfigurationError,
-        match=re.escape(msg),
-    ):
-        pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    with open('pyproject.toml', 'rb') as f:
+        if all_errors:
+            with pytest.raises(
+                pyproject_metadata.errors.ExceptionGroup,
+            ) as execinfo:
+                pyproject_metadata.StandardMetadata.from_pyproject(
+                    tomllib.load(f), all_errors=all_errors
+                )
+            assert 'Failed to parse pyproject.toml' in str(execinfo.value)
+            assert [msg] == [str(e) for e in execinfo.value.exceptions]
+        else:
+            with pytest.raises(
+                pyproject_metadata.ConfigurationError,
+                match=re.escape(msg),
+            ):
+                pyproject_metadata.StandardMetadata.from_pyproject(
+                    tomllib.load(f), all_errors=all_errors
+                )
 
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:

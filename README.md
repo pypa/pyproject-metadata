@@ -62,6 +62,13 @@ Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA f
 
 You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.
 
+## Collecting multiple errors
+
+You can use the `all_errors` argument to `from_pyproject` to show all errors in
+the metadata parse at once, instead of raising an exception on the first one.
+The exception type will be `pyproject_metadata.errors.ExceptionGroup` (which is
+just `ExceptionGroup` on Python 3.11+).
+
 ## Validating classifiers
 
 If you want to validate classifiers, then install the `trove_classifiers` library (the canonical source for classifiers), and run:
