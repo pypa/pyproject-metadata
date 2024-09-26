@@ -246,3 +246,37 @@ def test_convert_author_email() -> None:
     assert message.get_all('Author-Email') == [
         '"John Doe, Inc." <johndoe@example.com>, "Kate Doe, LLC." <katedoe@example.com>'
     ]
+
+
+def test_long_version() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {
+                'name': 'example',
+                'version': '0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters',
+            }
+        }
+    )
+    message = metadata.as_rfc822()
+    assert (
+        message.get('Version')
+        == '0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters'
+    )
+    assert (
+        bytes(message)
+        == inspect.cleandoc("""
+        Metadata-Version: 2.1
+        Name: example
+        Version: 0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters
+    """).encode('utf-8')
+        + b'\n\n'
+    )
+    assert (
+        str(message)
+        == inspect.cleandoc("""
+        Metadata-Version: 2.1
+        Name: example
+        Version: 0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters
+    """)
+        + '\n\n'
+    )
