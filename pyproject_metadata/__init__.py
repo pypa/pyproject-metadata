@@ -408,7 +408,7 @@ class StandardMetadata:
         self._write_metadata(smart_message)
         return message
 
-    def _write_metadata(  # noqa: PLR0912 C901
+    def _write_metadata(  # noqa: C901
         self, smart_message: _SmartMessageSetter | _JSonMessageSetter
     ) -> None:
         self.validate(warn=False)

@@ -86,7 +86,10 @@ extend-select = [
   "NPY",         # NumPy specific rules
   "PD",          # pandas-vet
 ]
-ignore = ["ISC001"]  # conflicts with formatter
+ignore = [
+  "ISC001",  # conflicts with formatter
+  "PLR09",  # Design related (too many X)
+]
 isort.lines-after-imports = 2
 isort.lines-between-types = 1
 

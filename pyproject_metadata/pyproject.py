@@ -147,7 +147,7 @@ def get_license_files(
     return list(_get_files_from_globs(project_dir, license_files))
 
 
-def get_readme(project: ProjectTable, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901, PLR0912
+def get_readme(project: ProjectTable, project_dir: pathlib.Path) -> Readme | None:  # noqa: C901
     if 'readme' not in project:
         return None
 
