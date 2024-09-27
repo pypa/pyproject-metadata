@@ -2,32 +2,33 @@
 Changelog
 +++++++++
 
-0.9.0 (beta 4: 20-09-2024)
+0.9.0 (beta 5: 27-09-2024)
 ==========================
-
 
 Features:
 
-* Setting a non-dynamic field is an error
+- Add TypedDict's in new module for typing pyproject.toml dicts
+- ``all_errors=True`` causes ``ExceptionGroup``'s to be emitted
+- Support METADATA 2.1+ JSON format with new ``.as_json()`` method
 
-Fixes:
 
-- Warn on multiline Summary (``project.description``)
+Internal and CI:
+
+- Require 100% coverage
 
 Refactoring:
 
-* Remove indirection accessing metadata_version, add ``auto_metadata_version``
-* Rework how dynamic works, add ``dynamic_metadata``
-* Use dataclass instead of named tuple
-* chore: use named arguments instead of positional
+- Spit up over multiple files
+- Remove data fetcher, use static types wherever possible
 
 
-0.9.0 (beta 3: 13-09-2024)
-==========================
+
+0.9.0 (WIP)
+===========
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
 and adds a lot of validation (including warnings and opt-in errors). The beta
-release is intended for backend authors to try out the changes before a final
+releases are intended for backend authors to try out the changes before a final
 release.
 
 Features:
@@ -36,12 +37,14 @@ Features:
 - Validate extra keys (warning, opt-in error)
 - Validate project name
 - Validate entrypoint group names
+* Setting a non-dynamic field is an error
 
 Fixes:
 
 - Correct typing for emails
 - Match EmailMessage spacing
 - Handle multilines the way setuptools does with smart indentation
+- Warn on multiline Summary (``project.description``)
 
 
 Refactoring:
@@ -49,6 +52,10 @@ Refactoring:
 - Move fetcher methods
 - Put validation in method
 - Make ``RFC822Message`` compatible with and subclass of ``EmailMessage`` class with support for Unicode
+* Remove indirection accessing metadata_version, add ``auto_metadata_version``
+* Rework how dynamic works, add ``dynamic_metadata``
+* Use dataclass instead of named tuple
+* chore: use named arguments instead of positional
 
 
 Internal and CI:
