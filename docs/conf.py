@@ -12,12 +12,11 @@
 
 import pyproject_metadata
 
-
 # -- Project information -----------------------------------------------------
 
-project = 'pyproject-metadata'
-copyright = '2021, Filipe Laíns'
-author = 'Filipe Laíns'
+project = "pyproject-metadata"
+copyright = "2021, Filipe Laíns"
+author = "Filipe Laíns"
 
 # The short X.Y version
 version = pyproject_metadata.__version__
@@ -31,38 +30,38 @@ release = pyproject_metadata.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
-    'sphinx_autodoc_typehints',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
 ]
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'packaging': ('https://packaging.pypa.io/en/latest/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "packaging": ("https://packaging.pypa.io/en/latest/", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-default_role = 'any'
+default_role = "any"
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'furo'
-html_title = f'pyproject-metadata {version}'
+html_theme = "furo"
+html_title = f"pyproject-metadata {version}"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named 'default.css' will overwrite the builtin 'default.css'.
 # html_static_path = ['_static']
 
-autoclass_content = 'both'
+autoclass_content = "both"

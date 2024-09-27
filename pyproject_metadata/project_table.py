@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import sys
-
 from typing import Any, Dict, List, Union
-
 
 if sys.version_info < (3, 11):
     from typing_extensions import Required
@@ -19,12 +17,12 @@ else:
 
 
 __all__ = [
-    'ContactTable',
-    'LicenseTable',
-    'ReadmeTable',
-    'ProjectTable',
-    'BuildSystemTable',
-    'PyProjectTable',
+    "ContactTable",
+    "LicenseTable",
+    "ReadmeTable",
+    "ProjectTable",
+    "BuildSystemTable",
+    "PyProjectTable",
 ]
 
 
@@ -43,47 +41,47 @@ class LicenseTable(TypedDict, total=False):
 
 
 ReadmeTable = TypedDict(
-    'ReadmeTable', {'file': str, 'text': str, 'content-type': str}, total=False
+    "ReadmeTable", {"file": str, "text": str, "content-type": str}, total=False
 )
 
 ProjectTable = TypedDict(
-    'ProjectTable',
+    "ProjectTable",
     {
-        'name': Required[str],
-        'version': str,
-        'description': str,
-        'license': Union[LicenseTable, str],
-        'license-files': List[str],
-        'readme': Union[str, ReadmeTable],
-        'requires-python': str,
-        'dependencies': List[str],
-        'optional-dependencies': Dict[str, List[str]],
-        'entry-points': Dict[str, Dict[str, str]],
-        'authors': List[ContactTable],
-        'maintainers': List[ContactTable],
-        'urls': Dict[str, str],
-        'classifiers': List[str],
-        'keywords': List[str],
-        'scripts': Dict[str, str],
-        'gui-scripts': Dict[str, str],
-        'dynamic': List[
+        "name": Required[str],
+        "version": str,
+        "description": str,
+        "license": Union[LicenseTable, str],
+        "license-files": List[str],
+        "readme": Union[str, ReadmeTable],
+        "requires-python": str,
+        "dependencies": List[str],
+        "optional-dependencies": Dict[str, List[str]],
+        "entry-points": Dict[str, Dict[str, str]],
+        "authors": List[ContactTable],
+        "maintainers": List[ContactTable],
+        "urls": Dict[str, str],
+        "classifiers": List[str],
+        "keywords": List[str],
+        "scripts": Dict[str, str],
+        "gui-scripts": Dict[str, str],
+        "dynamic": List[
             Literal[
-                'authors',
-                'classifiers',
-                'dependencies',
-                'description',
-                'dynamic',
-                'entry-points',
-                'gui-scripts',
-                'keywords',
-                'license',
-                'maintainers',
-                'optional-dependencies',
-                'readme',
-                'requires-python',
-                'scripts',
-                'urls',
-                'version',
+                "authors",
+                "classifiers",
+                "dependencies",
+                "description",
+                "dynamic",
+                "entry-points",
+                "gui-scripts",
+                "keywords",
+                "license",
+                "maintainers",
+                "optional-dependencies",
+                "readme",
+                "requires-python",
+                "scripts",
+                "urls",
+                "version",
             ]
         ],
     },
@@ -91,21 +89,21 @@ ProjectTable = TypedDict(
 )
 
 BuildSystemTable = TypedDict(
-    'BuildSystemTable',
+    "BuildSystemTable",
     {
-        'build-backend': str,
-        'requires': List[str],
-        'backend-path': List[str],
+        "build-backend": str,
+        "requires": List[str],
+        "backend-path": List[str],
     },
     total=False,
 )
 
 PyProjectTable = TypedDict(
-    'PyProjectTable',
+    "PyProjectTable",
     {
-        'build-system': BuildSystemTable,
-        'project': ProjectTable,
-        'tool': Dict[str, Any],
+        "build-system": BuildSystemTable,
+        "project": ProjectTable,
+        "tool": Dict[str, Any],
     },
     total=False,
 )

@@ -13,14 +13,12 @@ import packaging.specifiers
 import packaging.version
 import pytest
 
-
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 
 import pyproject_metadata
-
 
 DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -31,25 +29,25 @@ except ImportError:
     exceptiongroup = None  # type: ignore[assignment]
 
 
-@pytest.fixture(params=['one_error', 'all_errors', 'exceptiongroup'])
+@pytest.fixture(params=["one_error", "all_errors", "exceptiongroup"])
 def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> bool:
     param: str = request.param
-    if param == 'exceptiongroup':
+    if param == "exceptiongroup":
         if exceptiongroup is None:
-            pytest.skip('exceptiongroup is not installed')
+            pytest.skip("exceptiongroup is not installed")
         monkeypatch.setattr(
-            pyproject_metadata.errors, 'ExceptionGroup', exceptiongroup.ExceptionGroup
+            pyproject_metadata.errors, "ExceptionGroup", exceptiongroup.ExceptionGroup
         )
-    return param != 'one_error'
+    return param != "one_error"
 
 
 @pytest.mark.parametrize(
-    ('data', 'error'),
+    ("data", "error"),
     [
         pytest.param(
-            '',
+            "",
             'Section "project" missing in pyproject.toml',
-            id='Missing project section',
+            id="Missing project section",
         ),
         pytest.param(
             """
@@ -58,7 +56,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = '0.1.0'
             """,
             'Field "project.name" has an invalid type, expecting a string (got "True")',
-            id='Invalid name type',
+            id="Invalid name type",
         ),
         pytest.param(
             """
@@ -68,7 +66,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 not-real-key = true
             """,
             'Extra keys present in "project": "not-real-key"',
-            id='Invalid project key',
+            id="Invalid project key",
         ),
         pytest.param(
             """
@@ -80,7 +78,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             'Unsupported field "name" in "project.dynamic"',
-            id='Unsupported field in project.dynamic',
+            id="Unsupported field in project.dynamic",
         ),
         pytest.param(
             """
@@ -92,7 +90,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
-            id='Unsupported type in project.dynamic',
+            id="Unsupported type in project.dynamic",
         ),
         pytest.param(
             """
@@ -101,7 +99,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = true
             """,
             'Field "project.version" has an invalid type, expecting a string (got "True")',
-            id='Invalid version type',
+            id="Invalid version type",
         ),
         pytest.param(
             """
@@ -109,7 +107,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 name = 'test'
             """,
             'Field "project.version" missing and "version" not specified in "project.dynamic"',
-            id='Missing version',
+            id="Missing version",
         ),
         pytest.param(
             """
@@ -118,7 +116,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = '0.1.0-extra'
             """,
             'Invalid "project.version" value, expecting a valid PEP 440 version (got "0.1.0-extra")',
-            id='Invalid version value',
+            id="Invalid version value",
         ),
         pytest.param(
             """
@@ -128,7 +126,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = true
             """,
             'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "True")',
-            id='License invalid type',
+            id="License invalid type",
         ),
         pytest.param(
             """
@@ -138,7 +136,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = {}
             """,
             'Invalid "project.license" value, expecting either "file" or "text" (got "{}")',
-            id='Missing license keys',
+            id="Missing license keys",
         ),
         pytest.param(
             """
@@ -151,7 +149,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Invalid "project.license" value, expecting either "file" '
                 "or \"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
-            id='Both keys for license',
+            id="Both keys for license",
         ),
         pytest.param(
             """
@@ -161,7 +159,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = { made-up = ':(' }
             """,
             'Unexpected field "project.license.made-up"',
-            id='Got made-up license field',
+            id="Got made-up license field",
         ),
         pytest.param(
             """
@@ -171,7 +169,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = { file = true }
             """,
             'Field "project.license.file" has an invalid type, expecting a string (got "True")',
-            id='Invalid type for license.file',
+            id="Invalid type for license.file",
         ),
         pytest.param(
             """
@@ -181,7 +179,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = { text = true }
             """,
             'Field "project.license.text" has an invalid type, expecting a string (got "True")',
-            id='Invalid type for license.text',
+            id="Invalid type for license.text",
         ),
         pytest.param(
             """
@@ -191,7 +189,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license = { file = 'this-file-does-not-exist' }
             """,
             'License file not found ("this-file-does-not-exist")',
-            id='License file not present',
+            id="License file not present",
         ),
         pytest.param(
             """
@@ -204,7 +202,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.readme" has an invalid type, expecting either, '
                 'a string or dictionary of strings (got "True")'
             ),
-            id='Invalid readme type',
+            id="Invalid readme type",
         ),
         pytest.param(
             """
@@ -214,7 +212,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = {}
             """,
             'Invalid "project.readme" value, expecting either "file" or "text" (got "{}")',
-            id='Empty readme table',
+            id="Empty readme table",
         ),
         pytest.param(
             """
@@ -224,7 +222,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = 'README.jpg'
             """,
             'Could not infer content type for readme file "README.jpg"',
-            id='Unsupported filename in readme',
+            id="Unsupported filename in readme",
         ),
         pytest.param(
             """
@@ -237,7 +235,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Invalid "project.readme" value, expecting either "file" or '
                 "\"text\" (got \"{'file': '...', 'text': '...'}\")"
             ),
-            id='Both readme fields',
+            id="Both readme fields",
         ),
         pytest.param(
             """
@@ -247,7 +245,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { made-up = ':(' }
             """,
             'Unexpected field "project.readme.made-up"',
-            id='Unexpected field in readme',
+            id="Unexpected field in readme",
         ),
         pytest.param(
             """
@@ -257,7 +255,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { file = true }
             """,
             'Field "project.readme.file" has an invalid type, expecting a string (got "True")',
-            id='Invalid type for readme.file',
+            id="Invalid type for readme.file",
         ),
         pytest.param(
             """
@@ -267,7 +265,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { text = true }
             """,
             'Field "project.readme.text" has an invalid type, expecting a string (got "True")',
-            id='Invalid type for readme.text',
+            id="Invalid type for readme.text",
         ),
         pytest.param(
             """
@@ -277,7 +275,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { file = 'this-file-does-not-exist', content-type = '...' }
             """,
             'Readme file not found ("this-file-does-not-exist")',
-            id='Readme file not present',
+            id="Readme file not present",
         ),
         pytest.param(
             """
@@ -287,7 +285,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { file = 'README.md' }
             """,
             'Field "project.readme.content-type" missing',
-            id='Missing content-type for readme',
+            id="Missing content-type for readme",
         ),
         pytest.param(
             """
@@ -297,7 +295,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { file = "README.md", content-type = true }
             """,
             'Field "project.readme.content-type" has an invalid type, expecting a string (got "True")',
-            id='Wrong content-type type for readme',
+            id="Wrong content-type type for readme",
         ),
         pytest.param(
             """
@@ -307,7 +305,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 readme = { text = '...' }
             """,
             'Field "project.readme.content-type" missing',
-            id='Missing content-type for readme',
+            id="Missing content-type for readme",
         ),
         pytest.param(
             """
@@ -317,7 +315,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 description = true
             """,
             'Field "project.description" has an invalid type, expecting a string (got "True")',
-            id='Invalid description type',
+            id="Invalid description type",
         ),
         pytest.param(
             """
@@ -327,7 +325,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 dependencies = 'some string!'
             """,
             'Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")',
-            id='Invalid dependencies type',
+            id="Invalid dependencies type",
         ),
         pytest.param(
             """
@@ -339,7 +337,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             'Field "project.dependencies" contains item with invalid type, expecting a string (got "99")',
-            id='Invalid dependencies item type',
+            id="Invalid dependencies item type",
         ),
         pytest.param(
             """
@@ -354,7 +352,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.dependencies" contains an invalid PEP 508 requirement '
                 'string "definitely not a valid PEP 508 requirement!" '
             ),
-            id='Invalid dependencies item',
+            id="Invalid dependencies item",
         ),
         pytest.param(
             """
@@ -367,7 +365,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.optional-dependencies" has an invalid type, '
                 'expecting a dictionary of PEP 508 requirement strings (got "True")'
             ),
-            id='Invalid optional-dependencies type',
+            id="Invalid optional-dependencies type",
         ),
         pytest.param(
             """
@@ -381,7 +379,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.optional-dependencies.test" has an invalid type, '
                 'expecting a dictionary PEP 508 requirement strings (got "some string!")'
             ),
-            id='Invalid optional-dependencies not list',
+            id="Invalid optional-dependencies not list",
         ),
         pytest.param(
             """
@@ -397,7 +395,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.optional-dependencies.test" has an invalid type, '
                 'expecting a PEP 508 requirement string (got "True")'
             ),
-            id='Invalid optional-dependencies item type',
+            id="Invalid optional-dependencies item type",
         ),
         pytest.param(
             """
@@ -413,7 +411,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.optional-dependencies.test" contains an invalid '
                 'PEP 508 requirement string "definitely not a valid PEP 508 requirement!" '
             ),
-            id='Invalid optional-dependencies item',
+            id="Invalid optional-dependencies item",
         ),
         pytest.param(
             """
@@ -423,7 +421,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 requires-python = true
             """,
             'Field "project.requires-python" has an invalid type, expecting a string (got "True")',
-            id='Invalid requires-python type',
+            id="Invalid requires-python type",
         ),
         pytest.param(
             """
@@ -433,7 +431,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 requires-python = '3.8'
             """,
             'Invalid "project.requires-python" value, expecting a valid specifier set (got "3.8")',
-            id='Invalid requires-python value',
+            id="Invalid requires-python value",
         ),
         pytest.param(
             """
@@ -443,7 +441,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 keywords = 'some string!'
             """,
             'Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")',
-            id='Invalid keywords type',
+            id="Invalid keywords type",
         ),
         pytest.param(
             """
@@ -455,7 +453,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             'Field "project.keywords" contains item with invalid type, expecting a string (got "True")',
-            id='Invalid keywords item type',
+            id="Invalid keywords item type",
         ),
         pytest.param(
             """
@@ -468,7 +466,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.authors" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
-            id='Invalid authors type',
+            id="Invalid authors type",
         ),
         pytest.param(
             """
@@ -483,7 +481,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.authors" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "[True]")'
             ),
-            id='Invalid authors item type',
+            id="Invalid authors item type",
         ),
         pytest.param(
             """
@@ -496,7 +494,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.maintainers" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "{}")'
             ),
-            id='Invalid maintainers type',
+            id="Invalid maintainers type",
         ),
         pytest.param(
             """
@@ -511,7 +509,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.maintainers" has an invalid type, expecting a list of '
                 'dictionaries containing the "name" and/or "email" keys (got "[10]")'
             ),
-            id='Invalid maintainers item type',
+            id="Invalid maintainers item type",
         ),
         pytest.param(
             """
@@ -521,7 +519,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 classifiers = 'some string!'
             """,
             'Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")',
-            id='Invalid classifiers type',
+            id="Invalid classifiers type",
         ),
         pytest.param(
             """
@@ -533,7 +531,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             'Field "project.classifiers" contains item with invalid type, expecting a string (got "True")',
-            id='Invalid classifiers item type',
+            id="Invalid classifiers item type",
         ),
         pytest.param(
             """
@@ -544,7 +542,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 homepage = true
             """,
             'Field "project.urls.homepage" has an invalid type, expecting a string (got "True")',
-            id='Invalid urls homepage type',
+            id="Invalid urls homepage type",
         ),
         pytest.param(
             """
@@ -555,7 +553,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 documentation = true
             """,
             'Field "project.urls.documentation" has an invalid type, expecting a string (got "True")',
-            id='Invalid urls documentation type',
+            id="Invalid urls documentation type",
         ),
         pytest.param(
             """
@@ -566,7 +564,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 repository = true
             """,
             'Field "project.urls.repository" has an invalid type, expecting a string (got "True")',
-            id='Invalid urls repository type',
+            id="Invalid urls repository type",
         ),
         pytest.param(
             """
@@ -577,7 +575,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 changelog = true
             """,
             'Field "project.urls.changelog" has an invalid type, expecting a string (got "True")',
-            id='Invalid urls changelog type',
+            id="Invalid urls changelog type",
         ),
         pytest.param(
             """
@@ -587,7 +585,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 scripts = []
             """,
             'Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")',
-            id='Invalid scripts type',
+            id="Invalid scripts type",
         ),
         pytest.param(
             """
@@ -597,7 +595,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 gui-scripts = []
             """,
             'Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")',
-            id='Invalid gui-scripts type',
+            id="Invalid gui-scripts type",
         ),
         pytest.param(
             """
@@ -610,7 +608,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.entry-points" has an invalid type, '
                 'expecting a dictionary of entrypoint sections (got "[]")'
             ),
-            id='Invalid entry-points type',
+            id="Invalid entry-points type",
         ),
         pytest.param(
             """
@@ -623,7 +621,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.entry-points.section" has an invalid type, '
                 'expecting a dictionary of entrypoints (got "something")'
             ),
-            id='Invalid entry-points section type',
+            id="Invalid entry-points section type",
         ),
         pytest.param(
             """
@@ -634,7 +632,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 entrypoint = []
             """,
             'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")',
-            id='Invalid entry-points entrypoint type',
+            id="Invalid entry-points entrypoint type",
         ),
         pytest.param(
             """
@@ -644,9 +642,9 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Invalid project name ".test". A valid name consists only of ASCII letters and '
-                'numbers, period, underscore and hyphen. It must start and end with a letter or number'
+                "numbers, period, underscore and hyphen. It must start and end with a letter or number"
             ),
-            id='Invalid project name',
+            id="Invalid project name",
         ),
         pytest.param(
             """
@@ -659,7 +657,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 'Field "project.entry-points" has an invalid value, expecting a name containing only '
                 'alphanumeric, underscore, or dot characters (got "bad-name")'
             ),
-            id='Invalid entry-points name',
+            id="Invalid entry-points name",
         ),
         # both license files and classic license are not allowed
         pytest.param(
@@ -671,7 +669,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license.text = "stuff"
             """,
             '"project.license-files" must not be used when "project.license" is not a SPDX license expression',
-            id='Both license files and classic license',
+            id="Both license files and classic license",
         ),
         pytest.param(
             """
@@ -681,7 +679,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license-files = ["../LICENSE"]
             """,
             '"../LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
-            id='Parent license-files glob',
+            id="Parent license-files glob",
         ),
         pytest.param(
             """
@@ -691,7 +689,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license-files = [12]
             """,
             'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
-            id='Parent license-files invalid type',
+            id="Parent license-files invalid type",
         ),
         pytest.param(
             """
@@ -701,7 +699,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license-files = ["this", 12]
             """,
             'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
-            id='Parent license-files invalid type',
+            id="Parent license-files invalid type",
         ),
         pytest.param(
             """
@@ -711,7 +709,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license-files = ["/LICENSE"]
             """,
             '"/LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
-            id='Aboslute license-files glob',
+            id="Aboslute license-files glob",
         ),
         pytest.param(
             """
@@ -722,14 +720,14 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 classifiers = ["License :: OSI Approved :: MIT License"]
             """,
             'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers',
-            id='SPDX license and License trove classifiers',
+            id="SPDX license and License trove classifiers",
         ),
     ],
 )
 def test_load(
     data: str, error: str, monkeypatch: pytest.MonkeyPatch, all_errors: bool
 ) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
     if not all_errors:
         with pytest.raises(
             pyproject_metadata.ConfigurationError, match=re.escape(error)
@@ -741,7 +739,7 @@ def test_load(
     else:
         with warnings.catch_warnings():
             warnings.simplefilter(
-                action='ignore', category=pyproject_metadata.ConfigurationWarning
+                action="ignore", category=pyproject_metadata.ConfigurationWarning
             )
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
@@ -753,19 +751,19 @@ def test_load(
         args = [e.args[0] for e in exceptions]
         assert len(args) == 1
         assert error in args[0]
-        assert 'Failed to parse pyproject.toml' in repr(execinfo.value)
+        assert "Failed to parse pyproject.toml" in repr(execinfo.value)
 
 
 @pytest.mark.parametrize(
-    ('data', 'errors'),
+    ("data", "errors"),
     [
         pytest.param(
-            '[project]',
+            "[project]",
             [
                 'Field "project.name" missing',
                 'Field "project.version" missing and "version" not specified in "project.dynamic"',
             ],
-            id='Missing project name',
+            id="Missing project name",
         ),
         pytest.param(
             """
@@ -780,7 +778,7 @@ def test_load(
                 'Unsupported field "name" in "project.dynamic"',
                 'Field "project.name" has an invalid type, expecting a string (got "True")',
             ],
-            id='Unsupported field in project.dynamic',
+            id="Unsupported field in project.dynamic",
         ),
         pytest.param(
             """
@@ -795,7 +793,7 @@ def test_load(
                 'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
                 'Field "project.name" has an invalid type, expecting a string (got "True")',
             ],
-            id='Unsupported type in project.dynamic',
+            id="Unsupported type in project.dynamic",
         ),
         pytest.param(
             """
@@ -809,7 +807,7 @@ def test_load(
                 'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
                 'Could not infer content type for readme file "README.jpg"',
             ],
-            id='Unsupported filename in readme',
+            id="Unsupported filename in readme",
         ),
         pytest.param(
             """
@@ -828,14 +826,14 @@ def test_load(
                 'Could not infer content type for readme file "README.jpg"',
                 'Field "project.entry-points" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got "bad-name")',
             ],
-            id='Four errors including extra keys',
+            id="Four errors including extra keys",
         ),
     ],
 )
 def test_load_multierror(
     data: str, errors: list[str], monkeypatch: pytest.MonkeyPatch, all_errors: bool
 ) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
     if not all_errors:
         with pytest.raises(
             pyproject_metadata.ConfigurationError, match=re.escape(errors[0])
@@ -847,7 +845,7 @@ def test_load_multierror(
     else:
         with warnings.catch_warnings():
             warnings.simplefilter(
-                action='ignore', category=pyproject_metadata.ConfigurationWarning
+                action="ignore", category=pyproject_metadata.ConfigurationWarning
             )
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
@@ -859,11 +857,11 @@ def test_load_multierror(
         args = [e.args[0] for e in exceptions]
         assert len(args) == len(errors)
         assert args == errors
-        assert 'Failed to parse pyproject.toml' in repr(execinfo.value)
+        assert "Failed to parse pyproject.toml" in repr(execinfo.value)
 
 
 @pytest.mark.parametrize(
-    ('data', 'error', 'metadata_version'),
+    ("data", "error", "metadata_version"),
     [
         pytest.param(
             """
@@ -873,8 +871,8 @@ def test_load_multierror(
                 license = "MIT"
             """,
             'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4',
-            '2.3',
-            id='SPDX with metadata_version 2.3',
+            "2.3",
+            id="SPDX with metadata_version 2.3",
         ),
         pytest.param(
             """
@@ -884,15 +882,15 @@ def test_load_multierror(
                 license-files = ["README.md"]
             """,
             '"project.license-files" is supported only when emitting metadata version >= 2.4',
-            '2.3',
-            id='license-files with metadata_version 2.3',
+            "2.3",
+            id="license-files with metadata_version 2.3",
         ),
     ],
 )
 def test_load_with_metadata_version(
     data: str, error: str, metadata_version: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
     with pytest.raises(pyproject_metadata.ConfigurationError, match=re.escape(error)):
         pyproject_metadata.StandardMetadata.from_pyproject(
             tomllib.loads(textwrap.dedent(data)), metadata_version=metadata_version
@@ -900,7 +898,7 @@ def test_load_with_metadata_version(
 
 
 @pytest.mark.parametrize(
-    ('data', 'error', 'metadata_version'),
+    ("data", "error", "metadata_version"),
     [
         pytest.param(
             """
@@ -910,8 +908,8 @@ def test_load_with_metadata_version(
                 license.text = "MIT"
             """,
             'Set "project.license" to an SPDX license expression for metadata >= 2.4',
-            '2.4',
-            id='Classic license with metadata 2.4',
+            "2.4",
+            id="Classic license with metadata 2.4",
         ),
         pytest.param(
             """
@@ -921,109 +919,109 @@ def test_load_with_metadata_version(
                 classifiers = ["License :: OSI Approved :: MIT License"]
             """,
             '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
-            '2.4',
-            id='License trove classfiers with metadata 2.4',
+            "2.4",
+            id="License trove classfiers with metadata 2.4",
         ),
     ],
 )
 def test_load_with_metadata_version_warnings(
     data: str, error: str, metadata_version: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
     with pytest.warns(pyproject_metadata.ConfigurationWarning, match=re.escape(error)):
         pyproject_metadata.StandardMetadata.from_pyproject(
             tomllib.loads(textwrap.dedent(data)), metadata_version=metadata_version
         )
 
 
-@pytest.mark.parametrize('after_rfc', [False, True])
+@pytest.mark.parametrize("after_rfc", [False, True])
 def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
-    with open('pyproject.toml', 'rb') as f:
+    monkeypatch.chdir(DIR / "packages/full-metadata")
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     if after_rfc:
         metadata.as_rfc822()
 
     assert metadata.dynamic == []
-    assert metadata.name == 'full_metadata'
-    assert metadata.canonical_name == 'full-metadata'
-    assert metadata.version == packaging.version.Version('3.2.1')
-    assert metadata.requires_python == packaging.specifiers.Specifier('>=3.8')
+    assert metadata.name == "full_metadata"
+    assert metadata.canonical_name == "full-metadata"
+    assert metadata.version == packaging.version.Version("3.2.1")
+    assert metadata.requires_python == packaging.specifiers.Specifier(">=3.8")
     assert isinstance(metadata.license, pyproject_metadata.License)
     assert metadata.license.file is None
-    assert metadata.license.text == 'some license text'
+    assert metadata.license.text == "some license text"
     assert isinstance(metadata.readme, pyproject_metadata.Readme)
-    assert metadata.readme.file == pathlib.Path('README.md')
-    assert metadata.readme.text == pathlib.Path('README.md').read_text(encoding='utf-8')
-    assert metadata.readme.content_type == 'text/markdown'
-    assert metadata.description == 'A package with all the metadata :)'
+    assert metadata.readme.file == pathlib.Path("README.md")
+    assert metadata.readme.text == pathlib.Path("README.md").read_text(encoding="utf-8")
+    assert metadata.readme.content_type == "text/markdown"
+    assert metadata.description == "A package with all the metadata :)"
     assert metadata.authors == [
-        ('Unknown', 'example@example.com'),
-        ('Example!', None),
+        ("Unknown", "example@example.com"),
+        ("Example!", None),
     ]
     assert metadata.maintainers == [
-        ('Other Example', 'other@example.com'),
+        ("Other Example", "other@example.com"),
     ]
-    assert metadata.keywords == ['trampolim', 'is', 'interesting']
+    assert metadata.keywords == ["trampolim", "is", "interesting"]
     assert metadata.classifiers == [
-        'Development Status :: 4 - Beta',
-        'Programming Language :: Python',
+        "Development Status :: 4 - Beta",
+        "Programming Language :: Python",
     ]
     assert metadata.urls == {
-        'changelog': 'github.com/some/repo/blob/master/CHANGELOG.rst',
-        'documentation': 'readthedocs.org',
-        'homepage': 'example.com',
-        'repository': 'github.com/some/repo',
+        "changelog": "github.com/some/repo/blob/master/CHANGELOG.rst",
+        "documentation": "readthedocs.org",
+        "homepage": "example.com",
+        "repository": "github.com/some/repo",
     }
     assert metadata.entrypoints == {
-        'custom': {
-            'full-metadata': 'full_metadata:main_custom',
+        "custom": {
+            "full-metadata": "full_metadata:main_custom",
         },
     }
     assert metadata.scripts == {
-        'full-metadata': 'full_metadata:main_cli',
+        "full-metadata": "full_metadata:main_cli",
     }
     assert metadata.gui_scripts == {
-        'full-metadata-gui': 'full_metadata:main_gui',
+        "full-metadata-gui": "full_metadata:main_gui",
     }
     assert list(map(str, metadata.dependencies)) == [
-        'dependency1',
-        'dependency2>1.0.0',
-        'dependency3[extra]',
+        "dependency1",
+        "dependency2>1.0.0",
+        "dependency3[extra]",
         'dependency4; os_name != "nt"',
         'dependency5[other-extra]>1.0; os_name == "nt"',
     ]
-    assert list(metadata.optional_dependencies.keys()) == ['test']
-    assert list(map(str, metadata.optional_dependencies['test'])) == [
-        'test_dependency',
-        'test_dependency[test_extra]',
+    assert list(metadata.optional_dependencies.keys()) == ["test"]
+    assert list(map(str, metadata.optional_dependencies["test"])) == [
+        "test_dependency",
+        "test_dependency[test_extra]",
         'test_dependency[test_extra2]>3.0; os_name == "nt"',
     ]
 
 
 def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata2')
-    with open('pyproject.toml', 'rb') as f:
+    monkeypatch.chdir(DIR / "packages/full-metadata2")
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert isinstance(metadata.license, pyproject_metadata.License)
-    assert metadata.license.file == pathlib.Path('LICENSE')
-    assert metadata.license.text == 'Some license! 👋\n'
+    assert metadata.license.file == pathlib.Path("LICENSE")
+    assert metadata.license.text == "Some license! 👋\n"
 
 
 @pytest.mark.parametrize(
-    ('package', 'content_type'),
+    ("package", "content_type"),
     [
-        ('full-metadata', 'text/markdown'),
-        ('full-metadata2', 'text/x-rst'),
+        ("full-metadata", "text/markdown"),
+        ("full-metadata2", "text/x-rst"),
     ],
 )
 def test_readme_content_type(
     package: str, content_type: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.chdir(DIR / 'packages' / package)
-    with open('pyproject.toml', 'rb') as f:
+    monkeypatch.chdir(DIR / "packages" / package)
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
     assert isinstance(metadata.readme, pyproject_metadata.Readme)
@@ -1031,137 +1029,137 @@ def test_readme_content_type(
 
 
 def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/unknown-readme-type')
+    monkeypatch.chdir(DIR / "packages/unknown-readme-type")
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match=re.escape(
             'Could not infer content type for readme file "README.just-made-this-up-now"'
         ),
-    ), open('pyproject.toml', 'rb') as f:
+    ), open("pyproject.toml", "rb") as f:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
 def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_json()
 
     assert core_metadata == {
-        'author': 'Example!',
-        'author_email': 'Unknown <example@example.com>',
-        'classifier': [
-            'Development Status :: 4 - Beta',
-            'Programming Language :: Python',
+        "author": "Example!",
+        "author_email": "Unknown <example@example.com>",
+        "classifier": [
+            "Development Status :: 4 - Beta",
+            "Programming Language :: Python",
         ],
-        'description': 'some readme 👋\n',
-        'description_content_type': 'text/markdown',
-        'home_page': 'example.com',
-        'keywords': ['trampolim', 'is', 'interesting'],
-        'license': 'some license text',
-        'maintainer_email': 'Other Example <other@example.com>',
-        'metadata_version': '2.1',
-        'name': 'full_metadata',
-        'project_url': [
-            'Homepage, example.com',
-            'Documentation, readthedocs.org',
-            'Repository, github.com/some/repo',
-            'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst',
+        "description": "some readme 👋\n",
+        "description_content_type": "text/markdown",
+        "home_page": "example.com",
+        "keywords": ["trampolim", "is", "interesting"],
+        "license": "some license text",
+        "maintainer_email": "Other Example <other@example.com>",
+        "metadata_version": "2.1",
+        "name": "full_metadata",
+        "project_url": [
+            "Homepage, example.com",
+            "Documentation, readthedocs.org",
+            "Repository, github.com/some/repo",
+            "Changelog, github.com/some/repo/blob/master/CHANGELOG.rst",
         ],
-        'provides_extra': ['test'],
-        'requires_dist': [
-            'dependency1',
-            'dependency2>1.0.0',
-            'dependency3[extra]',
+        "provides_extra": ["test"],
+        "requires_dist": [
+            "dependency1",
+            "dependency2>1.0.0",
+            "dependency3[extra]",
             'dependency4; os_name != "nt"',
             'dependency5[other-extra]>1.0; os_name == "nt"',
             'test_dependency; extra == "test"',
             'test_dependency[test_extra]; extra == "test"',
             'test_dependency[test_extra2]>3.0; os_name == "nt" and ' 'extra == "test"',
         ],
-        'requires_python': '>=3.8',
-        'summary': 'A package with all the metadata :)',
-        'version': '3.2.1',
+        "requires_python": ">=3.8",
+        "summary": "A package with all the metadata :)",
+        "version": "3.2.1",
     }
 
 
 def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/full-metadata')
+    monkeypatch.chdir(DIR / "packages/full-metadata")
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
     assert core_metadata.items() == [
-        ('Metadata-Version', '2.1'),
-        ('Name', 'full_metadata'),
-        ('Version', '3.2.1'),
-        ('Summary', 'A package with all the metadata :)'),
-        ('Keywords', 'trampolim,is,interesting'),
-        ('Home-page', 'example.com'),
-        ('Author', 'Example!'),
-        ('Author-Email', 'Unknown <example@example.com>'),
-        ('Maintainer-Email', 'Other Example <other@example.com>'),
-        ('License', 'some license text'),
-        ('Classifier', 'Development Status :: 4 - Beta'),
-        ('Classifier', 'Programming Language :: Python'),
-        ('Project-URL', 'Homepage, example.com'),
-        ('Project-URL', 'Documentation, readthedocs.org'),
-        ('Project-URL', 'Repository, github.com/some/repo'),
-        ('Project-URL', 'Changelog, github.com/some/repo/blob/master/CHANGELOG.rst'),
-        ('Requires-Python', '>=3.8'),
-        ('Requires-Dist', 'dependency1'),
-        ('Requires-Dist', 'dependency2>1.0.0'),
-        ('Requires-Dist', 'dependency3[extra]'),
-        ('Requires-Dist', 'dependency4; os_name != "nt"'),
-        ('Requires-Dist', 'dependency5[other-extra]>1.0; os_name == "nt"'),
-        ('Provides-Extra', 'test'),
-        ('Requires-Dist', 'test_dependency; extra == "test"'),
-        ('Requires-Dist', 'test_dependency[test_extra]; extra == "test"'),
+        ("Metadata-Version", "2.1"),
+        ("Name", "full_metadata"),
+        ("Version", "3.2.1"),
+        ("Summary", "A package with all the metadata :)"),
+        ("Keywords", "trampolim,is,interesting"),
+        ("Home-page", "example.com"),
+        ("Author", "Example!"),
+        ("Author-Email", "Unknown <example@example.com>"),
+        ("Maintainer-Email", "Other Example <other@example.com>"),
+        ("License", "some license text"),
+        ("Classifier", "Development Status :: 4 - Beta"),
+        ("Classifier", "Programming Language :: Python"),
+        ("Project-URL", "Homepage, example.com"),
+        ("Project-URL", "Documentation, readthedocs.org"),
+        ("Project-URL", "Repository, github.com/some/repo"),
+        ("Project-URL", "Changelog, github.com/some/repo/blob/master/CHANGELOG.rst"),
+        ("Requires-Python", ">=3.8"),
+        ("Requires-Dist", "dependency1"),
+        ("Requires-Dist", "dependency2>1.0.0"),
+        ("Requires-Dist", "dependency3[extra]"),
+        ("Requires-Dist", 'dependency4; os_name != "nt"'),
+        ("Requires-Dist", 'dependency5[other-extra]>1.0; os_name == "nt"'),
+        ("Provides-Extra", "test"),
+        ("Requires-Dist", 'test_dependency; extra == "test"'),
+        ("Requires-Dist", 'test_dependency[test_extra]; extra == "test"'),
         (
-            'Requires-Dist',
+            "Requires-Dist",
             'test_dependency[test_extra2]>3.0; os_name == "nt" and extra == "test"',
         ),
-        ('Description-Content-Type', 'text/markdown'),
+        ("Description-Content-Type", "text/markdown"),
     ]
-    assert core_metadata.get_payload() == 'some readme 👋\n'
+    assert core_metadata.get_payload() == "some readme 👋\n"
 
 
 def test_as_json_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/spdx')
+    monkeypatch.chdir(DIR / "packages/spdx")
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_json()
     assert core_metadata == {
-        'license_expression': 'MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)',
-        'license_file': [
-            'AUTHORS.txt',
-            'LICENSE.md',
-            'LICENSE.txt',
-            'licenses/LICENSE.MIT',
+        "license_expression": "MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)",
+        "license_file": [
+            "AUTHORS.txt",
+            "LICENSE.md",
+            "LICENSE.txt",
+            "licenses/LICENSE.MIT",
         ],
-        'metadata_version': '2.4',
-        'name': 'example',
-        'version': '1.2.3',
+        "metadata_version": "2.4",
+        "name": "example",
+        "version": "1.2.3",
     }
 
 
 def test_as_rfc822_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/spdx')
+    monkeypatch.chdir(DIR / "packages/spdx")
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
     core_metadata = metadata.as_rfc822()
     assert core_metadata.items() == [
-        ('Metadata-Version', '2.4'),
-        ('Name', 'example'),
-        ('Version', '1.2.3'),
-        ('License-Expression', 'MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)'),
-        ('License-File', 'AUTHORS.txt'),
-        ('License-File', 'LICENSE.md'),
-        ('License-File', 'LICENSE.txt'),
-        ('License-File', 'licenses/LICENSE.MIT'),
+        ("Metadata-Version", "2.4"),
+        ("Name", "example"),
+        ("Version", "1.2.3"),
+        ("License-Expression", "MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)"),
+        ("License-File", "AUTHORS.txt"),
+        ("License-File", "LICENSE.md"),
+        ("License-File", "LICENSE.txt"),
+        ("License-File", "licenses/LICENSE.MIT"),
     ]
 
     assert core_metadata.get_payload() is None
@@ -1170,13 +1168,13 @@ def test_as_rfc822_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_as_rfc822_spdx_empty_glob(
     monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path, all_errors: bool
 ) -> None:
-    shutil.copytree(DIR / 'packages/spdx', tmp_path / 'spdx')
-    monkeypatch.chdir(tmp_path / 'spdx')
+    shutil.copytree(DIR / "packages/spdx", tmp_path / "spdx")
+    monkeypatch.chdir(tmp_path / "spdx")
 
-    pathlib.Path('AUTHORS.txt').unlink()
+    pathlib.Path("AUTHORS.txt").unlink()
     msg = 'Every pattern in "project.license-files" must match at least one file: "AUTHORS*" did not match any'
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         if all_errors:
             with pytest.raises(
                 pyproject_metadata.errors.ExceptionGroup,
@@ -1184,7 +1182,7 @@ def test_as_rfc822_spdx_empty_glob(
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.load(f), all_errors=all_errors
                 )
-            assert 'Failed to parse pyproject.toml' in str(execinfo.value)
+            assert "Failed to parse pyproject.toml" in str(execinfo.value)
             assert [msg] == [str(e) for e in execinfo.value.exceptions]
         else:
             with pytest.raises(
@@ -1197,32 +1195,32 @@ def test_as_rfc822_spdx_empty_glob(
 
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(DIR / 'packages/dynamic-description')
+    monkeypatch.chdir(DIR / "packages/dynamic-description")
 
-    with open('pyproject.toml', 'rb') as f:
+    with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
-    metadata.dynamic_metadata = ['description']
+    metadata.dynamic_metadata = ["description"]
     core_metadata = metadata.as_rfc822()
     assert core_metadata.items() == [
-        ('Metadata-Version', '2.2'),
-        ('Name', 'dynamic-description'),
-        ('Version', '1.0.0'),
-        ('Dynamic', 'description'),
+        ("Metadata-Version", "2.2"),
+        ("Name", "dynamic-description"),
+        ("Version", "1.0.0"),
+        ("Dynamic", "description"),
     ]
 
 
-@pytest.mark.parametrize('metadata_version', ['2.1', '2.2', '2.3'])
+@pytest.mark.parametrize("metadata_version", ["2.1", "2.2", "2.3"])
 def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'hi',
-                'version': '1.2',
-                'optional-dependencies': {
-                    'under_score': ['some_package'],
-                    'da-sh': ['some-package'],
-                    'do.t': ['some.package'],
-                    'empty': [],
+            "project": {
+                "name": "hi",
+                "version": "1.2",
+                "optional-dependencies": {
+                    "under_score": ["some_package"],
+                    "da-sh": ["some-package"],
+                    "do.t": ["some.package"],
+                    "empty": [],
                 },
             }
         },
@@ -1230,14 +1228,14 @@ def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     )
     assert metadata.metadata_version == metadata_version
 
-    rfc822 = bytes(metadata.as_rfc822()).decode('utf-8')
+    rfc822 = bytes(metadata.as_rfc822()).decode("utf-8")
 
-    assert f'Metadata-Version: {metadata_version}' in rfc822
+    assert f"Metadata-Version: {metadata_version}" in rfc822
 
-    assert 'Provides-Extra: under-score' in rfc822
-    assert 'Provides-Extra: da-sh' in rfc822
-    assert 'Provides-Extra: do-t' in rfc822
-    assert 'Provides-Extra: empty' in rfc822
+    assert "Provides-Extra: under-score" in rfc822
+    assert "Provides-Extra: da-sh" in rfc822
+    assert "Provides-Extra: do-t" in rfc822
+    assert "Provides-Extra: empty" in rfc822
     assert 'Requires-Dist: some_package; extra == "under-score"' in rfc822
     assert 'Requires-Dist: some-package; extra == "da-sh"' in rfc822
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
@@ -1246,96 +1244,96 @@ def test_as_rfc822_set_metadata(metadata_version: str) -> None:
 def test_as_json_set_metadata() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'hi',
-                'version': '1.2',
-                'optional-dependencies': {
-                    'under_score': ['some_package'],
-                    'da-sh': ['some-package'],
-                    'do.t': ['some.package'],
-                    'empty': [],
+            "project": {
+                "name": "hi",
+                "version": "1.2",
+                "optional-dependencies": {
+                    "under_score": ["some_package"],
+                    "da-sh": ["some-package"],
+                    "do.t": ["some.package"],
+                    "empty": [],
                 },
             }
         },
-        metadata_version='2.1',
+        metadata_version="2.1",
     )
-    assert metadata.metadata_version == '2.1'
+    assert metadata.metadata_version == "2.1"
 
     json = metadata.as_json()
 
     assert json == {
-        'metadata_version': '2.1',
-        'name': 'hi',
-        'provides_extra': ['under-score', 'da-sh', 'do-t', 'empty'],
-        'requires_dist': [
+        "metadata_version": "2.1",
+        "name": "hi",
+        "provides_extra": ["under-score", "da-sh", "do-t", "empty"],
+        "requires_dist": [
             'some_package; extra == "under-score"',
             'some-package; extra == "da-sh"',
             'some.package; extra == "do-t"',
         ],
-        'version': '1.2',
+        "version": "1.2",
     }
 
 
 def test_as_rfc822_set_metadata_invalid() -> None:
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='The metadata_version must be one of',
+        match="The metadata_version must be one of",
     ) as err:
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
-                'project': {
-                    'name': 'hi',
-                    'version': '1.2',
+                "project": {
+                    "name": "hi",
+                    "version": "1.2",
                 },
             },
-            metadata_version='2.0',
+            metadata_version="2.0",
         )
-    assert '2.1' in str(err.value)
-    assert '2.2' in str(err.value)
-    assert '2.3' in str(err.value)
+    assert "2.1" in str(err.value)
+    assert "2.2" in str(err.value)
+    assert "2.3" in str(err.value)
 
 
 def test_as_rfc822_invalid_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
-        name='something',
-        version=packaging.version.Version('1.0.0'),
-        dynamic_metadata=['name'],
+        name="something",
+        version=packaging.version.Version("1.0.0"),
+        dynamic_metadata=["name"],
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field cannot be set as dynamic metadata: name',
+        match="Field cannot be set as dynamic metadata: name",
     ):
         metadata.as_rfc822()
-    metadata.dynamic_metadata = ['version']
+    metadata.dynamic_metadata = ["version"]
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field cannot be set as dynamic metadata: version',
+        match="Field cannot be set as dynamic metadata: version",
     ):
         metadata.as_rfc822()
-    metadata.dynamic_metadata = ['unknown']
+    metadata.dynamic_metadata = ["unknown"]
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field is not known: unknown',
+        match="Field is not known: unknown",
     ):
         metadata.as_rfc822()
 
 
 def test_as_rfc822_mapped_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
-        name='something',
-        version=packaging.version.Version('1.0.0'),
-        dynamic_metadata=list(pyproject_metadata.field_to_metadata('description')),
+        name="something",
+        version=packaging.version.Version("1.0.0"),
+        dynamic_metadata=list(pyproject_metadata.field_to_metadata("description")),
     )
     assert (
         str(metadata.as_rfc822())
-        == 'Metadata-Version: 2.2\nName: something\nVersion: 1.0.0\nDynamic: Summary\n\n'
+        == "Metadata-Version: 2.2\nName: something\nVersion: 1.0.0\nDynamic: Summary\n\n"
     )
 
 
 def test_as_rfc822_missing_version() -> None:
-    metadata = pyproject_metadata.StandardMetadata(name='something')
+    metadata = pyproject_metadata.StandardMetadata(name="something")
     with pytest.raises(
-        pyproject_metadata.ConfigurationError, match='Missing version field'
+        pyproject_metadata.ConfigurationError, match="Missing version field"
     ):
         metadata.as_rfc822()
 
@@ -1347,11 +1345,11 @@ def test_stically_defined_dynamic_field() -> None:
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
-                'project': {
-                    'name': 'example',
-                    'version': '1.2.3',
-                    'dynamic': [
-                        'version',
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "dynamic": [
+                        "version",
                     ],
                 },
             }
@@ -1359,21 +1357,21 @@ def test_stically_defined_dynamic_field() -> None:
 
 
 @pytest.mark.parametrize(
-    'value',
+    "value",
     [
-        '<3.10',
-        '>3.7,<3.11',
-        '>3.7,<3.11,!=3.8.4',
-        '~=3.10,!=3.10.3',
+        "<3.10",
+        ">3.7,<3.11",
+        ">3.7,<3.11,!=3.8.4",
+        "~=3.10,!=3.10.3",
     ],
 )
 def test_requires_python(value: str) -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'version': '0.1.0',
-                'requires-python': value,
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "requires-python": value,
             },
         }
     )
@@ -1382,34 +1380,34 @@ def test_requires_python(value: str) -> None:
 def test_version_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'dynamic': [
-                    'version',
+            "project": {
+                "name": "example",
+                "dynamic": [
+                    "version",
                 ],
             },
         }
     )
-    metadata.version = packaging.version.Version('1.2.3')
+    metadata.version = packaging.version.Version("1.2.3")
 
 
 def test_modify_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'version': '1.2.3',
-                'dynamic': [
-                    'requires-python',
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dynamic": [
+                    "requires-python",
                 ],
             },
         }
     )
-    metadata.requires_python = packaging.specifiers.SpecifierSet('>=3.12')
+    metadata.requires_python = packaging.specifiers.SpecifierSet(">=3.12")
     with pytest.raises(
         AttributeError, match=re.escape('Field "version" is not dynamic')
     ):
-        metadata.version = packaging.version.Version('1.2.3')
+        metadata.version = packaging.version.Version("1.2.3")
 
 
 def test_missing_keys_warns() -> None:
@@ -1419,10 +1417,10 @@ def test_missing_keys_warns() -> None:
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
-                'project': {
-                    'name': 'example',
-                    'version': '1.2.3',
-                    'not-real-key': True,
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "not-real-key": True,
                 },
             }
         )
@@ -1431,7 +1429,7 @@ def test_missing_keys_warns() -> None:
 def test_missing_keys_okay() -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
+            "project": {"name": "example", "version": "1.2.3", "not-real-key": True},
         },
         allow_extra_keys=True,
     )
@@ -1440,15 +1438,15 @@ def test_missing_keys_okay() -> None:
 def test_extra_top_level() -> None:
     assert not pyproject_metadata.extras_top_level(
         {
-            'project': {},
+            "project": {},
         }
     )
-    assert {'also-not-real', 'not-real'} == pyproject_metadata.extras_top_level(
+    assert {"also-not-real", "not-real"} == pyproject_metadata.extras_top_level(
         {
-            'not-real': {},
-            'also-not-real': {},
-            'project': {},
-            'build-system': {},
+            "not-real": {},
+            "also-not-real": {},
+            "project": {},
+            "build-system": {},
         }
     )
 
@@ -1456,18 +1454,18 @@ def test_extra_top_level() -> None:
 def test_extra_build_system() -> None:
     assert not pyproject_metadata.extras_build_system(
         {
-            'build-system': {
-                'build-backend': 'one',
-                'requires': ['two'],
-                'backend-path': 'local',
+            "build-system": {
+                "build-backend": "one",
+                "requires": ["two"],
+                "backend-path": "local",
             },
         }
     )
-    assert {'also-not-real', 'not-real'} == pyproject_metadata.extras_build_system(
+    assert {"also-not-real", "not-real"} == pyproject_metadata.extras_build_system(
         {
-            'build-system': {
-                'not-real': {},
-                'also-not-real': {},
+            "build-system": {
+                "not-real": {},
+                "also-not-real": {},
             }
         }
     )
@@ -1482,10 +1480,10 @@ def test_multiline_description_warns() -> None:
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
-                'project': {
-                    'name': 'example',
-                    'version': '1.2.3',
-                    'description': 'this\nis multiline',
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "description": "this\nis multiline",
                 },
             }
         )

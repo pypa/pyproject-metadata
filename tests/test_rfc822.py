@@ -14,84 +14,84 @@ import pyproject_metadata.constants
 
 
 @pytest.mark.parametrize(
-    ('items', 'data'),
+    ("items", "data"),
     [
         pytest.param(
             [],
-            '',
-            id='empty',
+            "",
+            id="empty",
         ),
         pytest.param(
             [
-                ('Foo', 'Bar'),
+                ("Foo", "Bar"),
             ],
-            'Foo: Bar\n',
-            id='simple',
+            "Foo: Bar\n",
+            id="simple",
         ),
         pytest.param(
             [
-                ('Foo', 'Bar'),
-                ('Foo2', 'Bar2'),
+                ("Foo", "Bar"),
+                ("Foo2", "Bar2"),
             ],
             """\
             Foo: Bar
             Foo2: Bar2
             """,
-            id='multiple',
+            id="multiple",
         ),
         pytest.param(
             [
-                ('Foo', 'Unicøde'),
+                ("Foo", "Unicøde"),
             ],
-            'Foo: Unicøde\n',
-            id='unicode',
+            "Foo: Unicøde\n",
+            id="unicode",
         ),
         pytest.param(
             [
-                ('Foo', '🕵️'),
+                ("Foo", "🕵️"),
             ],
-            'Foo: 🕵️\n',
-            id='emoji',
+            "Foo: 🕵️\n",
+            id="emoji",
         ),
         pytest.param(
             [
-                ('Item', None),
+                ("Item", None),
             ],
-            '',
-            id='none',
+            "",
+            id="none",
         ),
         pytest.param(
             [
-                ('ItemA', 'ValueA'),
-                ('ItemB', 'ValueB'),
-                ('ItemC', 'ValueC'),
+                ("ItemA", "ValueA"),
+                ("ItemB", "ValueB"),
+                ("ItemC", "ValueC"),
             ],
             """\
             ItemA: ValueA
             ItemB: ValueB
             ItemC: ValueC
             """,
-            id='order 1',
+            id="order 1",
         ),
         pytest.param(
             [
-                ('ItemB', 'ValueB'),
-                ('ItemC', 'ValueC'),
-                ('ItemA', 'ValueA'),
+                ("ItemB", "ValueB"),
+                ("ItemC", "ValueC"),
+                ("ItemA", "ValueA"),
             ],
             """\
             ItemB: ValueB
             ItemC: ValueC
             ItemA: ValueA
             """,
-            id='order 2',
+            id="order 2",
         ),
         pytest.param(
             [
-                ('ItemA', 'ValueA1'),
-                ('ItemB', 'ValueB'),
-                ('ItemC', 'ValueC'),
-                ('ItemA', 'ValueA2'),
+                ("ItemA", "ValueA1"),
+                ("ItemB", "ValueB"),
+                ("ItemC", "ValueC"),
+                ("ItemA", "ValueA2"),
             ],
             """\
             ItemA: ValueA1
@@ -99,13 +99,13 @@ import pyproject_metadata.constants
             ItemC: ValueC
             ItemA: ValueA2
             """,
-            id='multiple keys',
+            id="multiple keys",
         ),
         pytest.param(
             [
-                ('ItemA', 'ValueA'),
-                ('ItemB', 'ValueB1\nValueB2\nValueB3'),
-                ('ItemC', 'ValueC'),
+                ("ItemA", "ValueA"),
+                ("ItemB", "ValueB1\nValueB2\nValueB3"),
+                ("ItemC", "ValueC"),
             ],
             """\
             ItemA: ValueA
@@ -114,7 +114,7 @@ import pyproject_metadata.constants
                    ValueB3
             ItemC: ValueC
             """,
-            id='multiline',
+            id="multiline",
         ),
     ],
 )
@@ -126,33 +126,33 @@ def test_headers(
 
     monkeypatch.setattr(
         pyproject_metadata.constants,
-        'KNOWN_METADATA_FIELDS',
+        "KNOWN_METADATA_FIELDS",
         {x.lower() for x, _ in items},
     )
 
     for name, value in items:
         smart_message[name] = value
 
-    data = textwrap.dedent(data) + '\n'
+    data = textwrap.dedent(data) + "\n"
     assert str(message) == data
     assert bytes(message) == data.encode()
 
     assert email.message_from_string(str(message)).items() == [
-        (a, '\n       '.join(b.splitlines())) for a, b in items if b is not None
+        (a, "\n       ".join(b.splitlines())) for a, b in items if b is not None
     ]
 
 
 def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         pyproject_metadata.constants,
-        'KNOWN_METADATA_FIELDS',
-        {'itema', 'itemb', 'itemc'},
+        "KNOWN_METADATA_FIELDS",
+        {"itema", "itemb", "itemc"},
     )
     message = pyproject_metadata.RFC822Message()
 
-    message['ItemA'] = 'ValueA'
-    message['ItemB'] = 'ValueB'
-    message['ItemC'] = 'ValueC'
+    message["ItemA"] = "ValueA"
+    message["ItemB"] = "ValueB"
+    message["ItemC"] = "ValueC"
     body = inspect.cleandoc("""
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris congue semper
         fermentum. Nunc vitae tempor ante. Aenean aliquet posuere lacus non faucibus.
@@ -172,7 +172,7 @@ def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
         ItemB: ValueB
         ItemC: ValueC
         """)
-    full = f'{headers}\n\n{body}'
+    full = f"{headers}\n\n{body}"
 
     message.set_payload(textwrap.dedent(body))
 
@@ -182,7 +182,7 @@ def test_body(monkeypatch: pytest.MonkeyPatch) -> None:
     assert new_message.items() == message.items()
     assert new_message.get_payload() == message.get_payload()
 
-    assert bytes(message) == full.encode('utf-8')
+    assert bytes(message) == full.encode("utf-8")
 
 
 def test_unknown_field() -> None:
@@ -191,23 +191,23 @@ def test_unknown_field() -> None:
         pyproject_metadata.ConfigurationError,
         match=re.escape('Unknown field "Unknown"'),
     ):
-        message['Unknown'] = 'Value'
+        message["Unknown"] = "Value"
 
 
 def test_known_field() -> None:
     message = pyproject_metadata.RFC822Message()
-    message['Platform'] = 'Value'
-    assert str(message) == 'Platform: Value\n\n'
+    message["Platform"] = "Value"
+    assert str(message) == "Platform: Value\n\n"
 
 
 def test_convert_optional_dependencies() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'version': '0.1.0',
-                'optional-dependencies': {
-                    'test': [
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "optional-dependencies": {
+                    "test": [
                         'foo; os_name == "nt" or sys_platform == "win32"',
                         'bar; os_name == "posix" and sys_platform == "linux"',
                     ],
@@ -216,7 +216,7 @@ def test_convert_optional_dependencies() -> None:
         }
     )
     message = metadata.as_rfc822()
-    requires = message.get_all('Requires-Dist')
+    requires = message.get_all("Requires-Dist")
     assert requires == [
         'foo; (os_name == "nt" or sys_platform == "win32") and extra == "test"',
         'bar; os_name == "posix" and sys_platform == "linux" and extra == "test"',
@@ -226,24 +226,24 @@ def test_convert_optional_dependencies() -> None:
 def test_convert_author_email() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'version': '0.1.0',
-                'authors': [
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "authors": [
                     {
-                        'name': 'John Doe, Inc.',
-                        'email': 'johndoe@example.com',
+                        "name": "John Doe, Inc.",
+                        "email": "johndoe@example.com",
                     },
                     {
-                        'name': 'Kate Doe, LLC.',
-                        'email': 'katedoe@example.com',
+                        "name": "Kate Doe, LLC.",
+                        "email": "katedoe@example.com",
                     },
                 ],
             },
         }
     )
     message = metadata.as_rfc822()
-    assert message.get_all('Author-Email') == [
+    assert message.get_all("Author-Email") == [
         '"John Doe, Inc." <johndoe@example.com>, "Kate Doe, LLC." <katedoe@example.com>'
     ]
 
@@ -251,16 +251,16 @@ def test_convert_author_email() -> None:
 def test_long_version() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {
-                'name': 'example',
-                'version': '0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters',
+            "project": {
+                "name": "example",
+                "version": "0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters",
             }
         }
     )
     message = metadata.as_rfc822()
     assert (
-        message.get('Version')
-        == '0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters'
+        message.get("Version")
+        == "0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters"
     )
     assert (
         bytes(message)
@@ -268,8 +268,8 @@ def test_long_version() -> None:
         Metadata-Version: 2.1
         Name: example
         Version: 0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters
-    """).encode('utf-8')
-        + b'\n\n'
+    """).encode("utf-8")
+        + b"\n\n"
     )
     assert (
         str(message)
@@ -278,5 +278,5 @@ def test_long_version() -> None:
         Name: example
         Version: 0.0.0+super.duper.long.version.string.that.is.longer.than.sixty.seven.characters
     """)
-        + '\n\n'
+        + "\n\n"
     )

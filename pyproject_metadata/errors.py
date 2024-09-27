@@ -6,12 +6,11 @@ import dataclasses
 import sys
 import typing
 
-
 __all__ = [
-    'ConfigurationError',
-    'ConfigurationWarning',
-    'ExceptionGroup',
-    'ErrorCollector',
+    "ConfigurationError",
+    "ConfigurationWarning",
+    "ExceptionGroup",
+    "ErrorCollector",
 ]
 
 
@@ -50,7 +49,7 @@ else:
             self.exceptions = exceptions
 
         def __repr__(self) -> str:
-            return f'{self.__class__.__name__}({self.message!r}, {self.exceptions!r})'
+            return f"{self.__class__.__name__}({self.message!r}, {self.exceptions!r})"
 
 
 @dataclasses.dataclass
