@@ -1,10 +1,11 @@
 # pyproject-metadata
 
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pypa/pyproject-metadata/main.svg)](https://results.pre-commit.ci/latest/github/pypa/pyproject-metadata/main)
-[![checks](https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml/badge.svg)](https://github.com/FFY00/python-pyproject-metadata/actions/workflows/checks.yml)
-[![tests](https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml/badge.svg)](https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/pypa/pyproject-metadata/branch/main/graph/badge.svg?token=9chBjS1lch)](https://codecov.io/gh/pypa/pyproject-metadata)
-[![Documentation Status](https://readthedocs.org/projects/pyproject-metadata/badge/?version=latest)](https://pep621.readthedocs.io/en/latest/?badge=latest)
+[![pre-commit.ci status][pre-commit-badge]][pre-commit-link]
+[![checks][gha-checks-badge]][gha-checks-link]
+[![tests][gha-tests-badge]][gha-tests-link]
+[![codecov][codecov-badge]][codecov-link]
+[![Documentation Status][rtd-badge]][rtd-link]
+[![PyPI version][pypi-version]][pypi-link]
 
 
 > Dataclass for PEP 621 metadata with support for [core metadata] generation
@@ -87,3 +88,17 @@ deprecated_classifiers = {k: trove_classifiers.deprecated_classifiers[k] for k i
 If you are writing a build backend, you should not validate classifiers with a `Private ::` prefix; these are only restricted for upload to PyPI (such as `Private :: Do Not Upload`).
 
 Since classifiers are a moving target, it is probably best for build backends (which may be shipped by third party distributors like Debian or Fedora) to either ignore or have optional classifier validation.
+
+
+[gha-checks-link]:          https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml
+[gha-checks-badge]:         https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml/badge.svg
+[gha-tests-link]:           https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml
+[gha-tests-badge]:          https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml/badge.svg
+[pre-commit-link]:          https://results.pre-commit.ci/latest/github/pypa/pyproject-metadata/main
+[pre-commit-badge]:         https://results.pre-commit.ci/badge/github/pypa/pyproject-metadata/main.svg
+[codecov-link]:             https://codecov.io/gh/pypa/pyproject-metadata
+[codecov-badge]:            https://codecov.io/gh/pypa/pyproject-metadata/branch/main/graph/badge.svg?token=9chBjS1lch
+[pypi-link]:                https://pypi.org/project/pyproject-metadata/
+[pypi-version]:             https://badge.fury.io/py/pyproject-metadata.svg
+[rtd-link]:                 https://pep621.readthedocs.io/en/latest/?badge=latest
+[rtd-badge]:                https://readthedocs.org/projects/pep621/badge/?version=latest
