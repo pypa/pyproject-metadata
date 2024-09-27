@@ -39,7 +39,7 @@ import packaging.utils
 import packaging.version
 
 
-__version__ = '0.9.0b4'
+__version__ = '0.9.0b5'
 
 __all__ = [
     'ConfigurationError',
