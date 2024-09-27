@@ -25,9 +25,22 @@ import pyproject_metadata
 DIR = pathlib.Path(__file__).parent.resolve()
 
 
-@pytest.fixture(params=[False, True], ids=['one_error', 'all_errors'])
-def all_errors(request: pytest.FixtureRequest) -> bool:
-    return request.param  # type: ignore[no-any-return]
+try:
+    import exceptiongroup
+except ImportError:
+    exceptiongroup = None  # type: ignore[assignment]
+
+
+@pytest.fixture(params=['one_error', 'all_errors', 'exceptiongroup'])
+def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> bool:
+    param: str = request.param
+    if param == 'exceptiongroup':
+        if exceptiongroup is None:
+            pytest.skip('exceptiongroup is not installed')
+        monkeypatch.setattr(
+            pyproject_metadata.errors, 'ExceptionGroup', exceptiongroup.ExceptionGroup
+        )
+    return param != 'one_error'
 
 
 @pytest.mark.parametrize(
@@ -54,7 +67,7 @@ def all_errors(request: pytest.FixtureRequest) -> bool:
                 version = '0.1.0'
                 not-real-key = true
             """,
-            'Extra keys present in "project": {\'not-real-key\'}',
+            'Extra keys present in "project": "not-real-key"',
             id='Invalid project key',
         ),
         pytest.param(
@@ -779,6 +792,25 @@ def test_load(
             ],
             id='Unsupported filename in readme',
         ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = '0.1.0'
+                readme = 'README.jpg'
+                license-files = [12]
+                entry-points.bad-name = {}
+                other-entry = {}
+                not-valid = true
+            """,
+            [
+                'Extra keys present in "project": "not-valid", "other-entry"',
+                'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+                'Could not infer content type for readme file "README.jpg"',
+                'Field "project.entry-points" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got "bad-name")',
+            ],
+            id='Four errors including extra keys',
+        ),
     ],
 )
 def test_load_multierror(
@@ -1364,7 +1396,7 @@ def test_modify_dynamic() -> None:
 def test_missing_keys_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,
-        match=re.escape("""Extra keys present in "project": {'not-real-key'}"""),
+        match=re.escape('Extra keys present in "project": "not-real-key"'),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
@@ -1394,7 +1426,9 @@ def test_extra_top_level() -> None:
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match=r"Extra keys present in pyproject.toml: \{'(also-|)not-real', '(also-|)not-real'\}",
+        match=re.escape(
+            'Extra keys present in pyproject.toml: "also-not-real", "not-real"'
+        ),
     ):
         pyproject_metadata.validate_top_level(
             {
@@ -1416,7 +1450,9 @@ def test_extra_build_system() -> None:
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match=r"""Extra keys present in "build-system": \{'(also-|)not-real', '(also-|)not-real'\}""",
+        match=re.escape(
+            'Extra keys present in "build-system": "also-not-real", "not-real"'
+        ),
     ):
         pyproject_metadata.validate_build_system(
             {

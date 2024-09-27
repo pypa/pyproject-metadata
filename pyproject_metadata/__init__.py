@@ -70,7 +70,8 @@ def field_to_metadata(field: str) -> frozenset[str]:
 def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
     extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
     if extra_keys:
-        msg = f'Extra keys present in pyproject.toml: {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
@@ -80,7 +81,8 @@ def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
     if extra_keys:
-        msg = f'Extra keys present in "build-system": {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in "build-system": {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
@@ -89,7 +91,8 @@ def validate_project(pyproject_table: Mapping[str, Any]) -> None:
         set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
     )
     if extra_keys:
-        msg = f'Extra keys present in "project": {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in "project": {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
