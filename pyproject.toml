@@ -38,6 +38,7 @@ test = [
     "pytest-cov[toml]>=2",
     "pytest>=6.2.4",
     'tomli>=1.0.0;python_version<"3.11"',
+    'exceptiongroup;python_version<"3.11"',  # Optional
 ]
 
 [project.urls]

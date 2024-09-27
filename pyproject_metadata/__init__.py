@@ -15,9 +15,9 @@ import sys
 import typing
 import warnings
 
-from . import constants, pyproject
-from .errors import ConfigurationError, ConfigurationWarning
-from .pyproject import License, Readme
+from . import constants
+from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
+from .pyproject import License, PyProjectReader, Readme
 
 
 if typing.TYPE_CHECKING:
@@ -70,7 +70,8 @@ def field_to_metadata(field: str) -> frozenset[str]:
 def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
     extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
     if extra_keys:
-        msg = f'Extra keys present in pyproject.toml: {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
@@ -80,7 +81,8 @@ def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
     if extra_keys:
-        msg = f'Extra keys present in "build-system": {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in "build-system": {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
@@ -89,7 +91,8 @@ def validate_project(pyproject_table: Mapping[str, Any]) -> None:
         set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
     )
     if extra_keys:
-        msg = f'Extra keys present in "project": {extra_keys}'
+        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+        msg = f'Extra keys present in "project": {extra_keys_str}'
         raise ConfigurationError(msg)
 
 
@@ -210,6 +213,7 @@ class StandardMetadata:
     """
 
     metadata_version: str | None = None
+    all_errors: bool = False
     _locked_metadata: bool = False
 
     def __post_init__(self) -> None:
@@ -225,9 +229,11 @@ class StandardMetadata:
         super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
+        errors = ErrorCollector(collect_errors=self.all_errors)
+
         if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
             msg = f'The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)'
-            raise ConfigurationError(msg)
+            errors.config_error(msg)
 
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
         # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
@@ -238,17 +244,17 @@ class StandardMetadata:
                 f'Invalid project name "{self.name}". A valid name consists only of ASCII letters and '
                 'numbers, period, underscore and hyphen. It must start and end with a letter or number'
             )
-            raise ConfigurationError(msg)
+            errors.config_error(msg, key='project.name')
 
         if self.license_files is not None and isinstance(self.license, License):
             msg = '"project.license-files" must not be used when "project.license" is not a SPDX license expression'
-            raise ConfigurationError(msg)
+            errors.config_error(msg, key='project.license-files')
 
         if isinstance(self.license, str) and any(
             c.startswith('License ::') for c in self.classifiers
         ):
             msg = 'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers'
-            raise ConfigurationError(msg)
+            errors.config_error(msg, key='project.license')
 
         if warn:
             if self.description and '\n' in self.description:
@@ -276,14 +282,16 @@ class StandardMetadata:
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
-            raise ConfigurationError(msg)
+            errors.config_error(msg, key='project.license')
 
         if (
             self.license_files is not None
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
             msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
-            raise ConfigurationError(msg)
+            errors.config_error(msg, key='project.license-files')
+
+        errors.finalize('Metadata validation failed')
 
     @property
     def auto_metadata_version(self) -> str:
@@ -301,7 +309,7 @@ class StandardMetadata:
         return packaging.utils.canonicalize_name(self.name)
 
     @classmethod
-    def from_pyproject(
+    def from_pyproject(  # noqa: C901
         cls,
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
@@ -309,11 +317,17 @@ class StandardMetadata:
         dynamic_metadata: list[str] | None = None,
         *,
         allow_extra_keys: bool | None = None,
+        all_errors: bool = False,
     ) -> Self:
+        pyproject = PyProjectReader(collect_errors=all_errors)
+
         pyproject_table: PyProjectTable = data  # type: ignore[assignment]
         if 'project' not in pyproject_table:
             msg = 'Section "project" missing in pyproject.toml'
-            raise ConfigurationError(msg)
+            pyproject.config_error(msg, key='project')
+            pyproject.finalize('Failed to parse pyproject.toml')
+            msg = 'Unreachable code'  # pragma: no cover
+            raise AssertionError(msg)  # pragma: no cover
 
         project = pyproject_table['project']
         project_dir = pathlib.Path(project_dir)
@@ -324,76 +338,109 @@ class StandardMetadata:
             except ConfigurationError as err:
                 warnings.warn(str(err), ConfigurationWarning, stacklevel=2)
         elif not allow_extra_keys:
-            validate_project(data)
+            with pyproject.collect():
+                validate_project(data)
 
         dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
             if field in data['project']:
                 msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
-                raise ConfigurationError(msg)
+                pyproject.config_error(msg, key=field)
 
-        name = pyproject.ensure_str(project.get('name'), 'project.name')
-        if not name:
+        raw_name = project.get('name')
+        name = 'UNKNOWN'
+        if raw_name is None:
             msg = 'Field "project.name" missing'
-            raise ConfigurationError(msg)
+            pyproject.config_error(msg, key='name')
+        else:
+            tmp_name = pyproject.ensure_str(raw_name, 'project.name')
+            if tmp_name is not None:
+                name = tmp_name
 
-        version_string = pyproject.ensure_str(project.get('version'), 'project.version')
-        version = packaging.version.Version(version_string) if version_string else None
-
-        if version is None and 'version' not in dynamic:
+        version: packaging.version.Version | None = packaging.version.Version('0.0.0')
+        raw_version = project.get('version')
+        if raw_version is not None:
+            version_string = pyproject.ensure_str(raw_version, 'project.version')
+            if version_string is not None:
+                with pyproject.collect():
+                    version = (
+                        packaging.version.Version(version_string)
+                        if version_string
+                        else None
+                    )
+        elif 'version' not in dynamic:
             msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
-            raise ConfigurationError(msg)
+            pyproject.config_error(msg, key='version')
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
-        description = pyproject.ensure_str(
-            project.get('description'), 'project.description'
-        )
-
-        requires_python_string = pyproject.ensure_str(
-            project.get('requires-python'), 'project.requires-python'
-        )
-        requires_python = (
-            packaging.specifiers.SpecifierSet(requires_python_string)
-            if requires_python_string
+        project_description_raw = project.get('description')
+        description = (
+            pyproject.ensure_str(project_description_raw, 'project.description')
+            if project_description_raw is not None
             else None
         )
 
-        self = cls(
-            name=name,
-            version=version,
-            description=description,
-            license=pyproject.get_license(project, project_dir),
-            license_files=pyproject.get_license_files(project, project_dir),
-            readme=pyproject.get_readme(project, project_dir),
-            requires_python=requires_python,
-            dependencies=pyproject.get_dependencies(project),
-            optional_dependencies=pyproject.get_optional_dependencies(project),
-            entrypoints=pyproject.get_entrypoints(project),
-            authors=pyproject.ensure_people(
-                project.get('authors', []), 'project.authors'
-            ),
-            maintainers=pyproject.ensure_people(
-                project.get('maintainers', []), 'project.maintainers'
-            ),
-            urls=pyproject.ensure_dict(project.get('urls'), 'project.urls'),
-            classifiers=pyproject.ensure_list(
-                project.get('classifiers'), 'project.classifiers'
+        requires_python_raw = project.get('requires-python')
+        requires_python = None
+        if requires_python_raw is not None:
+            requires_python_string = pyproject.ensure_str(
+                requires_python_raw, 'project.requires-python'
             )
-            or [],
-            keywords=pyproject.ensure_list(project.get('keywords'), 'project.keywords')
-            or [],
-            scripts=pyproject.ensure_dict(project.get('scripts'), 'project.scripts'),
-            gui_scripts=pyproject.ensure_dict(
-                project.get('gui-scripts'), 'project.gui-scripts'
-            ),
-            dynamic=dynamic,
-            dynamic_metadata=dynamic_metadata or [],
-            metadata_version=metadata_version,
-        )
-        self._locked_metadata = True
+            if requires_python_string is not None:
+                with pyproject.collect():
+                    requires_python = packaging.specifiers.SpecifierSet(
+                        requires_python_string
+                    )
+
+        self = None
+        with pyproject.collect():
+            self = cls(
+                name=name,
+                version=version,
+                description=description,
+                license=pyproject.get_license(project, project_dir),
+                license_files=pyproject.get_license_files(project, project_dir),
+                readme=pyproject.get_readme(project, project_dir),
+                requires_python=requires_python,
+                dependencies=pyproject.get_dependencies(project),
+                optional_dependencies=pyproject.get_optional_dependencies(project),
+                entrypoints=pyproject.get_entrypoints(project),
+                authors=pyproject.ensure_people(
+                    project.get('authors', []), 'project.authors'
+                ),
+                maintainers=pyproject.ensure_people(
+                    project.get('maintainers', []), 'project.maintainers'
+                ),
+                urls=pyproject.ensure_dict(project.get('urls', {}), 'project.urls')
+                or {},
+                classifiers=pyproject.ensure_list(
+                    project.get('classifiers', []), 'project.classifiers'
+                )
+                or [],
+                keywords=pyproject.ensure_list(
+                    project.get('keywords', []), 'project.keywords'
+                )
+                or [],
+                scripts=pyproject.ensure_dict(
+                    project.get('scripts', {}), 'project.scripts'
+                )
+                or {},
+                gui_scripts=pyproject.ensure_dict(
+                    project.get('gui-scripts', {}), 'project.gui-scripts'
+                )
+                or {},
+                dynamic=dynamic,
+                dynamic_metadata=dynamic_metadata or [],
+                metadata_version=metadata_version,
+                all_errors=all_errors,
+            )
+            self._locked_metadata = True
+
+        pyproject.finalize('Failed to parse pyproject.toml')
+        assert self is not None
         return self
 
     def as_rfc822(self) -> RFC822Message:
