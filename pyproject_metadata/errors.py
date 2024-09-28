@@ -73,15 +73,6 @@ class ErrorCollector:
         if self.errors:
             raise ExceptionGroup(msg, self.errors)
 
-    def reraise(self, err: Exception) -> None:
-        """
-        Take an existing error and raise it, or add it to the error list.
-        """
-        if self.collect_errors:
-            self.errors.append(err)
-        else:
-            raise err from None
-
     @contextlib.contextmanager
     def collect(self) -> typing.Generator[None, None, None]:
         if self.collect_errors:

@@ -717,7 +717,7 @@ def test_load(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                validate=pyproject_metadata.Validate.ALL,
+                validate=pyproject_metadata.Validate.EXTRA_KEYS,
             )
     else:
         with warnings.catch_warnings():
@@ -727,7 +727,7 @@ def test_load(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    validate=pyproject_metadata.Validate.ALL,
+                    validate=pyproject_metadata.Validate.EXTRA_KEYS,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -823,7 +823,7 @@ def test_load_multierror(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                validate=pyproject_metadata.Validate.ALL,
+                validate=pyproject_metadata.Validate.EXTRA_KEYS,
             )
     else:
         with warnings.catch_warnings():
@@ -833,7 +833,7 @@ def test_load_multierror(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    validate=pyproject_metadata.Validate.ALL,
+                    validate=pyproject_metadata.Validate.EXTRA_KEYS,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -1393,7 +1393,7 @@ def test_modify_dynamic() -> None:
         metadata.version = packaging.version.Version('1.2.3')
 
 
-def test_missing_keys_warns() -> None:
+def test_missing_keys_project_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,
         match=re.escape('Extra keys present in "project": "not-real-key"'),
@@ -1409,19 +1409,53 @@ def test_missing_keys_warns() -> None:
         )
 
 
+def test_missing_keys_top_level_warns() -> None:
+    with pytest.warns(
+        pyproject_metadata.ConfigurationWarning,
+        match=re.escape('Extra keys present in pyproject.toml: "not-real-key"'),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'not-real-key': True,
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                },
+            }
+        )
+
+
+def test_missing_keys_build_system_warns() -> None:
+    with pytest.warns(
+        pyproject_metadata.ConfigurationWarning,
+        match=re.escape('Extra keys present in "build-system": "not-real-key"'),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                'build-system': {
+                    'not-real-key': True,
+                },
+                'project': {
+                    'name': 'example',
+                    'version': '1.2.3',
+                },
+            }
+        )
+
+
 def test_missing_keys_okay() -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
         },
-        validate=pyproject_metadata.Validate.NONE,
+        warn=pyproject_metadata.Validate.NONE,
     )
 
 
 def test_extra_top_level() -> None:
     pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {"name": "example", "version": "1.2.3"},
+            'project': {'name': 'example', 'version': '1.2.3'},
         },
         validate=pyproject_metadata.Validate.TOP_LEVEL,
     )
@@ -1433,7 +1467,7 @@ def test_extra_top_level() -> None:
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
-                'project': {"name": "example", "version": "1.2.3"},
+                'project': {'name': 'example', 'version': '1.2.3'},
                 'not-real': {},
                 'also-not-real': {},
             },
@@ -1449,7 +1483,7 @@ def test_extra_build_system() -> None:
                 'requires': ['two'],
                 'backend-path': 'local',
             },
-            'project': {"name": "example", "version": "1.2.3"},
+            'project': {'name': 'example', 'version': '1.2.3'},
         },
         validate=pyproject_metadata.Validate.BUILD_SYSTEM,
     )
@@ -1465,7 +1499,7 @@ def test_extra_build_system() -> None:
                     'not-real': {},
                     'also-not-real': {},
                 },
-            'project': {"name": "example", "version": "1.2.3"},
+                'project': {'name': 'example', 'version': '1.2.3'},
             },
             validate=pyproject_metadata.Validate.BUILD_SYSTEM,
         )

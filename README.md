@@ -57,7 +57,6 @@ folder, preserving the original source structure.
 
 Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA fields in `dynamic_metadata`. If you want to convert `pyproject.toml` field names to METADATA field(s), use `pyproject_metadata.pyproject_to_metadata("field-name")`, which will return a frozenset of metadata names that are touched by that field.
 
-
 ## Adding extra fields
 
 You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.
@@ -68,6 +67,17 @@ You can use the `all_errors` argument to `from_pyproject` to show all errors in
 the metadata parse at once, instead of raising an exception on the first one.
 The exception type will be `pyproject_metadata.errors.ExceptionGroup` (which is
 just `ExceptionGroup` on Python 3.11+).
+
+## Validating extra fields
+
+By default, a warning will be issued for extra fields at the top level, in
+build-system, and in the project table. If you want to make these errors, pass
+`validate=Validate.EXTRA_KEYS` in `from_pyproject`. You can also pass
+`warn=Validate.NONE` to disable the warnings instead.  For fine-grained control,
+you can pass `Validate.TOP_LEVEL` to only validate top-level fields,
+`Validate.BUILD_SYSTEM` to only validate build-system fields, and
+`Validate.PROJECT` to only validate project fields, or any `|` combination of
+these.
 
 ## Validating classifiers
 
