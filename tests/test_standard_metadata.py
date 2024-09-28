@@ -717,7 +717,7 @@ def test_load(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                allow_extra_keys=False,
+                validate=pyproject_metadata.Validate.ALL,
             )
     else:
         with warnings.catch_warnings():
@@ -727,7 +727,7 @@ def test_load(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    allow_extra_keys=False,
+                    validate=pyproject_metadata.Validate.ALL,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -823,7 +823,7 @@ def test_load_multierror(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                allow_extra_keys=False,
+                validate=pyproject_metadata.Validate.ALL,
             )
     else:
         with warnings.catch_warnings():
@@ -833,7 +833,7 @@ def test_load_multierror(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    allow_extra_keys=False,
+                    validate=pyproject_metadata.Validate.ALL,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -1414,15 +1414,16 @@ def test_missing_keys_okay() -> None:
         {
             'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
         },
-        allow_extra_keys=True,
+        validate=pyproject_metadata.Validate.NONE,
     )
 
 
 def test_extra_top_level() -> None:
-    pyproject_metadata.validate_top_level(
+    pyproject_metadata.StandardMetadata.from_pyproject(
         {
-            'project': {},
-        }
+            'project': {"name": "example", "version": "1.2.3"},
+        },
+        validate=pyproject_metadata.Validate.TOP_LEVEL,
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
@@ -1430,23 +1431,27 @@ def test_extra_top_level() -> None:
             'Extra keys present in pyproject.toml: "also-not-real", "not-real"'
         ),
     ):
-        pyproject_metadata.validate_top_level(
+        pyproject_metadata.StandardMetadata.from_pyproject(
             {
+                'project': {"name": "example", "version": "1.2.3"},
                 'not-real': {},
                 'also-not-real': {},
-            }
+            },
+            validate=pyproject_metadata.Validate.TOP_LEVEL,
         )
 
 
 def test_extra_build_system() -> None:
-    pyproject_metadata.validate_build_system(
+    pyproject_metadata.StandardMetadata.from_pyproject(
         {
             'build-system': {
                 'build-backend': 'one',
                 'requires': ['two'],
                 'backend-path': 'local',
             },
-        }
+            'project': {"name": "example", "version": "1.2.3"},
+        },
+        validate=pyproject_metadata.Validate.BUILD_SYSTEM,
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
@@ -1454,13 +1459,15 @@ def test_extra_build_system() -> None:
             'Extra keys present in "build-system": "also-not-real", "not-real"'
         ),
     ):
-        pyproject_metadata.validate_build_system(
+        pyproject_metadata.StandardMetadata.from_pyproject(
             {
                 'build-system': {
                     'not-real': {},
                     'also-not-real': {},
-                }
-            }
+                },
+            'project': {"name": "example", "version": "1.2.3"},
+            },
+            validate=pyproject_metadata.Validate.BUILD_SYSTEM,
         )
 
 
