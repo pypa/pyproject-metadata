@@ -717,7 +717,7 @@ def test_load(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                validate=pyproject_metadata.Validate.EXTRA_KEYS,
+                allow_extra_keys=False,
             )
     else:
         with warnings.catch_warnings():
@@ -727,7 +727,7 @@ def test_load(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    validate=pyproject_metadata.Validate.EXTRA_KEYS,
+                    allow_extra_keys=False,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -823,7 +823,7 @@ def test_load_multierror(
         ):
             pyproject_metadata.StandardMetadata.from_pyproject(
                 tomllib.loads(textwrap.dedent(data)),
-                validate=pyproject_metadata.Validate.EXTRA_KEYS,
+                allow_extra_keys=False,
             )
     else:
         with warnings.catch_warnings():
@@ -833,7 +833,7 @@ def test_load_multierror(
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
                     tomllib.loads(textwrap.dedent(data)),
-                    validate=pyproject_metadata.Validate.EXTRA_KEYS,
+                    allow_extra_keys=False,
                     all_errors=True,
                 )
         exceptions = execinfo.value.exceptions
@@ -1395,7 +1395,16 @@ def test_modify_dynamic() -> None:
         metadata.version = packaging.version.Version('1.2.3')
 
 
-def test_missing_keys_project_warns() -> None:
+def test_extra_keys_okay() -> None:
+    pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
+        },
+        allow_extra_keys=True,
+    )
+
+
+def test_extra_keys_project_warns() -> None:
     with pytest.warns(
         pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in "project": "not-real-key"'),
@@ -1411,7 +1420,7 @@ def test_missing_keys_project_warns() -> None:
         )
 
 
-def test_missing_keys_top_level_warns() -> None:
+def test_extra_keys_top_level_warns() -> None:
     with pytest.warns(
         pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in pyproject.toml: "not-real-key"'),
@@ -1427,7 +1436,7 @@ def test_missing_keys_top_level_warns() -> None:
         )
 
 
-def test_missing_keys_build_system_warns() -> None:
+def test_extra_keys_build_system_warns() -> None:
     with pytest.warns(
         pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in "build-system": "not-real-key"'),
@@ -1450,7 +1459,7 @@ def test_extra_top_level() -> None:
         {
             'project': {'name': 'example', 'version': '1.2.3'},
         },
-        validate=pyproject_metadata.Validate.TOP_LEVEL,
+        allow_extra_keys=False,
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
@@ -1464,7 +1473,7 @@ def test_extra_top_level() -> None:
                 'not-real': {},
                 'also-not-real': {},
             },
-            validate=pyproject_metadata.Validate.TOP_LEVEL,
+            allow_extra_keys=False,
         )
 
 
@@ -1478,7 +1487,7 @@ def test_extra_build_system() -> None:
             },
             'project': {'name': 'example', 'version': '1.2.3'},
         },
-        validate=pyproject_metadata.Validate.BUILD_SYSTEM,
+        allow_extra_keys=False,
     )
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
@@ -1494,7 +1503,7 @@ def test_extra_build_system() -> None:
                 },
                 'project': {'name': 'example', 'version': '1.2.3'},
             },
-            validate=pyproject_metadata.Validate.BUILD_SYSTEM,
+            allow_extra_keys=False,
         )
 
 

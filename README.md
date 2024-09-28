@@ -72,11 +72,10 @@ just `ExceptionGroup` on Python 3.11+).
 
 By default, a warning (`pyproject_metadata.errors.ExtraKeyWarning`) will be
 issued for extra fields at the top level, in build-system, and in the project
-table. If you want to make these errors, pass `validate=Validate.EXTRA_KEYS` in
-`from_pyproject`. For fine-grained control, you can pass `Validate.TOP_LEVEL` to
-only validate top-level fields, `Validate.BUILD_SYSTEM` to only validate
-build-system fields, and `Validate.PROJECT` to only validate project fields, or
-any `|` combination of these.
+table. If you want to make these errors, pass `allow_extra_keys=False` in
+`from_pyproject`. Passing `True` instead avoid the check entirely. If you
+want to only validate the `project` table, you can pass
+`{"project": pyproject.get("project", None)}` instead of the full `pyproject.toml`.
 
 ## Validating classifiers
 

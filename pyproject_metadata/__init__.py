@@ -7,7 +7,6 @@ import dataclasses
 import email.message
 import email.policy
 import email.utils
-import enum
 import os
 import os.path
 import pathlib
@@ -55,20 +54,11 @@ __all__ = [
     'Readme',
     'StandardMetadata',
     'field_to_metadata',
-    'Validate',
 ]
 
 
 def __dir__() -> list[str]:
     return __all__
-
-
-class Validate(enum.Flag):
-    TOP_LEVEL = enum.auto()
-    BUILD_SYSTEM = enum.auto()
-    PROJECT = enum.auto()
-    EXTRA_KEYS = TOP_LEVEL | BUILD_SYSTEM | PROJECT
-    NONE = 0
 
 
 def field_to_metadata(field: str) -> frozenset[str]:
@@ -298,13 +288,13 @@ class StandardMetadata:
         metadata_version: str | None = None,
         dynamic_metadata: list[str] | None = None,
         *,
-        validate: Validate = Validate.NONE,
+        allow_extra_keys: bool | None = None,
         all_errors: bool = False,
     ) -> Self:
         pyproject = PyProjectReader(collect_errors=all_errors)
 
         pyproject_table: PyProjectTable = data  # type: ignore[assignment]
-        if 'project' not in pyproject_table:
+        if 'project' not in pyproject_table or pyproject_table['project'] is None:
             msg = 'Section "project" missing in pyproject.toml'
             pyproject.config_error(msg, key='project')
             pyproject.finalize('Failed to parse pyproject.toml')
@@ -314,35 +304,36 @@ class StandardMetadata:
         project = pyproject_table['project']
         project_dir = pathlib.Path(project_dir)
 
-        extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
-        if extra_keys:
-            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-            msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
-            if Validate.TOP_LEVEL in validate:
-                pyproject.config_error(msg)
-            else:
-                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+        if not allow_extra_keys:
+            extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
+            if extra_keys:
+                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+                msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
-        extra_keys = (
-            set(pyproject_table.get('build-system', {}))
-            - constants.KNOWN_BUILD_SYSTEM_FIELDS
-        )
-        if extra_keys:
-            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-            msg = f'Extra keys present in "build-system": {extra_keys_str}'
-            if Validate.BUILD_SYSTEM in validate:
-                pyproject.config_error(msg)
-            else:
-                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+            extra_keys = (
+                set(pyproject_table.get('build-system', {}))
+                - constants.KNOWN_BUILD_SYSTEM_FIELDS
+            )
+            if extra_keys:
+                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+                msg = f'Extra keys present in "build-system": {extra_keys_str}'
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
-        extra_keys = set(project) - constants.KNOWN_PROJECT_FIELDS
-        if extra_keys:
-            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-            msg = f'Extra keys present in "project": {extra_keys_str}'
-            if Validate.PROJECT in validate:
-                pyproject.config_error(msg)
-            else:
-                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+            extra_keys = set(project) - constants.KNOWN_PROJECT_FIELDS
+            if extra_keys:
+                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+                msg = f'Extra keys present in "project": {extra_keys_str}'
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
         dynamic = pyproject.get_dynamic(project)
 
