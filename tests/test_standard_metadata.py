@@ -722,7 +722,7 @@ def test_load(
     else:
         with warnings.catch_warnings():
             warnings.simplefilter(
-                action='ignore', category=pyproject_metadata.ConfigurationWarning
+                action='ignore', category=pyproject_metadata.errors.ConfigurationWarning
             )
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
@@ -828,7 +828,7 @@ def test_load_multierror(
     else:
         with warnings.catch_warnings():
             warnings.simplefilter(
-                action='ignore', category=pyproject_metadata.ConfigurationWarning
+                action='ignore', category=pyproject_metadata.errors.ConfigurationWarning
             )
             with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
                 pyproject_metadata.StandardMetadata.from_pyproject(
@@ -911,7 +911,9 @@ def test_load_with_metadata_version_warnings(
     data: str, error: str, metadata_version: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(DIR / 'packages/full-metadata')
-    with pytest.warns(pyproject_metadata.ConfigurationWarning, match=re.escape(error)):
+    with pytest.warns(
+        pyproject_metadata.errors.ConfigurationWarning, match=re.escape(error)
+    ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             tomllib.loads(textwrap.dedent(data)), metadata_version=metadata_version
         )
@@ -1395,7 +1397,7 @@ def test_modify_dynamic() -> None:
 
 def test_missing_keys_project_warns() -> None:
     with pytest.warns(
-        pyproject_metadata.ConfigurationWarning,
+        pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in "project": "not-real-key"'),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
@@ -1411,7 +1413,7 @@ def test_missing_keys_project_warns() -> None:
 
 def test_missing_keys_top_level_warns() -> None:
     with pytest.warns(
-        pyproject_metadata.ConfigurationWarning,
+        pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in pyproject.toml: "not-real-key"'),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
@@ -1427,7 +1429,7 @@ def test_missing_keys_top_level_warns() -> None:
 
 def test_missing_keys_build_system_warns() -> None:
     with pytest.warns(
-        pyproject_metadata.ConfigurationWarning,
+        pyproject_metadata.errors.ExtraKeyWarning,
         match=re.escape('Extra keys present in "build-system": "not-real-key"'),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
@@ -1441,15 +1443,6 @@ def test_missing_keys_build_system_warns() -> None:
                 },
             }
         )
-
-
-def test_missing_keys_okay() -> None:
-    pyproject_metadata.StandardMetadata.from_pyproject(
-        {
-            'project': {'name': 'example', 'version': '1.2.3', 'not-real-key': True},
-        },
-        warn=pyproject_metadata.Validate.NONE,
-    )
 
 
 def test_extra_top_level() -> None:
@@ -1507,7 +1500,7 @@ def test_extra_build_system() -> None:
 
 def test_multiline_description_warns() -> None:
     with pytest.warns(
-        pyproject_metadata.ConfigurationWarning,
+        pyproject_metadata.errors.ConfigurationWarning,
         match=re.escape(
             'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.'
         ),

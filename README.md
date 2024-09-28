@@ -70,14 +70,13 @@ just `ExceptionGroup` on Python 3.11+).
 
 ## Validating extra fields
 
-By default, a warning will be issued for extra fields at the top level, in
-build-system, and in the project table. If you want to make these errors, pass
-`validate=Validate.EXTRA_KEYS` in `from_pyproject`. You can also pass
-`warn=Validate.NONE` to disable the warnings instead.  For fine-grained control,
-you can pass `Validate.TOP_LEVEL` to only validate top-level fields,
-`Validate.BUILD_SYSTEM` to only validate build-system fields, and
-`Validate.PROJECT` to only validate project fields, or any `|` combination of
-these.
+By default, a warning (`pyproject_metadata.errors.ExtraKeyWarning`) will be
+issued for extra fields at the top level, in build-system, and in the project
+table. If you want to make these errors, pass `validate=Validate.EXTRA_KEYS` in
+`from_pyproject`. For fine-grained control, you can pass `Validate.TOP_LEVEL` to
+only validate top-level fields, `Validate.BUILD_SYSTEM` to only validate
+build-system fields, and `Validate.PROJECT` to only validate project fields, or
+any `|` combination of these.
 
 ## Validating classifiers
 

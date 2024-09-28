@@ -17,7 +17,12 @@ import typing
 import warnings
 
 from . import constants
-from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
+from .errors import (
+    ConfigurationError,
+    ConfigurationWarning,
+    ErrorCollector,
+    ExtraKeyWarning,
+)
 from .pyproject import License, PyProjectReader, Readme
 
 
@@ -44,7 +49,6 @@ __version__ = '0.9.0b5'
 
 __all__ = [
     'ConfigurationError',
-    'ConfigurationWarning',
     'License',
     'RFC822Message',
     'RFC822Policy',
@@ -295,7 +299,6 @@ class StandardMetadata:
         dynamic_metadata: list[str] | None = None,
         *,
         validate: Validate = Validate.NONE,
-        warn: Validate = Validate.EXTRA_KEYS,
         all_errors: bool = False,
     ) -> Self:
         pyproject = PyProjectReader(collect_errors=all_errors)
@@ -311,38 +314,35 @@ class StandardMetadata:
         project = pyproject_table['project']
         project_dir = pathlib.Path(project_dir)
 
-        if validate | warn & Validate.TOP_LEVEL:
-            extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
-            if extra_keys:
-                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-                msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
-                if Validate.TOP_LEVEL in validate:
-                    pyproject.config_error(msg)
-                elif Validate.TOP_LEVEL in warn:
-                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+        extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
+        if extra_keys:
+            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+            msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
+            if Validate.TOP_LEVEL in validate:
+                pyproject.config_error(msg)
+            else:
+                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
 
-        if validate | warn & Validate.BUILD_SYSTEM:
-            extra_keys = (
-                set(pyproject_table.get('build-system', {}))
-                - constants.KNOWN_BUILD_SYSTEM_FIELDS
-            )
-            if extra_keys:
-                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-                msg = f'Extra keys present in "build-system": {extra_keys_str}'
-                if Validate.BUILD_SYSTEM in validate:
-                    pyproject.config_error(msg)
-                elif Validate.BUILD_SYSTEM in warn:
-                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+        extra_keys = (
+            set(pyproject_table.get('build-system', {}))
+            - constants.KNOWN_BUILD_SYSTEM_FIELDS
+        )
+        if extra_keys:
+            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+            msg = f'Extra keys present in "build-system": {extra_keys_str}'
+            if Validate.BUILD_SYSTEM in validate:
+                pyproject.config_error(msg)
+            else:
+                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
 
-        if warn | validate & Validate.PROJECT:
-            extra_keys = set(project) - constants.KNOWN_PROJECT_FIELDS
-            if extra_keys:
-                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-                msg = f'Extra keys present in "project": {extra_keys_str}'
-                if Validate.PROJECT in validate:
-                    pyproject.config_error(msg)
-                elif Validate.PROJECT in warn:
-                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+        extra_keys = set(project) - constants.KNOWN_PROJECT_FIELDS
+        if extra_keys:
+            extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+            msg = f'Extra keys present in "project": {extra_keys_str}'
+            if Validate.PROJECT in validate:
+                pyproject.config_error(msg)
+            else:
+                warnings.warn(msg, ExtraKeyWarning, stacklevel=2)
 
         dynamic = pyproject.get_dynamic(project)
 

@@ -15,6 +15,7 @@ __all__ = [
     'ConfigurationWarning',
     'ExceptionGroup',
     'ErrorCollector',
+    'ExtraKeyWarning',
 ]
 
 
@@ -36,6 +37,10 @@ class ConfigurationError(Exception):
 
 class ConfigurationWarning(UserWarning):
     """Warnings about backend metadata."""
+
+
+class ExtraKeyWarning(ConfigurationWarning):
+    """Warning about an extra key in the backend metadata."""
 
 
 if sys.version_info >= (3, 11):
