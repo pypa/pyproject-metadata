@@ -46,602 +46,602 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
     [
         pytest.param(
             "",
-            'Section "project" missing in pyproject.toml',
+            "Section 'project' missing in pyproject.toml",
             id="Missing project section",
         ),
         pytest.param(
             """
                 [project]
                 name = true
-                version = '0.1.0'
+                version = "0.1.0"
             """,
-            'Field "project.name" has an invalid type, expecting a string (got "True")',
+            "Field 'project.name' has an invalid type, expecting a string (got True)",
             id="Invalid name type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 not-real-key = true
             """,
-            'Extra keys present in "project": "not-real-key"',
+            "Extra keys present in 'project': 'not-real-key'",
             id="Invalid project key",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 dynamic = [
-                    'name',
+                    "name",
                 ]
             """,
-            'Unsupported field "name" in "project.dynamic"',
+            "Unsupported field 'name' in 'project.dynamic'",
             id="Unsupported field in project.dynamic",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 dynamic = [
                     3,
                 ]
             """,
-            'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
+            "Field 'project.dynamic' contains item with invalid type, expecting a string (got 3)",
             id="Unsupported type in project.dynamic",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
+                name = "test"
                 version = true
             """,
-            'Field "project.version" has an invalid type, expecting a string (got "True")',
+            "Field 'project.version' has an invalid type, expecting a string (got True)",
             id="Invalid version type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
+                name = "test"
             """,
-            'Field "project.version" missing and "version" not specified in "project.dynamic"',
+            "Field 'project.version' missing and 'version' not specified in 'project.dynamic'",
             id="Missing version",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0-extra'
+                name = "test"
+                version = "0.1.0-extra"
             """,
-            'Invalid "project.version" value, expecting a valid PEP 440 version (got "0.1.0-extra")',
+            "Invalid 'project.version' value, expecting a valid PEP 440 version (got '0.1.0-extra')",
             id="Invalid version value",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license = true
             """,
-            'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "True")',
+            "Field 'project.license' has an invalid type, expecting a string or dictionary of strings (got True)",
             id="License invalid type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license = {}
             """,
-            'Invalid "project.license" value, expecting either "file" or "text" (got "{}")',
+            "Invalid 'project.license' value, expecting either 'file' or 'text' (got {})",
             id="Missing license keys",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license = { file = '...', text = '...' }
+                name = "test"
+                version = "0.1.0"
+                license = { file = "...", text = "..." }
             """,
             (
-                'Invalid "project.license" value, expecting either "file" '
-                "or \"text\" (got \"{'file': '...', 'text': '...'}\")"
+                "Invalid 'project.license' value, expecting either 'file' "
+                "or 'text' (got {'file': '...', 'text': '...'})"
             ),
             id="Both keys for license",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license = { made-up = ':(' }
+                name = "test"
+                version = "0.1.0"
+                license = { made-up = ":(" }
             """,
-            'Unexpected field "project.license.made-up"',
+            "Unexpected field 'project.license.made-up'",
             id="Got made-up license field",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license = { file = true }
             """,
-            'Field "project.license.file" has an invalid type, expecting a string (got "True")',
+            "Field 'project.license.file' has an invalid type, expecting a string (got True)",
             id="Invalid type for license.file",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license = { text = true }
             """,
-            'Field "project.license.text" has an invalid type, expecting a string (got "True")',
+            "Field 'project.license.text' has an invalid type, expecting a string (got True)",
             id="Invalid type for license.text",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license = { file = 'this-file-does-not-exist' }
+                name = "test"
+                version = "0.1.0"
+                license = { file = "this-file-does-not-exist" }
             """,
-            'License file not found ("this-file-does-not-exist")',
+            "License file not found ('this-file-does-not-exist')",
             id="License file not present",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 readme = true
             """,
             (
-                'Field "project.readme" has an invalid type, expecting either, '
-                'a string or dictionary of strings (got "True")'
+                "Field 'project.readme' has an invalid type, expecting either "
+                "a string or dictionary of strings (got True)"
             ),
             id="Invalid readme type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 readme = {}
             """,
-            'Invalid "project.readme" value, expecting either "file" or "text" (got "{}")',
+            "Invalid 'project.readme' value, expecting either 'file' or 'text' (got {})",
             id="Empty readme table",
         ),
         pytest.param(
             """
                 [project]
-                name = "test"
-                version = '0.1.0'
-                readme = 'README.jpg'
+                name = 'test'
+                version = "0.1.0"
+                readme = "README.jpg"
             """,
-            'Could not infer content type for readme file "README.jpg"',
+            "Could not infer content type for readme file 'README.jpg'",
             id="Unsupported filename in readme",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { file = '...', text = '...' }
+                name = "test"
+                version = "0.1.0"
+                readme = { file = "...", text = "..." }
             """,
             (
-                'Invalid "project.readme" value, expecting either "file" or '
-                "\"text\" (got \"{'file': '...', 'text': '...'}\")"
+                "Invalid 'project.readme' value, expecting either 'file' or "
+                "'text' (got {'file': '...', 'text': '...'})"
             ),
             id="Both readme fields",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { made-up = ':(' }
+                name = "test"
+                version = "0.1.0"
+                readme = { made-up = ":(" }
             """,
-            'Unexpected field "project.readme.made-up"',
+            "Unexpected field 'project.readme.made-up'",
             id="Unexpected field in readme",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 readme = { file = true }
             """,
-            'Field "project.readme.file" has an invalid type, expecting a string (got "True")',
+            "Field 'project.readme.file' has an invalid type, expecting a string (got True)",
             id="Invalid type for readme.file",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 readme = { text = true }
             """,
-            'Field "project.readme.text" has an invalid type, expecting a string (got "True")',
+            "Field 'project.readme.text' has an invalid type, expecting a string (got True)",
             id="Invalid type for readme.text",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { file = 'this-file-does-not-exist', content-type = '...' }
+                name = "test"
+                version = "0.1.0"
+                readme = { file = "this-file-does-not-exist", content-type = "..." }
             """,
-            'Readme file not found ("this-file-does-not-exist")',
+            "Readme file not found ('this-file-does-not-exist')",
             id="Readme file not present",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { file = 'README.md' }
+                name = "test"
+                version = "0.1.0"
+                readme = { file = "README.md" }
             """,
-            'Field "project.readme.content-type" missing',
+            "Field 'project.readme.content-type' missing",
             id="Missing content-type for readme",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { file = "README.md", content-type = true }
+                name = "test"
+                version = "0.1.0"
+                readme = { file = 'README.md', content-type = true }
             """,
-            'Field "project.readme.content-type" has an invalid type, expecting a string (got "True")',
+            "Field 'project.readme.content-type' has an invalid type, expecting a string (got True)",
             id="Wrong content-type type for readme",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                readme = { text = '...' }
+                name = "test"
+                version = "0.1.0"
+                readme = { text = "..." }
             """,
-            'Field "project.readme.content-type" missing',
+            "Field 'project.readme.content-type' missing",
             id="Missing content-type for readme",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 description = true
             """,
-            'Field "project.description" has an invalid type, expecting a string (got "True")',
+            "Field 'project.description' has an invalid type, expecting a string (got True)",
             id="Invalid description type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                dependencies = 'some string!'
+                name = "test"
+                version = "0.1.0"
+                dependencies = "some string!"
             """,
-            'Field "project.dependencies" has an invalid type, expecting a list of strings (got "some string!")',
+            "Field 'project.dependencies' has an invalid type, expecting a list of strings (got 'some string!')",
             id="Invalid dependencies type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 dependencies = [
                     99,
                 ]
             """,
-            'Field "project.dependencies" contains item with invalid type, expecting a string (got "99")',
+            "Field 'project.dependencies' contains item with invalid type, expecting a string (got 99)",
             id="Invalid dependencies item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 dependencies = [
-                    'definitely not a valid PEP 508 requirement!',
+                    "definitely not a valid PEP 508 requirement!",
                 ]
             """,
             (
-                'Field "project.dependencies" contains an invalid PEP 508 requirement '
-                'string "definitely not a valid PEP 508 requirement!" '
+                "Field 'project.dependencies' contains an invalid PEP 508 requirement "
+                "string 'definitely not a valid PEP 508 requirement!' "
             ),
             id="Invalid dependencies item",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 optional-dependencies = true
             """,
             (
-                'Field "project.optional-dependencies" has an invalid type, '
-                'expecting a dictionary of PEP 508 requirement strings (got "True")'
+                "Field 'project.optional-dependencies' has an invalid type, "
+                "expecting a dictionary of PEP 508 requirement strings (got True)"
             ),
             id="Invalid optional-dependencies type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.optional-dependencies]
-                test = 'some string!'
+                test = "some string!"
             """,
             (
-                'Field "project.optional-dependencies.test" has an invalid type, '
-                'expecting a dictionary PEP 508 requirement strings (got "some string!")'
+                "Field 'project.optional-dependencies.test' has an invalid type, "
+                "expecting a dictionary PEP 508 requirement strings (got 'some string!')"
             ),
             id="Invalid optional-dependencies not list",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.optional-dependencies]
                 test = [
                     true,
                 ]
             """,
             (
-                'Field "project.optional-dependencies.test" has an invalid type, '
-                'expecting a PEP 508 requirement string (got "True")'
+                "Field 'project.optional-dependencies.test' has an invalid type, "
+                "expecting a PEP 508 requirement string (got True)"
             ),
             id="Invalid optional-dependencies item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.optional-dependencies]
                 test = [
-                    'definitely not a valid PEP 508 requirement!',
+                    "definitely not a valid PEP 508 requirement!",
                 ]
             """,
             (
-                'Field "project.optional-dependencies.test" contains an invalid '
-                'PEP 508 requirement string "definitely not a valid PEP 508 requirement!" '
+                "Field 'project.optional-dependencies.test' contains an invalid "
+                "PEP 508 requirement string 'definitely not a valid PEP 508 requirement!' "
             ),
             id="Invalid optional-dependencies item",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 requires-python = true
             """,
-            'Field "project.requires-python" has an invalid type, expecting a string (got "True")',
+            "Field 'project.requires-python' has an invalid type, expecting a string (got True)",
             id="Invalid requires-python type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                requires-python = '3.8'
+                name = "test"
+                version = "0.1.0"
+                requires-python = "3.8"
             """,
-            'Invalid "project.requires-python" value, expecting a valid specifier set (got "3.8")',
+            "Invalid 'project.requires-python' value, expecting a valid specifier set (got '3.8')",
             id="Invalid requires-python value",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                keywords = 'some string!'
+                name = "test"
+                version = "0.1.0"
+                keywords = "some string!"
             """,
-            'Field "project.keywords" has an invalid type, expecting a list of strings (got "some string!")',
+            "Field 'project.keywords' has an invalid type, expecting a list of strings (got 'some string!')",
             id="Invalid keywords type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 keywords = [
                     true,
                 ]
             """,
-            'Field "project.keywords" contains item with invalid type, expecting a string (got "True")',
+            "Field 'project.keywords' contains item with invalid type, expecting a string (got True)",
             id="Invalid keywords item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 authors = {}
             """,
             (
-                'Field "project.authors" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got "{}")'
+                "Field 'project.authors' has an invalid type, expecting a list of "
+                "dictionaries containing the 'name' and/or 'email' keys (got {})"
             ),
             id="Invalid authors type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 authors = [
                     true,
                 ]
             """,
             (
-                'Field "project.authors" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got "[True]")'
+                "Field 'project.authors' has an invalid type, expecting a list of "
+                "dictionaries containing the 'name' and/or 'email' keys (got [True])"
             ),
             id="Invalid authors item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 maintainers = {}
             """,
             (
-                'Field "project.maintainers" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got "{}")'
+                "Field 'project.maintainers' has an invalid type, expecting a list of "
+                "dictionaries containing the 'name' and/or 'email' keys (got {})"
             ),
             id="Invalid maintainers type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 maintainers = [
                     10
                 ]
             """,
             (
-                'Field "project.maintainers" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got "[10]")'
+                "Field 'project.maintainers' has an invalid type, expecting a list of "
+                "dictionaries containing the 'name' and/or 'email' keys (got [10])"
             ),
             id="Invalid maintainers item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                classifiers = 'some string!'
+                name = "test"
+                version = "0.1.0"
+                classifiers = "some string!"
             """,
-            'Field "project.classifiers" has an invalid type, expecting a list of strings (got "some string!")',
+            "Field 'project.classifiers' has an invalid type, expecting a list of strings (got 'some string!')",
             id="Invalid classifiers type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 classifiers = [
                     true,
                 ]
             """,
-            'Field "project.classifiers" contains item with invalid type, expecting a string (got "True")',
+            "Field 'project.classifiers' contains item with invalid type, expecting a string (got True)",
             id="Invalid classifiers item type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.urls]
                 homepage = true
             """,
-            'Field "project.urls.homepage" has an invalid type, expecting a string (got "True")',
+            "Field 'project.urls.homepage' has an invalid type, expecting a string (got True)",
             id="Invalid urls homepage type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.urls]
                 documentation = true
             """,
-            'Field "project.urls.documentation" has an invalid type, expecting a string (got "True")',
+            "Field 'project.urls.documentation' has an invalid type, expecting a string (got True)",
             id="Invalid urls documentation type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.urls]
                 repository = true
             """,
-            'Field "project.urls.repository" has an invalid type, expecting a string (got "True")',
+            "Field 'project.urls.repository' has an invalid type, expecting a string (got True)",
             id="Invalid urls repository type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.urls]
                 changelog = true
             """,
-            'Field "project.urls.changelog" has an invalid type, expecting a string (got "True")',
+            "Field 'project.urls.changelog' has an invalid type, expecting a string (got True)",
             id="Invalid urls changelog type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 scripts = []
             """,
-            'Field "project.scripts" has an invalid type, expecting a dictionary of strings (got "[]")',
+            "Field 'project.scripts' has an invalid type, expecting a dictionary of strings (got [])",
             id="Invalid scripts type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 gui-scripts = []
             """,
-            'Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got "[]")',
+            "Field 'project.gui-scripts' has an invalid type, expecting a dictionary of strings (got [])",
             id="Invalid gui-scripts type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 entry-points = []
             """,
             (
-                'Field "project.entry-points" has an invalid type, '
-                'expecting a dictionary of entrypoint sections (got "[]")'
+                "Field 'project.entry-points' has an invalid type, "
+                "expecting a dictionary of entrypoint sections (got [])"
             ),
             id="Invalid entry-points type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                entry-points = { section = 'something' }
+                name = "test"
+                version = "0.1.0"
+                entry-points = { section = "something" }
             """,
             (
-                'Field "project.entry-points.section" has an invalid type, '
-                'expecting a dictionary of entrypoints (got "something")'
+                "Field 'project.entry-points.section' has an invalid type, "
+                "expecting a dictionary of entrypoints (got 'something')"
             ),
             id="Invalid entry-points section type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.entry-points.section]
                 entrypoint = []
             """,
-            'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got "[]")',
+            "Field 'project.entry-points.section.entrypoint' has an invalid type, expecting a string (got [])",
             id="Invalid entry-points entrypoint type",
         ),
         pytest.param(
             """
                 [project]
-                name = '.test'
-                version = '0.1.0'
+                name = ".test"
+                version = "0.1.0"
             """,
             (
-                'Invalid project name ".test". A valid name consists only of ASCII letters and '
+                "Invalid project name '.test'. A valid name consists only of ASCII letters and "
                 "numbers, period, underscore and hyphen. It must start and end with a letter or number"
             ),
             id="Invalid project name",
@@ -649,13 +649,13 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 [project.entry-points.bad-name]
             """,
             (
-                'Field "project.entry-points" has an invalid value, expecting a name containing only '
-                'alphanumeric, underscore, or dot characters (got "bad-name")'
+                "Field 'project.entry-points' has an invalid value, expecting a name containing only "
+                "alphanumeric, underscore, or dot characters (got 'bad-name')"
             ),
             id="Invalid entry-points name",
         ),
@@ -663,63 +663,63 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license-files = []
-                license.text = "stuff"
+                license.text = 'stuff'
             """,
-            '"project.license-files" must not be used when "project.license" is not a SPDX license expression',
+            "'project.license-files' must not be used when 'project.license' is not a SPDX license expression",
             id="Both license files and classic license",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license-files = ["../LICENSE"]
+                name = "test"
+                version = "0.1.0"
+                license-files = ['../LICENSE']
             """,
-            '"../LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
+            "'../LICENSE' is an invalid 'project.license-files' glob: the pattern must match files within the project directory",
             id="Parent license-files glob",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
+                name = "test"
+                version = "0.1.0"
                 license-files = [12]
             """,
-            'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+            "Field 'project.license-files' contains item with invalid type, expecting a string (got 12)",
             id="Parent license-files invalid type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license-files = ["this", 12]
+                name = "test"
+                version = "0.1.0"
+                license-files = ['this', 12]
             """,
-            'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
+            "Field 'project.license-files' contains item with invalid type, expecting a string (got 12)",
             id="Parent license-files invalid type",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license-files = ["/LICENSE"]
+                name = "test"
+                version = "0.1.0"
+                license-files = ['/LICENSE']
             """,
-            '"/LICENSE" is an invalid "project.license-files" glob: the pattern must match files within the project directory',
+            "'/LICENSE' is an invalid 'project.license-files' glob: the pattern must match files within the project directory",
             id="Aboslute license-files glob",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license = "MIT"
-                classifiers = ["License :: OSI Approved :: MIT License"]
+                name = "test"
+                version = "0.1.0"
+                license = 'MIT'
+                classifiers = ['License :: OSI Approved :: MIT License']
             """,
-            'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers',
+            "Setting 'project.license' to an SPDX license expression is not compatible with 'License ::' classifiers",
             id="SPDX license and License trove classifiers",
         ),
     ],
@@ -760,8 +760,8 @@ def test_load(
         pytest.param(
             "[project]",
             [
-                'Field "project.name" missing',
-                'Field "project.version" missing and "version" not specified in "project.dynamic"',
+                "Field 'project.name' missing",
+                "Field 'project.version' missing and 'version' not specified in 'project.dynamic'",
             ],
             id="Missing project name",
         ),
@@ -769,14 +769,14 @@ def test_load(
             """
                 [project]
                 name = true
-                version = '0.1.0'
+                version = "0.1.0"
                 dynamic = [
-                    'name',
+                    "name",
                 ]
             """,
             [
-                'Unsupported field "name" in "project.dynamic"',
-                'Field "project.name" has an invalid type, expecting a string (got "True")',
+                "Unsupported field 'name' in 'project.dynamic'",
+                "Field 'project.name' has an invalid type, expecting a string (got True)",
             ],
             id="Unsupported field in project.dynamic",
         ),
@@ -784,47 +784,47 @@ def test_load(
             """
                 [project]
                 name = true
-                version = '0.1.0'
+                version = "0.1.0"
                 dynamic = [
                     3,
                 ]
             """,
             [
-                'Field "project.dynamic" contains item with invalid type, expecting a string (got "3")',
-                'Field "project.name" has an invalid type, expecting a string (got "True")',
+                "Field 'project.dynamic' contains item with invalid type, expecting a string (got 3)",
+                "Field 'project.name' has an invalid type, expecting a string (got True)",
             ],
             id="Unsupported type in project.dynamic",
         ),
         pytest.param(
             """
                 [project]
-                name = "test"
-                version = '0.1.0'
-                readme = 'README.jpg'
+                name = 'test'
+                version = "0.1.0"
+                readme = "README.jpg"
                 license-files = [12]
             """,
             [
-                'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
-                'Could not infer content type for readme file "README.jpg"',
+                "Field 'project.license-files' contains item with invalid type, expecting a string (got 12)",
+                "Could not infer content type for readme file 'README.jpg'",
             ],
             id="Unsupported filename in readme",
         ),
         pytest.param(
             """
                 [project]
-                name = "test"
-                version = '0.1.0'
-                readme = 'README.jpg'
+                name = 'test'
+                version = "0.1.0"
+                readme = "README.jpg"
                 license-files = [12]
                 entry-points.bad-name = {}
                 other-entry = {}
                 not-valid = true
             """,
             [
-                'Extra keys present in "project": "not-valid", "other-entry"',
-                'Field "project.license-files" contains item with invalid type, expecting a string (got "12")',
-                'Could not infer content type for readme file "README.jpg"',
-                'Field "project.entry-points" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got "bad-name")',
+                "Extra keys present in 'project': 'not-valid', 'other-entry'",
+                "Field 'project.license-files' contains item with invalid type, expecting a string (got 12)",
+                "Could not infer content type for readme file 'README.jpg'",
+                "Field 'project.entry-points' has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
             ],
             id="Four errors including extra keys",
         ),
@@ -866,22 +866,22 @@ def test_load_multierror(
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license = "MIT"
+                name = "test"
+                version = "0.1.0"
+                license = 'MIT'
             """,
-            'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4',
+            "Setting 'project.license' to an SPDX license expression is supported only when emitting metadata version >= 2.4",
             "2.3",
             id="SPDX with metadata_version 2.3",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license-files = ["README.md"]
+                name = "test"
+                version = "0.1.0"
+                license-files = ['README.md']
             """,
-            '"project.license-files" is supported only when emitting metadata version >= 2.4',
+            "'project.license-files' is supported only when emitting metadata version >= 2.4",
             "2.3",
             id="license-files with metadata_version 2.3",
         ),
@@ -903,22 +903,22 @@ def test_load_with_metadata_version(
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                license.text = "MIT"
+                name = "test"
+                version = "0.1.0"
+                license.text = 'MIT'
             """,
-            'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+            "Set 'project.license' to an SPDX license expression for metadata >= 2.4",
             "2.4",
             id="Classic license with metadata 2.4",
         ),
         pytest.param(
             """
                 [project]
-                name = 'test'
-                version = '0.1.0'
-                classifiers = ["License :: OSI Approved :: MIT License"]
+                name = "test"
+                version = "0.1.0"
+                classifiers = ['License :: OSI Approved :: MIT License']
             """,
-            '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
+            "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for 'project.license' instead",
             "2.4",
             id="License trove classfiers with metadata 2.4",
         ),
@@ -1033,7 +1033,7 @@ def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
         match=re.escape(
-            'Could not infer content type for readme file "README.just-made-this-up-now"'
+            "Could not infer content type for readme file 'README.just-made-this-up-now'"
         ),
     ), open("pyproject.toml", "rb") as f:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
@@ -1076,7 +1076,7 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
             'dependency5[other-extra]>1.0; os_name == "nt"',
             'test_dependency; extra == "test"',
             'test_dependency[test_extra]; extra == "test"',
-            'test_dependency[test_extra2]>3.0; os_name == "nt" and ' 'extra == "test"',
+            'test_dependency[test_extra2]>3.0; os_name == "nt" and extra == "test"',
         ],
         "requires_python": ">=3.8",
         "summary": "A package with all the metadata :)",
@@ -1172,7 +1172,7 @@ def test_as_rfc822_spdx_empty_glob(
     monkeypatch.chdir(tmp_path / "spdx")
 
     pathlib.Path("AUTHORS.txt").unlink()
-    msg = 'Every pattern in "project.license-files" must match at least one file: "AUTHORS*" did not match any'
+    msg = "Every pattern in 'project.license-files' must match at least one file: 'AUTHORS*' did not match any"
 
     with open("pyproject.toml", "rb") as f:
         if all_errors:
@@ -1341,7 +1341,7 @@ def test_as_rfc822_missing_version() -> None:
 def test_stically_defined_dynamic_field() -> None:
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match='Field "project.version" declared as dynamic in "project.dynamic" but is defined',
+        match="Field 'project.version' declared as dynamic in 'project.dynamic' but is defined",
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
@@ -1405,7 +1405,7 @@ def test_modify_dynamic() -> None:
     )
     metadata.requires_python = packaging.specifiers.SpecifierSet(">=3.12")
     with pytest.raises(
-        AttributeError, match=re.escape('Field "version" is not dynamic')
+        AttributeError, match=re.escape("Field 'version' is not dynamic")
     ):
         metadata.version = packaging.version.Version("1.2.3")
 
@@ -1413,7 +1413,7 @@ def test_modify_dynamic() -> None:
 def test_missing_keys_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,
-        match=re.escape('Extra keys present in "project": "not-real-key"'),
+        match=re.escape("Extra keys present in 'project': 'not-real-key'"),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {
@@ -1475,7 +1475,7 @@ def test_multiline_description_warns() -> None:
     with pytest.warns(
         pyproject_metadata.ConfigurationWarning,
         match=re.escape(
-            'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.'
+            "The one-line summary 'project.description' should not contain more than one line. Readers might merge or truncate newlines."
         ),
     ):
         pyproject_metadata.StandardMetadata.from_pyproject(

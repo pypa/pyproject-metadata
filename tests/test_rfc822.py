@@ -189,7 +189,7 @@ def test_unknown_field() -> None:
     message = pyproject_metadata.RFC822Message()
     with pytest.raises(
         pyproject_metadata.ConfigurationError,
-        match=re.escape('Unknown field "Unknown"'),
+        match=re.escape("Unknown field 'Unknown'"),
     ):
         message["Unknown"] = "Value"
 
