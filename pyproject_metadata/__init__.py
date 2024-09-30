@@ -350,12 +350,15 @@ class StandardMetadata:
         if raw_version is not None:
             version_string = pyproject.ensure_str(raw_version, 'project.version')
             if version_string is not None:
-                with pyproject.collect():
+                try:
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
                     )
+                except packaging.version.InvalidVersion:
+                    msg = f'Invalid "project.version" value, expecting a valid PEP 440 version (got "{version_string}")'
+                    pyproject.config_error(msg, key='project.version')
         elif 'version' not in dynamic:
             msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
             pyproject.config_error(msg, key='version')
@@ -377,10 +380,13 @@ class StandardMetadata:
                 requires_python_raw, 'project.requires-python'
             )
             if requires_python_string is not None:
-                with pyproject.collect():
+                try:
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
                     )
+                except packaging.specifiers.InvalidSpecifier:
+                    msg = f'Invalid "project.requires-python" value, expecting a valid specifier set (got "{requires_python_string}")'
+                    pyproject.config_error(msg, key='project.requires-python')
 
         self = None
         with pyproject.collect():

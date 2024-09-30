@@ -115,6 +115,15 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """
                 [project]
                 name = 'test'
+                version = '0.1.0-extra'
+            """,
+            'Invalid "project.version" value, expecting a valid PEP 440 version (got "0.1.0-extra")',
+            id='Invalid version value',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
                 version = '0.1.0'
                 license = true
             """,
@@ -415,6 +424,16 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             'Field "project.requires-python" has an invalid type, expecting a string (got "True")',
             id='Invalid requires-python type',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                requires-python = '3.8'
+            """,
+            'Invalid "project.requires-python" value, expecting a valid specifier set (got "3.8")',
+            id='Invalid requires-python value',
         ),
         pytest.param(
             """

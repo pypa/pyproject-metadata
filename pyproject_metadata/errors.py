@@ -6,9 +6,6 @@ import dataclasses
 import sys
 import typing
 
-import packaging.specifiers
-import packaging.version
-
 
 __all__ = [
     'ConfigurationError',
@@ -78,12 +75,6 @@ class ErrorCollector:
         if self.collect_errors:
             try:
                 yield
-            except (
-                ConfigurationError,
-                packaging.version.InvalidVersion,
-                packaging.specifiers.InvalidSpecifier,
-            ) as error:
-                self.errors.append(error)
             except ExceptionGroup as error:
                 self.errors.extend(error.exceptions)
         else:
