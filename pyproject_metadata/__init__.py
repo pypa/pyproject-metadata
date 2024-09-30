@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: MIT
 
+"""
+This is pyproject_metadata, a library for working with PEP 621 metadata.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -15,6 +19,7 @@ import sys
 import typing
 import warnings
 
+# Build backends may vendor this package, so all imports are relative.
 from . import constants
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .pyproject import License, PyProjectReader, Readme
@@ -30,7 +35,7 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import PyProjectTable
+    from .project_table import Dynamic, PyProjectTable
 
 import packaging.markers
 import packaging.specifiers
@@ -66,10 +71,16 @@ def field_to_metadata(field: str) -> frozenset[str]:
 
 
 def extras_top_level(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the top-level of the pyproject table.
+    """
     return set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
 
 
 def extras_build_system(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the build-system table.
+    """
     return (
         set(pyproject_table.get("build-system", []))
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
@@ -77,6 +88,9 @@ def extras_build_system(pyproject_table: Mapping[str, Any]) -> set[str]:
 
 
 def extras_project(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the project table.
+    """
     return set(pyproject_table.get("project", [])) - constants.KNOWN_PROJECT_FIELDS
 
 
@@ -104,8 +118,8 @@ class _SmartMessageSetter:
 @dataclasses.dataclass
 class _JSonMessageSetter:
     """
-    This provides an API to build a JSON message output. Line breaks are
-    preserved this way.
+    This provides an API to build a JSON message output in the same way as the
+    classic Message. Line breaks are preserved this way.
     """
 
     data: dict[str, str | list[str]]
@@ -187,7 +201,7 @@ class StandardMetadata:
     keywords: list[str] = dataclasses.field(default_factory=list)
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
-    dynamic: list[str] = dataclasses.field(default_factory=list)
+    dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
     """
@@ -204,15 +218,29 @@ class StandardMetadata:
         self.validate()
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if self._locked_metadata and name.replace("_", "-") not in set(self.dynamic) | {
-            "metadata-version",
-            "dynamic-metadata",
-        }:
-            msg = f'Field "{name}" is not dynamic'
-            raise AttributeError(msg)
+        if self._locked_metadata:
+            metadata_name = name.replace("_", "-")
+            locked_fields = constants.KNOWN_METADATA_FIELDS - set(self.dynamic)
+            if metadata_name in locked_fields:
+                msg = f'Field "{name}" is not dynamic'
+                raise AttributeError(msg)
         super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
+        """
+        Validate metadata for consistency and correctness. Will also produce warnings if
+        ``warn`` is given. Respects ``all_errors``. Checks:
+
+        - ``metadata_version`` is a known version or None
+        - ``name`` is a valid project name
+        - ``license_files`` can't be used with classic ``license``
+        - License classifiers can't be used with SPDX license
+        - ``description`` is a single line (warning)
+        - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
+        - License classifiers deprecated for metadata_version >= 2.4 (warning)
+        - ``license`` is an SPDX license expression if metadata_version >= 2.4
+        - ``license_files`` is supported only for metadata_version >= 2.4
+        """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
         if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
@@ -279,6 +307,10 @@ class StandardMetadata:
 
     @property
     def auto_metadata_version(self) -> str:
+        """
+        This computes the metadata version based on the fields set in the object
+        if ``metadata_version`` is None.
+        """
         if self.metadata_version is not None:
             return self.metadata_version
 
@@ -290,6 +322,9 @@ class StandardMetadata:
 
     @property
     def canonical_name(self) -> str:
+        """
+        Return the canonical name of the project.
+        """
         return packaging.utils.canonicalize_name(self.name)
 
     @classmethod
@@ -303,6 +338,13 @@ class StandardMetadata:
         allow_extra_keys: bool | None = None,
         all_errors: bool = False,
     ) -> Self:
+        """
+        Read metadata from a pyproject.toml table. This is the main method for
+        creating an instance of this class. It also supports two additional
+        fields: ``allow_extra_keys`` to control what happens when extra keys are
+        present in the pyproject table, and ``all_errors``, to  raise all errors
+        in an ExceptionGroup instead of raising the first one.
+        """
         pyproject = PyProjectReader(collect_errors=all_errors)
 
         pyproject_table: PyProjectTable = data  # type: ignore[assignment]
@@ -435,12 +477,18 @@ class StandardMetadata:
         return self
 
     def as_rfc822(self) -> RFC822Message:
+        """
+        Return an RFC822 message with the metadata.
+        """
         message = RFC822Message()
         smart_message = _SmartMessageSetter(message)
         self._write_metadata(smart_message)
         return message
 
     def as_json(self) -> dict[str, str | list[str]]:
+        """
+        Return a JSON message with the metadata.
+        """
         message: dict[str, str | list[str]] = {}
         smart_message = _JSonMessageSetter(message)
         self._write_metadata(smart_message)
@@ -449,6 +497,9 @@ class StandardMetadata:
     def _write_metadata(  # noqa: C901
         self, smart_message: _SmartMessageSetter | _JSonMessageSetter
     ) -> None:
+        """
+        Write the metadata to the message. Handles JSON or Message.
+        """
         self.validate(warn=False)
 
         smart_message["Metadata-Version"] = self.auto_metadata_version
@@ -465,10 +516,10 @@ class StandardMetadata:
         if "homepage" in self.urls:
             smart_message["Home-page"] = self.urls["homepage"]
         # skip 'Download-URL'
-        smart_message["Author"] = self._name_list(self.authors)
-        smart_message["Author-Email"] = self._email_list(self.authors)
-        smart_message["Maintainer"] = self._name_list(self.maintainers)
-        smart_message["Maintainer-Email"] = self._email_list(self.maintainers)
+        smart_message["Author"] = _name_list(self.authors)
+        smart_message["Author-Email"] = _email_list(self.authors)
+        smart_message["Maintainer"] = _name_list(self.maintainers)
+        smart_message["Maintainer-Email"] = _email_list(self.maintainers)
 
         if isinstance(self.license, License):
             smart_message["License"] = self.license.text
@@ -495,7 +546,7 @@ class StandardMetadata:
             smart_message["Provides-Extra"] = norm_extra
             for requirement in requirements:
                 smart_message["Requires-Dist"] = str(
-                    self._build_extra_req(norm_extra, requirement)
+                    _build_extra_req(norm_extra, requirement)
                 )
         if self.readme:
             if self.readme.content_type:
@@ -512,35 +563,43 @@ class StandardMetadata:
                     raise ConfigurationError(msg)
                 smart_message["Dynamic"] = field
 
-    def _name_list(self, people: list[tuple[str, str | None]]) -> str | None:
-        return ", ".join(name for name, email_ in people if not email_) or None
 
-    def _email_list(self, people: list[tuple[str, str | None]]) -> str | None:
-        return (
-            ", ".join(
-                email.utils.formataddr((name, _email))
-                for name, _email in people
-                if _email
-            )
-            or None
+def _name_list(people: list[tuple[str, str | None]]) -> str | None:
+    """
+    Build a comma-separated list of names.
+    """
+    return ", ".join(name for name, email_ in people if not email_) or None
+
+
+def _email_list(people: list[tuple[str, str | None]]) -> str | None:
+    """
+    Build a comma-separated list of emails.
+    """
+    return (
+        ", ".join(
+            email.utils.formataddr((name, _email)) for name, _email in people if _email
         )
+        or None
+    )
 
-    def _build_extra_req(
-        self,
-        extra: str,
-        requirement: Requirement,
-    ) -> Requirement:
-        # append or add our extra marker
-        requirement = copy.copy(requirement)
-        if requirement.marker:
-            if "or" in requirement.marker._markers:
-                requirement.marker = packaging.markers.Marker(
-                    f'({requirement.marker}) and extra == "{extra}"'
-                )
-            else:
-                requirement.marker = packaging.markers.Marker(
-                    f'{requirement.marker} and extra == "{extra}"'
-                )
+
+def _build_extra_req(
+    extra: str,
+    requirement: Requirement,
+) -> Requirement:
+    """
+    Build a new requirement with an extra marker.
+    """
+    requirement = copy.copy(requirement)
+    if requirement.marker:
+        if "or" in requirement.marker._markers:
+            requirement.marker = packaging.markers.Marker(
+                f'({requirement.marker}) and extra == "{extra}"'
+            )
         else:
-            requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
-        return requirement
+            requirement.marker = packaging.markers.Marker(
+                f'{requirement.marker} and extra == "{extra}"'
+            )
+    else:
+        requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
+    return requirement

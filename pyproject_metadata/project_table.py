@@ -1,5 +1,11 @@
 # SPDX-License-Identifier: MIT
 
+"""
+This module contains type definitions for the tables used in the
+``pyproject.toml``.  You should either import this at type-check time only, or
+make sure ``typing_extensions`` is available for Python 3.10 and below.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -17,12 +23,13 @@ else:
 
 
 __all__ = [
-    "ContactTable",
-    "LicenseTable",
-    "ReadmeTable",
-    "ProjectTable",
     "BuildSystemTable",
+    "ContactTable",
+    "Dynamic",
+    "LicenseTable",
+    "ProjectTable",
     "PyProjectTable",
+    "ReadmeTable",
 ]
 
 
@@ -44,6 +51,25 @@ ReadmeTable = TypedDict(
     "ReadmeTable", {"file": str, "text": str, "content-type": str}, total=False
 )
 
+Dynamic = Literal[
+    "authors",
+    "classifiers",
+    "dependencies",
+    "description",
+    "dynamic",
+    "entry-points",
+    "gui-scripts",
+    "keywords",
+    "license",
+    "maintainers",
+    "optional-dependencies",
+    "readme",
+    "requires-python",
+    "scripts",
+    "urls",
+    "version",
+]
+
 ProjectTable = TypedDict(
     "ProjectTable",
     {
@@ -64,26 +90,7 @@ ProjectTable = TypedDict(
         "keywords": List[str],
         "scripts": Dict[str, str],
         "gui-scripts": Dict[str, str],
-        "dynamic": List[
-            Literal[
-                "authors",
-                "classifiers",
-                "dependencies",
-                "description",
-                "dynamic",
-                "entry-points",
-                "gui-scripts",
-                "keywords",
-                "license",
-                "maintainers",
-                "optional-dependencies",
-                "readme",
-                "requires-python",
-                "scripts",
-                "urls",
-                "version",
-            ]
-        ],
+        "dynamic": List[Dynamic],
     },
     total=False,
 )

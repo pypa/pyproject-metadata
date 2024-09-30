@@ -1,3 +1,11 @@
+# SPDX-License-Identifier: MIT
+
+"""
+This module focues on reading pyproject.toml fields with error collection. It is
+mostly internal, except for License and Readme classes, which are re-exported in
+the top-level package.
+"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -8,6 +16,14 @@ import typing
 import packaging.requirements
 
 from .errors import ErrorCollector
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Sequence
+
+    from packaging.requirements import Requirement
+
+    from .project_table import ContactTable, Dynamic, ProjectTable
+
 
 __all__ = [
     "License",
@@ -32,17 +48,22 @@ class Readme:
     content_type: str
 
 
-if typing.TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Sequence
-
-    from packaging.requirements import Requirement
-
-    from .project_table import ContactTable, ProjectTable
+T = typing.TypeVar("T")
 
 
 @dataclasses.dataclass
 class PyProjectReader(ErrorCollector):
+    """Class for reading pyproject.toml fields with error collection.
+
+    Unrelated errors are collected and raised at once if the `collect_errors`
+    parameter is set to `True`. Some methods will return None if an error was
+    raised. Most of them expect a non-None value as input to enforce the caller
+    to handle missing vs. error correctly. The exact design is based on usage,
+    as this is an internal class.
+    """
+
     def ensure_str(self, value: str, key: str) -> str | None:
+        """Ensure that a value is a string."""
         if isinstance(value, str):
             return value
 
@@ -50,7 +71,8 @@ class PyProjectReader(ErrorCollector):
         self.config_error(msg, key=key)
         return None
 
-    def ensure_list(self, val: list[str], key: str) -> list[str] | None:
+    def ensure_list(self, val: list[T], key: str) -> list[T] | None:
+        """Ensure that a value is a list of strings."""
         if not isinstance(val, list):
             msg = f'Field "{key}" has an invalid type, expecting a list of strings (got "{val}")'
             self.config_error(msg, key=key)
@@ -64,6 +86,7 @@ class PyProjectReader(ErrorCollector):
         return val
 
     def ensure_dict(self, val: dict[str, str], key: str) -> dict[str, str] | None:
+        """Ensure that a value is a dictionary of strings."""
         if not isinstance(val, dict):
             msg = f'Field "{key}" has an invalid type, expecting a dictionary of strings (got "{val}")'
             self.config_error(msg, key=key)
@@ -78,6 +101,7 @@ class PyProjectReader(ErrorCollector):
     def ensure_people(
         self, val: Sequence[ContactTable], key: str
     ) -> list[tuple[str, str | None]]:
+        """Ensure that a value is a list of dictionaries with optional "name" and "email" keys."""
         if not (
             isinstance(val, list)
             and all(isinstance(x, dict) for x in val)
@@ -98,6 +122,10 @@ class PyProjectReader(ErrorCollector):
     def get_license(
         self, project: ProjectTable, project_dir: pathlib.Path
     ) -> License | str | None:
+        """Get the license field from the project table. Handles PEP 639 style license too.
+
+        None is returned if the license field is not present or if an error occurred.
+        """
         val = project.get("license")
         if val is None:
             return None
@@ -142,6 +170,11 @@ class PyProjectReader(ErrorCollector):
     def get_license_files(
         self, project: ProjectTable, project_dir: pathlib.Path
     ) -> list[pathlib.Path] | None:
+        """Get the license-files list of files from the project table.
+
+        Returns None if an error occurred (including invalid globs, etc) or if
+        not present.
+        """
         license_files = project.get("license-files")
         if license_files is None:
             return None
@@ -153,6 +186,10 @@ class PyProjectReader(ErrorCollector):
     def get_readme(  # noqa: C901
         self, project: ProjectTable, project_dir: pathlib.Path
     ) -> Readme | None:
+        """Get the text of the readme from the project table.
+
+        Returns None if an error occurred or if the readme field is not present.
+        """
         if "readme" not in project:
             return None
 
@@ -229,6 +266,8 @@ class PyProjectReader(ErrorCollector):
         return Readme(text, file, content_type)
 
     def get_dependencies(self, project: ProjectTable) -> list[Requirement]:
+        """Get the dependencies from the project table."""
+
         requirement_strings: list[str] | None = None
         requirement_strings_raw = project.get("dependencies")
         if requirement_strings_raw is not None:
@@ -255,6 +294,8 @@ class PyProjectReader(ErrorCollector):
         self,
         project: ProjectTable,
     ) -> dict[str, list[Requirement]]:
+        """Get the optional dependencies from the project table."""
+
         val = project.get("optional-dependencies")
         if not val:
             return {}
@@ -299,6 +340,8 @@ class PyProjectReader(ErrorCollector):
         return dict(requirements_dict)
 
     def get_entrypoints(self, project: ProjectTable) -> dict[str, dict[str, str]]:
+        """Get the entrypoints from the project table."""
+
         val = project.get("entry-points", None)
         if val is None:
             return {}
@@ -336,8 +379,12 @@ class PyProjectReader(ErrorCollector):
                     return {}
         return val
 
-    def get_dynamic(self, project: ProjectTable) -> list[str]:
-        dynamic: list[str] = project.get("dynamic", [])  # type: ignore[assignment]
+    def get_dynamic(self, project: ProjectTable) -> list[Dynamic]:
+        """Get the dynamic fields from the project table.
+
+        Returns an empty list if the field is not present or if an error occurred.
+        """
+        dynamic = project.get("dynamic", [])
 
         self.ensure_list(dynamic, "project.dynamic")
 
@@ -351,6 +398,8 @@ class PyProjectReader(ErrorCollector):
     def _get_files_from_globs(
         self, project_dir: pathlib.Path, globs: Iterable[str]
     ) -> Generator[pathlib.Path, None, None]:
+        """Given a list of globs, get files that match."""
+
         for glob in globs:
             if glob.startswith(("..", "/")):
                 msg = f'"{glob}" is an invalid "project.license-files" glob: the pattern must match files within the project directory'

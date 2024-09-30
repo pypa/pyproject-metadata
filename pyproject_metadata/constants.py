@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: MIT
+
+"""
+Constants for the pyproject_metadata package, collected here to make them easy
+to update. These should be considered mostly private.
+"""
+
 from __future__ import annotations
 
 __all__ = [
