@@ -67,19 +67,19 @@ class PyProjectReader(ErrorCollector):
         if isinstance(value, str):
             return value
 
-        msg = f'Field "{key}" has an invalid type, expecting a string (got "{value}")'
+        msg = f"Field {key!r} has an invalid type, expecting a string (got {value!r})"
         self.config_error(msg, key=key)
         return None
 
     def ensure_list(self, val: list[T], key: str) -> list[T] | None:
         """Ensure that a value is a list of strings."""
         if not isinstance(val, list):
-            msg = f'Field "{key}" has an invalid type, expecting a list of strings (got "{val}")'
+            msg = f"Field {key!r} has an invalid type, expecting a list of strings (got {val!r})"
             self.config_error(msg, key=key)
             return None
         for item in val:
             if not isinstance(item, str):
-                msg = f'Field "{key}" contains item with invalid type, expecting a string (got "{item}")'
+                msg = f"Field {key!r} contains item with invalid type, expecting a string (got {item!r})"
                 self.config_error(msg, key=key)
                 return None
 
@@ -88,12 +88,12 @@ class PyProjectReader(ErrorCollector):
     def ensure_dict(self, val: dict[str, str], key: str) -> dict[str, str] | None:
         """Ensure that a value is a dictionary of strings."""
         if not isinstance(val, dict):
-            msg = f'Field "{key}" has an invalid type, expecting a dictionary of strings (got "{val}")'
+            msg = f"Field {key!r} has an invalid type, expecting a dictionary of strings (got {val!r})"
             self.config_error(msg, key=key)
             return None
         for subkey, item in val.items():
             if not isinstance(item, str):
-                msg = f'Field "{key}.{subkey}" has an invalid type, expecting a string (got "{item}")'
+                msg = f"Field '{key}.{subkey}' has an invalid type, expecting a string (got {item!r})"
                 self.config_error(msg, key=f"{key}.{subkey}")
                 return None
         return val
@@ -112,8 +112,8 @@ class PyProjectReader(ErrorCollector):
             )
         ):
             msg = (
-                f'Field "{key}" has an invalid type, expecting a list of '
-                f'dictionaries containing the "name" and/or "email" keys (got "{val}")'
+                f"Field {key!r} has an invalid type, expecting a list of "
+                f"dictionaries containing the 'name' and/or 'email' keys (got {val!r})"
             )
             self.config_error(msg, key=key)
             return []
@@ -137,13 +137,13 @@ class PyProjectReader(ErrorCollector):
             if _license is None:
                 return None
         else:
-            msg = f'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got "{val}")'
+            msg = f"Field 'project.license' has an invalid type, expecting a string or dictionary of strings (got {val!r})"
             self.config_error(msg, key="project.license")
             return None
 
         for field in _license:
             if field not in ("file", "text"):
-                msg = f'Unexpected field "project.license.{field}"'
+                msg = f"Unexpected field 'project.license.{field}'"
                 self.config_error(msg, key=f"project.license.{field}")
                 return None
 
@@ -152,14 +152,14 @@ class PyProjectReader(ErrorCollector):
         text = _license.get("text")
 
         if (filename and text) or (not filename and not text):
-            msg = f'Invalid "project.license" value, expecting either "file" or "text" (got "{_license}")'
+            msg = f"Invalid 'project.license' value, expecting either 'file' or 'text' (got {_license!r})"
             self.config_error(msg, key="project.license")
             return None
 
         if filename:
             file = project_dir.joinpath(filename)
             if not file.is_file():
-                msg = f'License file not found ("{filename}")'
+                msg = f"License file not found ({filename!r})"
                 self.config_error(msg, key="project.license.file")
                 return None
             text = file.read_text(encoding="utf-8")
@@ -208,14 +208,14 @@ class PyProjectReader(ErrorCollector):
             elif filename.endswith(".rst"):
                 content_type = "text/x-rst"
             else:
-                msg = f'Could not infer content type for readme file "{filename}"'
+                msg = f"Could not infer content type for readme file {filename!r}"
                 self.config_error(msg, key="project.readme")
                 return None
         elif isinstance(readme, dict):
             # readme is a dict containing either 'file' or 'text', and content-type
             for field in readme:
                 if field not in ("content-type", "file", "text"):
-                    msg = f'Unexpected field "project.readme.{field}"'
+                    msg = f"Unexpected field 'project.readme.{field}'"
                     self.config_error(msg, key=f"project.readme.{field}")
                     return None
 
@@ -239,17 +239,17 @@ class PyProjectReader(ErrorCollector):
                     return None
 
             if (filename and text) or (not filename and not text):
-                msg = f'Invalid "project.readme" value, expecting either "file" or "text" (got "{readme}")'
+                msg = f"Invalid 'project.readme' value, expecting either 'file' or 'text' (got {readme!r})"
                 self.config_error(msg, key="project.readme")
                 return None
             if not content_type:
-                msg = 'Field "project.readme.content-type" missing'
+                msg = "Field 'project.readme.content-type' missing"
                 self.config_error(msg, key="project.readme.content-type")
                 return None
         else:
             msg = (
-                f'Field "project.readme" has an invalid type, expecting either, '
-                f'a string or dictionary of strings (got "{readme}")'
+                f"Field 'project.readme' has an invalid type, expecting either "
+                f"a string or dictionary of strings (got {readme!r})"
             )
             self.config_error(msg, key="project.readme")
             return None
@@ -257,7 +257,7 @@ class PyProjectReader(ErrorCollector):
         if filename:
             file = project_dir.joinpath(filename)
             if not file.is_file():
-                msg = f'Readme file not found ("{filename}")'
+                msg = f"Readme file not found ({filename!r})"
                 self.config_error(msg, key="project.readme.file")
                 return None
             text = file.read_text(encoding="utf-8")
@@ -283,8 +283,8 @@ class PyProjectReader(ErrorCollector):
                 requirements.append(packaging.requirements.Requirement(req))
             except packaging.requirements.InvalidRequirement as e:
                 msg = (
-                    'Field "project.dependencies" contains an invalid PEP 508 '
-                    f'requirement string "{req}" ("{e}")'
+                    "Field 'project.dependencies' contains an invalid PEP 508 "
+                    f"requirement string {req!r} ({e!r})"
                 )
                 self.config_error(msg, key="project.dependencies")
                 return []
@@ -303,8 +303,8 @@ class PyProjectReader(ErrorCollector):
         requirements_dict: dict[str, list[Requirement]] = {}
         if not isinstance(val, dict):
             msg = (
-                'Field "project.optional-dependencies" has an invalid type, expecting a '
-                f'dictionary of PEP 508 requirement strings (got "{val}")'
+                "Field 'project.optional-dependencies' has an invalid type, expecting a "
+                f"dictionary of PEP 508 requirement strings (got {val!r})"
             )
             self.config_error(msg, key="project.optional-dependencies")
             return {}
@@ -312,8 +312,8 @@ class PyProjectReader(ErrorCollector):
             assert isinstance(extra, str)
             if not isinstance(requirements, list):
                 msg = (
-                    f'Field "project.optional-dependencies.{extra}" has an invalid type, expecting a '
-                    f'dictionary PEP 508 requirement strings (got "{requirements}")'
+                    f"Field 'project.optional-dependencies.{extra}' has an invalid type, expecting a "
+                    f"dictionary PEP 508 requirement strings (got {requirements!r})"
                 )
                 self.config_error(msg, key=f"project.optional-dependencies.{extra}")
                 return {}
@@ -321,8 +321,8 @@ class PyProjectReader(ErrorCollector):
             for req in requirements:
                 if not isinstance(req, str):
                     msg = (
-                        f'Field "project.optional-dependencies.{extra}" has an invalid type, '
-                        f'expecting a PEP 508 requirement string (got "{req}")'
+                        f"Field 'project.optional-dependencies.{extra}' has an invalid type, "
+                        f"expecting a PEP 508 requirement string (got {req!r})"
                     )
                     self.config_error(msg, key=f"project.optional-dependencies.{extra}")
                     return {}
@@ -332,8 +332,8 @@ class PyProjectReader(ErrorCollector):
                     )
                 except packaging.requirements.InvalidRequirement as e:
                     msg = (
-                        f'Field "project.optional-dependencies.{extra}" contains '
-                        f'an invalid PEP 508 requirement string "{req}" ("{e}")'
+                        f"Field 'project.optional-dependencies.{extra}' contains "
+                        f"an invalid PEP 508 requirement string {req!r} ({e!r})"
                     )
                     self.config_error(msg, key=f"project.optional-dependencies.{extra}")
                     return {}
@@ -347,8 +347,8 @@ class PyProjectReader(ErrorCollector):
             return {}
         if not isinstance(val, dict):
             msg = (
-                'Field "project.entry-points" has an invalid type, expecting a '
-                f'dictionary of entrypoint sections (got "{val}")'
+                "Field 'project.entry-points' has an invalid type, expecting a "
+                f"dictionary of entrypoint sections (got {val!r})"
             )
             self.config_error(msg, key="project.entry-points")
             return {}
@@ -356,15 +356,15 @@ class PyProjectReader(ErrorCollector):
             assert isinstance(section, str)
             if not re.match(r"^\w+(\.\w+)*$", section):
                 msg = (
-                    'Field "project.entry-points" has an invalid value, expecting a name '
-                    f'containing only alphanumeric, underscore, or dot characters (got "{section}")'
+                    "Field 'project.entry-points' has an invalid value, expecting a name "
+                    f"containing only alphanumeric, underscore, or dot characters (got {section!r})"
                 )
                 self.config_error(msg, key="project.entry-points")
                 return {}
             if not isinstance(entrypoints, dict):
                 msg = (
-                    f'Field "project.entry-points.{section}" has an invalid type, expecting a '
-                    f'dictionary of entrypoints (got "{entrypoints}")'
+                    f"Field 'project.entry-points.{section}' has an invalid type, expecting a "
+                    f"dictionary of entrypoints (got {entrypoints!r})"
                 )
                 self.config_error(msg, key=f"project.entry-points.{section}")
                 return {}
@@ -372,8 +372,8 @@ class PyProjectReader(ErrorCollector):
                 assert isinstance(name, str)
                 if not isinstance(entrypoint, str):
                     msg = (
-                        f'Field "project.entry-points.{section}.{name}" has an invalid type, '
-                        f'expecting a string (got "{entrypoint}")'
+                        f"Field 'project.entry-points.{section}.{name}' has an invalid type, "
+                        f"expecting a string (got {entrypoint!r})"
                     )
                     self.config_error(msg, key=f"project.entry-points.{section}.{name}")
                     return {}
@@ -389,7 +389,7 @@ class PyProjectReader(ErrorCollector):
         self.ensure_list(dynamic, "project.dynamic")
 
         if "name" in dynamic:
-            msg = 'Unsupported field "name" in "project.dynamic"'
+            msg = "Unsupported field 'name' in 'project.dynamic'"
             self.config_error(msg, key="project.dynamic")
             return []
 
@@ -402,12 +402,12 @@ class PyProjectReader(ErrorCollector):
 
         for glob in globs:
             if glob.startswith(("..", "/")):
-                msg = f'"{glob}" is an invalid "project.license-files" glob: the pattern must match files within the project directory'
+                msg = f"{glob!r} is an invalid 'project.license-files' glob: the pattern must match files within the project directory"
                 self.config_error(msg)
                 break
             files = [f for f in project_dir.glob(glob) if f.is_file()]
             if not files:
-                msg = f'Every pattern in "project.license-files" must match at least one file: "{glob}" did not match any'
+                msg = f"Every pattern in 'project.license-files' must match at least one file: {glob!r} did not match any"
                 self.config_error(msg)
                 break
             for f in files:
