@@ -115,6 +115,15 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """
                 [project]
                 name = 'test'
+                version = '0.1.0-extra'
+            """,
+            'Invalid "project.version" value, expecting a valid PEP 440 version (got "0.1.0-extra")',
+            id='Invalid version value',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
                 version = '0.1.0'
                 license = true
             """,
@@ -415,6 +424,16 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             'Field "project.requires-python" has an invalid type, expecting a string (got "True")',
             id='Invalid requires-python type',
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = '0.1.0'
+                requires-python = '3.8'
+            """,
+            'Invalid "project.requires-python" value, expecting a valid specifier set (got "3.8")',
+            id='Invalid requires-python value',
         ),
         pytest.param(
             """
@@ -1419,27 +1438,23 @@ def test_missing_keys_okay() -> None:
 
 
 def test_extra_top_level() -> None:
-    pyproject_metadata.validate_top_level(
+    assert not pyproject_metadata.extras_top_level(
         {
             'project': {},
         }
     )
-    with pytest.raises(
-        pyproject_metadata.ConfigurationError,
-        match=re.escape(
-            'Extra keys present in pyproject.toml: "also-not-real", "not-real"'
-        ),
-    ):
-        pyproject_metadata.validate_top_level(
-            {
-                'not-real': {},
-                'also-not-real': {},
-            }
-        )
+    assert {'also-not-real', 'not-real'} == pyproject_metadata.extras_top_level(
+        {
+            'not-real': {},
+            'also-not-real': {},
+            'project': {},
+            'build-system': {},
+        }
+    )
 
 
 def test_extra_build_system() -> None:
-    pyproject_metadata.validate_build_system(
+    assert not pyproject_metadata.extras_build_system(
         {
             'build-system': {
                 'build-backend': 'one',
@@ -1448,20 +1463,14 @@ def test_extra_build_system() -> None:
             },
         }
     )
-    with pytest.raises(
-        pyproject_metadata.ConfigurationError,
-        match=re.escape(
-            'Extra keys present in "build-system": "also-not-real", "not-real"'
-        ),
-    ):
-        pyproject_metadata.validate_build_system(
-            {
-                'build-system': {
-                    'not-real': {},
-                    'also-not-real': {},
-                }
+    assert {'also-not-real', 'not-real'} == pyproject_metadata.extras_build_system(
+        {
+            'build-system': {
+                'not-real': {},
+                'also-not-real': {},
             }
-        )
+        }
+    )
 
 
 def test_multiline_description_warns() -> None:

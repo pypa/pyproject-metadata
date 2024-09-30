@@ -50,9 +50,9 @@ __all__ = [
     'Readme',
     'StandardMetadata',
     'field_to_metadata',
-    'validate_build_system',
-    'validate_project',
-    'validate_top_level',
+    'extras_build_system',
+    'extras_project',
+    'extras_top_level',
 ]
 
 
@@ -67,33 +67,19 @@ def field_to_metadata(field: str) -> frozenset[str]:
     return frozenset(constants.PROJECT_TO_METADATA[field])
 
 
-def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_top_level(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
 
 
-def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
+def extras_build_system(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return (
         set(pyproject_table.get('build-system', []))
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "build-system": {extra_keys_str}'
-        raise ConfigurationError(msg)
 
 
-def validate_project(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
-        set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
-    )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "project": {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_project(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
 
 
 @dataclasses.dataclass
@@ -332,14 +318,15 @@ class StandardMetadata:
         project = pyproject_table['project']
         project_dir = pathlib.Path(project_dir)
 
-        if allow_extra_keys is None:
-            try:
-                validate_project(data)
-            except ConfigurationError as err:
-                warnings.warn(str(err), ConfigurationWarning, stacklevel=2)
-        elif not allow_extra_keys:
-            with pyproject.collect():
-                validate_project(data)
+        if not allow_extra_keys:
+            extra_keys = extras_project(data)
+            if extra_keys:
+                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+                msg = f'Extra keys present in "project": {extra_keys_str}'
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
         dynamic = pyproject.get_dynamic(project)
 
@@ -363,12 +350,15 @@ class StandardMetadata:
         if raw_version is not None:
             version_string = pyproject.ensure_str(raw_version, 'project.version')
             if version_string is not None:
-                with pyproject.collect():
+                try:
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
                     )
+                except packaging.version.InvalidVersion:
+                    msg = f'Invalid "project.version" value, expecting a valid PEP 440 version (got "{version_string}")'
+                    pyproject.config_error(msg, key='project.version')
         elif 'version' not in dynamic:
             msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
             pyproject.config_error(msg, key='version')
@@ -390,10 +380,13 @@ class StandardMetadata:
                 requires_python_raw, 'project.requires-python'
             )
             if requires_python_string is not None:
-                with pyproject.collect():
+                try:
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
                     )
+                except packaging.specifiers.InvalidSpecifier:
+                    msg = f'Invalid "project.requires-python" value, expecting a valid specifier set (got "{requires_python_string}")'
+                    pyproject.config_error(msg, key='project.requires-python')
 
         self = None
         with pyproject.collect():
