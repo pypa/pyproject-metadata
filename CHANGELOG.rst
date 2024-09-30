@@ -37,7 +37,7 @@ Features:
 - Validate extra keys (warning, opt-in error)
 - Validate project name
 - Validate entrypoint group names
-* Setting a non-dynamic field is an error
+- Setting a non-dynamic field is an error
 
 Fixes:
 
@@ -52,10 +52,10 @@ Refactoring:
 - Move fetcher methods
 - Put validation in method
 - Make ``RFC822Message`` compatible with and subclass of ``EmailMessage`` class with support for Unicode
-* Remove indirection accessing metadata_version, add ``auto_metadata_version``
-* Rework how dynamic works, add ``dynamic_metadata``
-* Use dataclass instead of named tuple
-* chore: use named arguments instead of positional
+- Remove indirection accessing metadata_version, add ``auto_metadata_version``
+- Rework how dynamic works, add ``dynamic_metadata``
+- Use dataclass instead of named tuple
+- chore: use named arguments instead of positional
 
 
 Internal and CI:

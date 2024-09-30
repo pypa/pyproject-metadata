@@ -177,6 +177,9 @@ class RFC822Message(email.message.EmailMessage):
     def as_bytes(
         self, unixfrom: bool = False, policy: email.policy.Policy | None = None
     ) -> bytes:
+        """
+        This handles unicode encoding.
+        """
         return self.as_string(unixfrom, policy=policy).encode("utf-8")
 
 

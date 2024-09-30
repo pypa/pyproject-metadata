@@ -4,6 +4,8 @@
 This module contains type definitions for the tables used in the
 ``pyproject.toml``.  You should either import this at type-check time only, or
 make sure ``typing_extensions`` is available for Python 3.10 and below.
+
+Documentation notice: the fields with hyphens are not shown due to a sphinx-autodoc bug.
 """
 
 from __future__ import annotations
