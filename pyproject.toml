@@ -32,7 +32,9 @@ dependencies = [
 docs = [
     "furo>=2023.9.10",
     "sphinx-autodoc-typehints>=1.10.0",
-    "sphinx~=7.0",
+    "sphinx>=7.0",
+    "sphinx-autodoc-typehints",
+    "myst-parser",
 ]
 test = [
     "pytest-cov[toml]>=2",

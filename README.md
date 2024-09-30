@@ -51,7 +51,12 @@ are paths relative to the project directory, into the `dist-info/licenses`
 folder, preserving the original source structure.
 
 
-[core metadata]: https://packaging.python.org/specifications/core-metadata/
+## Modifying metadata
+
+By default, `StandardMetadata` metadata fields are immutable unless a field is
+listed in `dynaimc` (not to be confused with `dynamic_metadata`). If you want to
+modify fields that are not dynamic, you can use the `dataclasses.replace` /
+`copy.replace` (Python 3.13+) function.
 
 
 ## Dynamic Metadata (METADATA 2.2+)
@@ -62,6 +67,7 @@ Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA f
 ## Adding extra fields
 
 You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.
+
 
 ## Collecting multiple errors
 
@@ -78,6 +84,7 @@ issued for extra fields at the project table. You can pass `allow_extra_keys=`
 to either avoid the check (`True`) or hard error (`False`). If you want to
 detect extra keys, you can get them with `pyproject_metadata.extra_top_level`
 and `pyproject_metadata.extra_build_sytem`.
+
 
 ## Validating classifiers
 
@@ -99,6 +106,7 @@ If you are writing a build backend, you should not validate classifiers with a `
 Since classifiers are a moving target, it is probably best for build backends (which may be shipped by third party distributors like Debian or Fedora) to either ignore or have optional classifier validation.
 
 
+[core metadata]:            https://packaging.python.org/specifications/core-metadata/
 [gha-checks-link]:          https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml
 [gha-checks-badge]:         https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml/badge.svg
 [gha-tests-link]:           https://github.com/pypa/pyproject-metadata/actions/workflows/tests.yml

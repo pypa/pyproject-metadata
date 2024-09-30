@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+import argparse
 import os
 import os.path
 
@@ -33,4 +34,56 @@ def test(session: nox.Session) -> None:
         "--cov-report=term-missing",
         "tests/",
         *session.posargs,
+    )
+
+
+@nox.session()
+def docs(session: nox.Session) -> None:
+    """
+    Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-b", dest="builder", default="html", help="Build target (default: html)"
+    )
+    args, posargs = parser.parse_known_args(session.posargs)
+
+    serve = args.builder == "html" and session.interactive
+    extra_installs = ["sphinx-autobuild"] if serve else []
+    session.install("-e.[docs]", *extra_installs)
+
+    session.chdir("docs")
+
+    shared_args = (
+        "-n",  # nitpicky mode
+        "-T",  # full tracebacks
+        f"-b={args.builder}",
+        ".",
+        f"_build/{args.builder}",
+        *posargs,
+    )
+
+    if serve:
+        session.run("sphinx-autobuild", "--open-browser", *shared_args)
+    else:
+        session.run("sphinx-build", "--keep-going", *shared_args)
+
+
+@nox.session()
+def build_api_docs(session: nox.Session) -> None:
+    """
+    Build (regenerate) API docs.
+    """
+
+    session.install("sphinx")
+    session.chdir("docs")
+    session.run(
+        "sphinx-apidoc",
+        "-o",
+        "api/",
+        "--no-toc",
+        "--force",
+        "--module-first",
+        "../pyproject_metadata",
     )
