@@ -50,9 +50,9 @@ __all__ = [
     'Readme',
     'StandardMetadata',
     'field_to_metadata',
-    'validate_build_system',
-    'validate_project',
-    'validate_top_level',
+    'extras_build_system',
+    'extras_project',
+    'extras_top_level',
 ]
 
 
@@ -67,33 +67,19 @@ def field_to_metadata(field: str) -> frozenset[str]:
     return frozenset(constants.PROJECT_TO_METADATA[field])
 
 
-def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_top_level(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
 
 
-def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
+def extras_build_system(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return (
         set(pyproject_table.get('build-system', []))
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "build-system": {extra_keys_str}'
-        raise ConfigurationError(msg)
 
 
-def validate_project(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
-        set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
-    )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "project": {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_project(pyproject_table: Mapping[str, Any]) -> set[str]:
+    return set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
 
 
 @dataclasses.dataclass
@@ -332,14 +318,15 @@ class StandardMetadata:
         project = pyproject_table['project']
         project_dir = pathlib.Path(project_dir)
 
-        if allow_extra_keys is None:
-            try:
-                validate_project(data)
-            except ConfigurationError as err:
-                warnings.warn(str(err), ConfigurationWarning, stacklevel=2)
-        elif not allow_extra_keys:
-            with pyproject.collect():
-                validate_project(data)
+        if not allow_extra_keys:
+            extra_keys = extras_project(data)
+            if extra_keys:
+                extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
+                msg = f'Extra keys present in "project": {extra_keys_str}'
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
         dynamic = pyproject.get_dynamic(project)
 

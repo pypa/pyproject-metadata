@@ -70,6 +70,15 @@ the metadata parse at once, instead of raising an exception on the first one.
 The exception type will be `pyproject_metadata.errors.ExceptionGroup` (which is
 just `ExceptionGroup` on Python 3.11+).
 
+
+## Validating extra fields
+
+By default, a warning (`pyproject_metadata.errors.ExtraKeyWarning`) will be
+issued for extra fields at the project table. You can pass `allow_extra_keys=`
+to either avoid the check (`True`) or hard error (`False`). If you want to
+detect extra keys, you can get them with `pyproject_metadata.extra_top_level`
+and `pyproject_metadata.extra_build_sytem`.
+
 ## Validating classifiers
 
 If you want to validate classifiers, then install the `trove_classifiers` library (the canonical source for classifiers), and run:
