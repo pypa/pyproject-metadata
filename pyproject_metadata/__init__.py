@@ -146,7 +146,7 @@ class _JSonMessageSetter:
 
 class RFC822Policy(email.policy.EmailPolicy):
     """
-    This is `email.policy.EmailPolicy`, but with a simple ``header_store_parse``
+    This is :class:`email.policy.EmailPolicy`, but with a simple ``header_store_parse``
     implementation that handles multiline values, and some nice defaults.
     """
 
@@ -165,7 +165,7 @@ class RFC822Policy(email.policy.EmailPolicy):
 
 class RFC822Message(email.message.EmailMessage):
     """
-    This is `email.message.EmailMessage` with two small changes: it defaults to
+    This is :class:`email.message.EmailMessage` with two small changes: it defaults to
     our `RFC822Policy`, and it correctly writes unicode when being called
     with `bytes()`.
     """
@@ -246,8 +246,8 @@ class StandardMetadata:
         errors = ErrorCollector(collect_errors=self.all_errors)
 
         if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
-            msg = f"The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)"
-            errors.config_error(msg)
+            msg = "The metadata_version must be one of {versions} or None (default)"
+            errors.config_error(msg, versions=constants.KNOWN_METADATA_VERSIONS)
 
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
         # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
@@ -255,19 +255,19 @@ class StandardMetadata:
             r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
         ):
             msg = (
-                f"Invalid project name {self.name!r}. A valid name consists only of ASCII letters and "
+                "Invalid project name {name!r}. A valid name consists only of ASCII letters and "
                 "numbers, period, underscore and hyphen. It must start and end with a letter or number"
             )
-            errors.config_error(msg, key="project.name")
+            errors.config_error(msg, key="project.name", name=self.name)
 
         if self.license_files is not None and isinstance(self.license, License):
-            msg = "'project.license-files' must not be used when 'project.license' is not a SPDX license expression"
+            msg = "{key} must not be used when 'project.license' is not a SPDX license expression"
             errors.config_error(msg, key="project.license-files")
 
         if isinstance(self.license, str) and any(
             c.startswith("License ::") for c in self.classifiers
         ):
-            msg = "Setting 'project.license' to an SPDX license expression is not compatible with 'License ::' classifiers"
+            msg = "Setting {key} to an SPDX license expression is not compatible with 'License ::' classifiers"
             errors.config_error(msg, key="project.license")
 
         if warn:
@@ -295,14 +295,14 @@ class StandardMetadata:
             isinstance(self.license, str)
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "Setting 'project.license' to an SPDX license expression is supported only when emitting metadata version >= 2.4"
+            msg = "Setting {key} to an SPDX license expression is supported only when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license")
 
         if (
             self.license_files is not None
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "'project.license-files' is supported only when emitting metadata version >= 2.4"
+            msg = "{key} is supported only when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license-files")
 
         errors.finalize("Metadata validation failed")
@@ -351,7 +351,7 @@ class StandardMetadata:
 
         pyproject_table: PyProjectTable = data  # type: ignore[assignment]
         if "project" not in pyproject_table:
-            msg = "Section 'project' missing in pyproject.toml"
+            msg = "Section {key} missing in pyproject.toml"
             pyproject.config_error(msg, key="project")
             pyproject.finalize("Failed to parse pyproject.toml")
             msg = "Unreachable code"  # pragma: no cover
@@ -364,24 +364,26 @@ class StandardMetadata:
             extra_keys = extras_project(data)
             if extra_keys:
                 extra_keys_str = ", ".join(sorted(f"{k!r}" for k in extra_keys))
-                msg = f"Extra keys present in 'project': {extra_keys_str}"
-                if allow_extra_keys is None:
-                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
-                else:
-                    pyproject.config_error(msg)
+                msg = "Extra keys present in {key}: {extra_keys}"
+                pyproject.config_error(
+                    msg,
+                    key="project",
+                    extra_keys=extra_keys_str,
+                    warn=allow_extra_keys is None,
+                )
 
         dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
             if field in data["project"]:
-                msg = f"Field 'project.{field}' declared as dynamic in 'project.dynamic' but is defined"
-                pyproject.config_error(msg, key=field)
+                msg = "Field {key} declared as dynamic in 'project.dynamic' but is defined"
+                pyproject.config_error(msg, key=f"project.{field}")
 
         raw_name = project.get("name")
         name = "UNKNOWN"
         if raw_name is None:
-            msg = "Field 'project.name' missing"
-            pyproject.config_error(msg, key="name")
+            msg = "Field {key} missing"
+            pyproject.config_error(msg, key="project.name")
         else:
             tmp_name = pyproject.ensure_str(raw_name, "project.name")
             if tmp_name is not None:
@@ -399,11 +401,13 @@ class StandardMetadata:
                         else None
                     )
                 except packaging.version.InvalidVersion:
-                    msg = f"Invalid 'project.version' value, expecting a valid PEP 440 version (got {version_string!r})"
-                    pyproject.config_error(msg, key="project.version")
+                    msg = "Invalid {key} value, expecting a valid PEP 440 version"
+                    pyproject.config_error(
+                        msg, key="project.version", got=version_string
+                    )
         elif "version" not in dynamic:
-            msg = "Field 'project.version' missing and 'version' not specified in 'project.dynamic'"
-            pyproject.config_error(msg, key="version")
+            msg = "Field {key} missing and 'version' not specified in 'project.dynamic'"
+            pyproject.config_error(msg, key="project.version")
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
@@ -427,8 +431,10 @@ class StandardMetadata:
                         requires_python_string
                     )
                 except packaging.specifiers.InvalidSpecifier:
-                    msg = f"Invalid 'project.requires-python' value, expecting a valid specifier set (got {requires_python_string!r})"
-                    pyproject.config_error(msg, key="project.requires-python")
+                    msg = "Invalid {key} value, expecting a valid specifier set"
+                    pyproject.config_error(
+                        msg, key="project.requires-python", got=requires_python_string
+                    )
 
         self = None
         with pyproject.collect():
