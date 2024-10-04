@@ -1,23 +1,16 @@
 # Changelog
 
-## 0.9.0 (beta 6: 30-09-2024)
+## 0.9.0 (beta 7: 04-10-2024)
 
 Refactoring:
 
-- Move `validate_*` functions into `extras_*` instead
-- Use `Dynamic` for the type of `.dynamic`
-- Reformat single quotes to double quotes to match packaging
-- Produce standard Python repr style in error messages
-
-Fixes:
-
-- Improve locking for just metadata fields
+- Revert to double quotes in error messages for field names
+- Show the types instead of values in error messages
 
 Docs:
 
-- Include extra badge in readme
-- Rework docs, include README and more classes
-- Changelog is now in markdown
+- Better API section
+
 
 ## 0.9.0 (WIP)
 
@@ -43,6 +36,8 @@ Fixes:
 - Match EmailMessage spacing
 - Handle multilines the way setuptools does with smart indentation
 - Warn on multiline Summary (`project.description`)
+- Improve locking for just metadata fields
+- Error on extra keys in author/maintainer
 
 Refactoring:
 
@@ -56,6 +51,8 @@ Refactoring:
 - Use named arguments instead of positional
 - Spit up over multiple files
 - Remove `DataFetcher`, use static types wherever possible
+- Reformat single quotes to double quotes to match packaging
+- Produce standard Python repr style in error messages
 
 Internal and CI:
 
@@ -70,6 +67,11 @@ Internal and CI:
 - Add human readable IDs to tests
 - Fix coverage context
 - Require 100% coverage
+
+Docs:
+- Include extra badge in readme
+- Rework docs, include README and more classes
+- Changelog is now in markdown
 
 ## 0.8.0 (17-04-2024)
 
