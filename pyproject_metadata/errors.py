@@ -88,7 +88,7 @@ class ErrorCollector:
         **kwargs: typing.Any,
     ) -> None:
         """Raise a configuration error, or add it to the error list."""
-        msg = msg.format(key=f"'{key}'", **kwargs)
+        msg = msg.format(key=f'"{key}"', **kwargs)
         if got is not None:
             msg = f"{msg} (got {got!r})"
 
