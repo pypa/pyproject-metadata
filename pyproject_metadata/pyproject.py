@@ -123,7 +123,7 @@ class PyProjectReader(ErrorCollector):
         ):
             msg = (
                 "Field {key} has an invalid type, expecting a list of "
-                "dictionaries containing the 'name' and/or 'email' keys"
+                'dictionaries containing the "name" and/or "email" keys'
             )
             self.config_error(msg, key=key, got=val)
             return []
@@ -162,7 +162,9 @@ class PyProjectReader(ErrorCollector):
         text = _license.get("text")
 
         if (filename and text) or (not filename and not text):
-            msg = "Invalid {key} value, expecting either 'file' or 'text'"
+            msg = (
+                'Invalid {key} contents, expecting a string or one key "file" or "text"'
+            )
             self.config_error(msg, key="project.license", got=_license)
             return None
 
@@ -249,7 +251,7 @@ class PyProjectReader(ErrorCollector):
                     return None
 
             if (filename and text) or (not filename and not text):
-                msg = "Invalid {key} value, expecting either 'file' or 'text'"
+                msg = 'Invalid {key} contents, expecting either "file" or "text"'
                 self.config_error(msg, key="project.readme", got=readme)
                 return None
             if not content_type:

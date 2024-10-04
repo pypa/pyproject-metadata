@@ -22,7 +22,7 @@ Example usage:
    ep["gui_scripts"] = self.metadata.gui_scripts
    for group, entries in ep.items():
        if entries:
-           with open("entry_points.txt", "w") as f:
+           with open("entry_points.txt", "w", encoding="utf-8") as f:
                print(f"[{group}]", file=f)
                for name, target in entries.items():
                    print(f"{name} = {target}", file=f)
@@ -246,7 +246,7 @@ class StandardMetadata:
     """
     metadata_version: str | None = None
     """
-    Thi is the target metadata version. If None, it will be computed as a minimum based on the fields set.
+    This is the target metadata version. If None, it will be computed as a minimum based on the fields set.
     """
     all_errors: bool = False
     """
@@ -338,7 +338,7 @@ class StandardMetadata:
 
         for field in dynamic:
             if field in data["project"]:
-                msg = "Field {key} declared as dynamic in 'project.dynamic' but is defined"
+                msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
                 pyproject.config_error(msg, key=f"project.{field}")
 
         raw_name = project.get("name")
@@ -368,7 +368,9 @@ class StandardMetadata:
                         msg, key="project.version", got=version_string
                     )
         elif "version" not in dynamic:
-            msg = "Field {key} missing and 'version' not specified in 'project.dynamic'"
+            msg = (
+                "Field {key} missing and 'version' not specified in \"project.dynamic\""
+            )
             pyproject.config_error(msg, key="project.version")
 
         # Description fills Summary, which cannot be multiline
@@ -498,7 +500,7 @@ class StandardMetadata:
             errors.config_error(msg, key="project.name", name=self.name)
 
         if self.license_files is not None and isinstance(self.license, License):
-            msg = "{key} must not be used when 'project.license' is not a SPDX license expression"
+            msg = '{key} must not be used when "project.license" is not a SPDX license expression'
             errors.config_error(msg, key="project.license-files")
 
         if isinstance(self.license, str) and any(
@@ -510,20 +512,20 @@ class StandardMetadata:
         if warn:
             if self.description and "\n" in self.description:
                 warnings.warn(
-                    "The one-line summary 'project.description' should not contain more than one line. Readers might merge or truncate newlines.",
+                    'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.',
                     ConfigurationWarning,
                     stacklevel=2,
                 )
             if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
                 if isinstance(self.license, License):
                     warnings.warn(
-                        "Set 'project.license' to an SPDX license expression for metadata >= 2.4",
+                        'Set "project.license" to an SPDX license expression for metadata >= 2.4',
                         ConfigurationWarning,
                         stacklevel=2,
                     )
                 elif any(c.startswith("License ::") for c in self.classifiers):
                     warnings.warn(
-                        "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for 'project.license' instead",
+                        "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for \"project.license\" instead",
                         ConfigurationWarning,
                         stacklevel=2,
                     )
