@@ -749,7 +749,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 license-files = ['/LICENSE']
             """,
             "'/LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
-            id="Aboslute license-files glob",
+            id="Absolute license-files glob",
         ),
         pytest.param(
             """
@@ -960,7 +960,7 @@ def test_load_with_metadata_version(
             """,
             "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for \"project.license\" instead",
             "2.4",
-            id="License trove classfiers with metadata 2.4",
+            id="License trove classifiers with metadata 2.4",
         ),
     ],
 )

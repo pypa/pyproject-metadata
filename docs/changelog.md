@@ -11,7 +11,6 @@ Docs:
 
 - Better API section
 
-
 ## 0.9.0 (WIP)
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
@@ -69,6 +68,7 @@ Internal and CI:
 - Require 100% coverage
 
 Docs:
+
 - Include extra badge in readme
 - Rework docs, include README and more classes
 - Changelog is now in markdown

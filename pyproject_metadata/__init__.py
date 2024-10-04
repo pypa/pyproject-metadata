@@ -242,11 +242,11 @@ class StandardMetadata:
 
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
-    This is a list of METADATA fields that can change inbetween SDist and wheel. Requires metadata_version 2.2+.
+    This is a list of METADATA fields that can change in between SDist and wheel. Requires metadata_version 2.2+.
     """
     metadata_version: str | None = None
     """
-    Thi is the target metadata version. If None, it will be computed as a minimum based on the fields set.
+    This is the target metadata version. If None, it will be computed as a minimum based on the fields set.
     """
     all_errors: bool = False
     """
@@ -254,7 +254,7 @@ class StandardMetadata:
     """
     _locked_metadata: bool = False
     """
-    Interal flag to prevent setting non-dynamic fields after initialization.
+    Internal flag to prevent setting non-dynamic fields after initialization.
     """
 
     def __post_init__(self) -> None:

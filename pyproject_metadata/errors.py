@@ -2,7 +2,7 @@
 
 """
 This module defines exceptions and error handling utilities. It is the
-recommened path to access ``ConfiguraitonError``, ``ConfigurationWarning``, and
+recommend path to access ``ConfiguratonError``, ``ConfigurationWarning``, and
 ``ExceptionGroup``. For backward compatibility, ``ConfigurationError`` is
 re-exported in the top-level package.
 """

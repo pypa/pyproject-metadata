@@ -7,31 +7,30 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 [![PyPI version][pypi-version]][pypi-link]
 
-
 > Dataclass for PEP 621 metadata with support for [core metadata] generation
 
-This project does not implement the parsing of `pyproject.toml`
-containing PEP 621 metadata.
+This project does not implement the parsing of `pyproject.toml` containing PEP
+621 metadata.
 
 Instead, given a Python data structure representing PEP 621 metadata (already
 parsed), it will validate this input and generate a PEP 643-compliant metadata
 file (e.g. `PKG-INFO`).
 
-
 ## Usage
 
-After [installing `pyproject-metadata`](https://pypi.org/project/pyproject-metadata/),
+After
+[installing `pyproject-metadata`](https://pypi.org/project/pyproject-metadata/),
 you can use it as a library in your scripts and programs:
 
 ```python
 from pyproject_metadata import StandardMetadata
 
-parsed_pyproject = { ... }  # you can use parsers like `tomli` to obtain this dict
-metadata = StandardMetadata.from_pyproject(parsed_pyproject, allow_extra_keys = False)
+parsed_pyproject = {...}  # you can use parsers like `tomli` to obtain this dict
+metadata = StandardMetadata.from_pyproject(parsed_pyproject, allow_extra_keys=False)
 print(metadata.entrypoints)  # same fields as defined in PEP 621
 
 pkg_info = metadata.as_rfc822()
-print(str(pkg_info)))  # core metadata
+print(str(pkg_info))  # core metadata
 ```
 
 ## SPDX licenses (METADATA 2.4+)
@@ -50,7 +49,6 @@ A backend is also expected to copy entries from `project.licence_files`, which
 are paths relative to the project directory, into the `dist-info/licenses`
 folder, preserving the original source structure.
 
-
 ## Modifying metadata
 
 By default, `StandardMetadata` metadata fields are immutable unless a field is
@@ -58,16 +56,18 @@ listed in `dynaimc` (not to be confused with `dynamic_metadata`). If you want to
 modify fields that are not dynamic, you can use the `dataclasses.replace` /
 `copy.replace` (Python 3.13+) function.
 
-
 ## Dynamic Metadata (METADATA 2.2+)
 
-Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA fields in `dynamic_metadata`. If you want to convert `pyproject.toml` field names to METADATA field(s), use `pyproject_metadata.pyproject_to_metadata("field-name")`, which will return a frozenset of metadata names that are touched by that field.
-
+Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA
+fields in `dynamic_metadata`. If you want to convert `pyproject.toml` field
+names to METADATA field(s), use
+`pyproject_metadata.pyproject_to_metadata("field-name")`, which will return a
+frozenset of metadata names that are touched by that field.
 
 ## Adding extra fields
 
-You can add extra fields to the Message returned by `to_rfc822()`, as long as they are valid metadata entries.
-
+You can add extra fields to the Message returned by `to_rfc822()`, as long as
+they are valid metadata entries.
 
 ## Collecting multiple errors
 
@@ -75,7 +75,6 @@ You can use the `all_errors` argument to `from_pyproject` to show all errors in
 the metadata parse at once, instead of raising an exception on the first one.
 The exception type will be `pyproject_metadata.errors.ExceptionGroup` (which is
 just `ExceptionGroup` on Python 3.11+).
-
 
 ## Validating extra fields
 
@@ -85,27 +84,35 @@ to either avoid the check (`True`) or hard error (`False`). If you want to
 detect extra keys, you can get them with `pyproject_metadata.extra_top_level`
 and `pyproject_metadata.extra_build_sytem`.
 
-
 ## Validating classifiers
 
-If you want to validate classifiers, then install the `trove_classifiers` library (the canonical source for classifiers), and run:
+If you want to validate classifiers, then install the `trove_classifiers`
+library (the canonical source for classifiers), and run:
 
 ```python
 import trove_classifiers
 
-metadata_classifieres = {c for c in metadata.classifiers if not c.startswith("Private ::")}
+metadata_classifieres = {
+    c for c in metadata.classifiers if not c.startswith("Private ::")
+}
 invalid_classifiers = set(metadata.classifiers) - trove_classifiers.classifiers
 
 # Also the deprecated dict if you want it
 dep_names = set(metadata.classifiers) & set(trove_classifiers.deprecated_classifiers)
-deprecated_classifiers = {k: trove_classifiers.deprecated_classifiers[k] for k in dep_names}
+deprecated_classifiers = {
+    k: trove_classifiers.deprecated_classifiers[k] for k in dep_names
+}
 ```
 
-If you are writing a build backend, you should not validate classifiers with a `Private ::` prefix; these are only restricted for upload to PyPI (such as `Private :: Do Not Upload`).
+If you are writing a build backend, you should not validate classifiers with a
+`Private ::` prefix; these are only restricted for upload to PyPI (such as
+`Private :: Do Not Upload`).
 
-Since classifiers are a moving target, it is probably best for build backends (which may be shipped by third party distributors like Debian or Fedora) to either ignore or have optional classifier validation.
+Since classifiers are a moving target, it is probably best for build backends
+(which may be shipped by third party distributors like Debian or Fedora) to
+either ignore or have optional classifier validation.
 
-
+<!-- prettier-ignore-start -->
 [core metadata]:            https://packaging.python.org/specifications/core-metadata/
 [gha-checks-link]:          https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml
 [gha-checks-badge]:         https://github.com/pypa/pyproject-metadata/actions/workflows/checks.yml/badge.svg
@@ -119,3 +126,4 @@ Since classifiers are a moving target, it is probably best for build backends (w
 [pypi-version]:             https://badge.fury.io/py/pyproject-metadata.svg
 [rtd-link]:                 https://pep621.readthedocs.io/en/latest/?badge=latest
 [rtd-badge]:                https://readthedocs.org/projects/pep621/badge/?version=latest
+<!-- prettier-ignore-end -->
