@@ -84,6 +84,7 @@ class ErrorCollector:
         *,
         key: str | None = None,
         got: typing.Any = None,
+        got_type: type[typing.Any] | None = None,
         warn: bool = False,
         **kwargs: typing.Any,
     ) -> None:
@@ -91,6 +92,8 @@ class ErrorCollector:
         msg = msg.format(key=f'"{key}"', **kwargs)
         if got is not None:
             msg = f"{msg} (got {got!r})"
+        if got_type is not None:
+            msg = f"{msg} (got {got_type.__name__})"
 
         if warn:
             warnings.warn(msg, ConfigurationWarning, stacklevel=3)

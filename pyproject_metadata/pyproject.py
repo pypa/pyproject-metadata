@@ -78,19 +78,19 @@ class PyProjectReader(ErrorCollector):
             return value
 
         msg = "Field {key} has an invalid type, expecting a string"
-        self.config_error(msg, key=key, got=value)
+        self.config_error(msg, key=key, got_type=type(value))
         return None
 
     def ensure_list(self, val: list[T], key: str) -> list[T] | None:
         """Ensure that a value is a list of strings."""
         if not isinstance(val, list):
             msg = "Field {key} has an invalid type, expecting a list of strings"
-            self.config_error(msg, key=key, got=val)
+            self.config_error(msg, key=key, got_type=type(val))
             return None
         for item in val:
             if not isinstance(item, str):
                 msg = "Field {key} contains item with invalid type, expecting a string"
-                self.config_error(msg, key=key, got=item)
+                self.config_error(msg, key=key, got_type=type(item))
                 return None
 
         return val
@@ -98,35 +98,58 @@ class PyProjectReader(ErrorCollector):
     def ensure_dict(self, val: dict[str, str], key: str) -> dict[str, str] | None:
         """Ensure that a value is a dictionary of strings."""
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a dictionary of strings"
-            self.config_error(msg, key=key, got=val)
+            msg = "Field {key} has an invalid type, expecting a table of strings"
+            self.config_error(msg, key=key, got_type=type(val))
             return None
         for subkey, item in val.items():
             if not isinstance(item, str):
                 msg = "Field {key} has an invalid type, expecting a string"
-                self.config_error(msg, key=f"{key}.{subkey}", got=item)
+                self.config_error(msg, key=f"{key}.{subkey}", got_type=type(item))
                 return None
         return val
 
     def ensure_people(
         self, val: Sequence[ContactTable], key: str
     ) -> list[tuple[str, str | None]]:
-        """Ensure that a value is a list of dictionaries with optional "name" and "email" keys."""
-        if not (
-            isinstance(val, list)
-            and all(isinstance(x, dict) for x in val)
-            and all(
-                isinstance(item, str)
-                for items in [_dict.values() for _dict in val]
-                for item in items
-            )
-        ):
+        """Ensure that a value is a list of tables with optional "name" and "email" keys."""
+        if not isinstance(val, list):
             msg = (
                 "Field {key} has an invalid type, expecting a list of "
-                'dictionaries containing the "name" and/or "email" keys'
+                'tables containing the "name" and/or "email" keys'
             )
-            self.config_error(msg, key=key, got=val)
+            self.config_error(msg, key=key, got_type=type(val))
             return []
+        for each in val:
+            if not isinstance(each, dict):
+                msg = (
+                    "Field {key} has an invalid type, expecting a list of "
+                    'tables containing the "name" and/or "email" keys'
+                    " (got list with {type_name})"
+                )
+                self.config_error(msg, key=key, type_name=type(each).__name__)
+                return []
+            for value in each.values():
+                if not isinstance(value, str):
+                    msg = (
+                        "Field {key} has an invalid type, expecting a list of "
+                        'tables containing the "name" and/or "email" keys'
+                        " (got list with dict with {type_name})"
+                    )
+                    self.config_error(msg, key=key, type_name=type(value).__name__)
+                    return []
+            extra_keys = set(each) - {"name", "email"}
+            if extra_keys:
+                msg = (
+                    "Field {key} has an invalid type, expecting a list of "
+                    'tables containing the "name" and/or "email" keys'
+                    " (got list with dict with extra keys {extra_keys})"
+                )
+                self.config_error(
+                    msg,
+                    key=key,
+                    extra_keys=", ".join(sorted(f'"{k}"' for k in extra_keys)),
+                )
+                return []
         return [(entry.get("name", "Unknown"), entry.get("email")) for entry in val]
 
     def get_license(
@@ -147,8 +170,8 @@ class PyProjectReader(ErrorCollector):
             if _license is None:
                 return None
         else:
-            msg = "Field {key} has an invalid type, expecting a string or dictionary of strings"
-            self.config_error(msg, key="project.license", got=val)
+            msg = "Field {key} has an invalid type, expecting a string or table of strings"
+            self.config_error(msg, key="project.license", got_type=type(val))
             return None
 
         for field in _license:
@@ -259,8 +282,8 @@ class PyProjectReader(ErrorCollector):
                 self.config_error(msg, key="project.readme.content-type")
                 return None
         else:
-            msg = "Field {key} has an invalid type, expecting either a string or dictionary of strings"
-            self.config_error(msg, key="project.readme", got=readme)
+            msg = "Field {key} has an invalid type, expecting either a string or table of strings"
+            self.config_error(msg, key="project.readme", got_type=type(readme))
             return None
 
         if filename:
@@ -308,17 +331,19 @@ class PyProjectReader(ErrorCollector):
 
         requirements_dict: dict[str, list[Requirement]] = {}
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a dictionary of PEP 508 requirement strings"
-            self.config_error(msg, key="project.optional-dependencies", got=val)
+            msg = "Field {key} has an invalid type, expecting a table of PEP 508 requirement strings"
+            self.config_error(
+                msg, key="project.optional-dependencies", got_type=type(val)
+            )
             return {}
         for extra, requirements in val.copy().items():
             assert isinstance(extra, str)
             if not isinstance(requirements, list):
-                msg = "Field {key} has an invalid type, expecting a dictionary PEP 508 requirement strings"
+                msg = "Field {key} has an invalid type, expecting a table of PEP 508 requirement strings"
                 self.config_error(
                     msg,
                     key=f"project.optional-dependencies.{extra}",
-                    got=requirements,
+                    got_type=type(requirements),
                 )
                 return {}
             requirements_dict[extra] = []
@@ -326,7 +351,9 @@ class PyProjectReader(ErrorCollector):
                 if not isinstance(req, str):
                     msg = "Field {key} has an invalid type, expecting a PEP 508 requirement string"
                     self.config_error(
-                        msg, key=f"project.optional-dependencies.{extra}", got=req
+                        msg,
+                        key=f"project.optional-dependencies.{extra}",
+                        got_type=type(req),
                     )
                     return {}
                 try:
@@ -354,8 +381,8 @@ class PyProjectReader(ErrorCollector):
         if val is None:
             return {}
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a dictionary of entrypoint sections"
-            self.config_error(msg, key="project.entry-points", got=val)
+            msg = "Field {key} has an invalid type, expecting a table of entrypoint sections"
+            self.config_error(msg, key="project.entry-points", got_type=type(val))
             return {}
         for section, entrypoints in val.items():
             assert isinstance(section, str)
@@ -367,9 +394,13 @@ class PyProjectReader(ErrorCollector):
                 self.config_error(msg, key="project.entry-points", got=section)
                 return {}
             if not isinstance(entrypoints, dict):
-                msg = "Field {key} has an invalid type, expecting a dictionary of entrypoints"
+                msg = (
+                    "Field {key} has an invalid type, expecting a table of entrypoints"
+                )
                 self.config_error(
-                    msg, key=f"project.entry-points.{section}", got=entrypoints
+                    msg,
+                    key=f"project.entry-points.{section}",
+                    got_type=type(entrypoints),
                 )
                 return {}
             for name, entrypoint in entrypoints.items():
@@ -379,7 +410,7 @@ class PyProjectReader(ErrorCollector):
                     self.config_error(
                         msg,
                         key=f"project.entry-points.{section}.{name}",
-                        got=entrypoint,
+                        got_type=type(entrypoint),
                     )
                     return {}
         return val
