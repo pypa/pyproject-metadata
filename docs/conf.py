@@ -60,6 +60,10 @@ html_title = f"pyproject-metadata {version}"
 # so a file named 'default.css' will overwrite the builtin 'default.css'.
 # html_static_path = ['_static']
 
+autodoc_default_options = {
+    "member-order": "bysource",
+}
+
 autoclass_content = "both"
 
 # Type hints

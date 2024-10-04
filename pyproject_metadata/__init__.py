@@ -2,6 +2,32 @@
 
 """
 This is pyproject_metadata, a library for working with PEP 621 metadata.
+
+Example usage:
+
+.. code-block:: python
+
+   from pyproject_metadata import StandardMetadata
+
+   metadata = StandardMetadata.from_pyproject(
+       parsed_pyproject, allow_extra_keys=False, all_errors=True, metadata_version="2.3"
+   )
+
+   pkg_info = metadata.as_rfc822()
+   with open("METADATA", "wb") as f:
+       f.write(pkg_info.as_bytes())
+
+   ep = self.metadata.entrypoints.copy()
+   ep["console_scripts"] = self.metadata.scripts
+   ep["gui_scripts"] = self.metadata.gui_scripts
+   for group, entries in ep.items():
+       if entries:
+           with open("entry_points.txt", "w") as f:
+               print(f"[{group}]", file=f)
+               for name, target in entries.items():
+                   print(f"{name} = {target}", file=f)
+               print(file=f)
+
 """
 
 from __future__ import annotations
@@ -184,6 +210,12 @@ class RFC822Message(email.message.EmailMessage):
 
 @dataclasses.dataclass
 class StandardMetadata:
+    """
+    This class represents the standard metadata fields for a project. It can be
+    used to read metadata from a pyproject.toml table, validate it, and write it
+    to an RFC822 message or JSON.
+    """
+
     name: str
     version: packaging.version.Version | None = None
     description: str | None = None
@@ -207,14 +239,23 @@ class StandardMetadata:
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
     """
+
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
     This is a list of METADATA fields that can change inbetween SDist and wheel. Requires metadata_version 2.2+.
     """
-
     metadata_version: str | None = None
+    """
+    Thi is the target metadata version. If None, it will be computed as a minimum based on the fields set.
+    """
     all_errors: bool = False
+    """
+    If True, all errors will be collected and raised in an ExceptionGroup.
+    """
     _locked_metadata: bool = False
+    """
+    Interal flag to prevent setting non-dynamic fields after initialization.
+    """
 
     def __post_init__(self) -> None:
         self.validate()
@@ -227,85 +268,6 @@ class StandardMetadata:
                 msg = f"Field {name!r} is not dynamic"
                 raise AttributeError(msg)
         super().__setattr__(name, value)
-
-    def validate(self, *, warn: bool = True) -> None:  # noqa: C901
-        """
-        Validate metadata for consistency and correctness. Will also produce warnings if
-        ``warn`` is given. Respects ``all_errors``. Checks:
-
-        - ``metadata_version`` is a known version or None
-        - ``name`` is a valid project name
-        - ``license_files`` can't be used with classic ``license``
-        - License classifiers can't be used with SPDX license
-        - ``description`` is a single line (warning)
-        - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
-        - License classifiers deprecated for metadata_version >= 2.4 (warning)
-        - ``license`` is an SPDX license expression if metadata_version >= 2.4
-        - ``license_files`` is supported only for metadata_version >= 2.4
-        """
-        errors = ErrorCollector(collect_errors=self.all_errors)
-
-        if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
-            msg = "The metadata_version must be one of {versions} or None (default)"
-            errors.config_error(msg, versions=constants.KNOWN_METADATA_VERSIONS)
-
-        # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
-        # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
-        if not re.match(
-            r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
-        ):
-            msg = (
-                "Invalid project name {name!r}. A valid name consists only of ASCII letters and "
-                "numbers, period, underscore and hyphen. It must start and end with a letter or number"
-            )
-            errors.config_error(msg, key="project.name", name=self.name)
-
-        if self.license_files is not None and isinstance(self.license, License):
-            msg = "{key} must not be used when 'project.license' is not a SPDX license expression"
-            errors.config_error(msg, key="project.license-files")
-
-        if isinstance(self.license, str) and any(
-            c.startswith("License ::") for c in self.classifiers
-        ):
-            msg = "Setting {key} to an SPDX license expression is not compatible with 'License ::' classifiers"
-            errors.config_error(msg, key="project.license")
-
-        if warn:
-            if self.description and "\n" in self.description:
-                warnings.warn(
-                    "The one-line summary 'project.description' should not contain more than one line. Readers might merge or truncate newlines.",
-                    ConfigurationWarning,
-                    stacklevel=2,
-                )
-            if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
-                if isinstance(self.license, License):
-                    warnings.warn(
-                        "Set 'project.license' to an SPDX license expression for metadata >= 2.4",
-                        ConfigurationWarning,
-                        stacklevel=2,
-                    )
-                elif any(c.startswith("License ::") for c in self.classifiers):
-                    warnings.warn(
-                        "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for 'project.license' instead",
-                        ConfigurationWarning,
-                        stacklevel=2,
-                    )
-
-        if (
-            isinstance(self.license, str)
-            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
-        ):
-            msg = "Setting {key} to an SPDX license expression is supported only when emitting metadata version >= 2.4"
-            errors.config_error(msg, key="project.license")
-
-        if (
-            self.license_files is not None
-            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
-        ):
-            msg = "{key} is supported only when emitting metadata version >= 2.4"
-            errors.config_error(msg, key="project.license-files")
-
-        errors.finalize("Metadata validation failed")
 
     @property
     def auto_metadata_version(self) -> str:
@@ -501,6 +463,86 @@ class StandardMetadata:
         smart_message = _JSonMessageSetter(message)
         self._write_metadata(smart_message)
         return message
+
+    def validate(self, *, warn: bool = True) -> None:  # noqa: C901
+        """
+        Validate metadata for consistency and correctness. Will also produce
+        warnings if ``warn`` is given. Respects ``all_errors``. This is called
+        when loading a pyproject.toml, and when making metadata. Checks:
+
+        - ``metadata_version`` is a known version or None
+        - ``name`` is a valid project name
+        - ``license_files`` can't be used with classic ``license``
+        - License classifiers can't be used with SPDX license
+        - ``description`` is a single line (warning)
+        - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
+        - License classifiers deprecated for metadata_version >= 2.4 (warning)
+        - ``license`` is an SPDX license expression if metadata_version >= 2.4
+        - ``license_files`` is supported only for metadata_version >= 2.4
+        """
+        errors = ErrorCollector(collect_errors=self.all_errors)
+
+        if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
+            msg = "The metadata_version must be one of {versions} or None (default)"
+            errors.config_error(msg, versions=constants.KNOWN_METADATA_VERSIONS)
+
+        # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
+        # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+        if not re.match(
+            r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
+        ):
+            msg = (
+                "Invalid project name {name!r}. A valid name consists only of ASCII letters and "
+                "numbers, period, underscore and hyphen. It must start and end with a letter or number"
+            )
+            errors.config_error(msg, key="project.name", name=self.name)
+
+        if self.license_files is not None and isinstance(self.license, License):
+            msg = "{key} must not be used when 'project.license' is not a SPDX license expression"
+            errors.config_error(msg, key="project.license-files")
+
+        if isinstance(self.license, str) and any(
+            c.startswith("License ::") for c in self.classifiers
+        ):
+            msg = "Setting {key} to an SPDX license expression is not compatible with 'License ::' classifiers"
+            errors.config_error(msg, key="project.license")
+
+        if warn:
+            if self.description and "\n" in self.description:
+                warnings.warn(
+                    "The one-line summary 'project.description' should not contain more than one line. Readers might merge or truncate newlines.",
+                    ConfigurationWarning,
+                    stacklevel=2,
+                )
+            if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
+                if isinstance(self.license, License):
+                    warnings.warn(
+                        "Set 'project.license' to an SPDX license expression for metadata >= 2.4",
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
+                elif any(c.startswith("License ::") for c in self.classifiers):
+                    warnings.warn(
+                        "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for 'project.license' instead",
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
+
+        if (
+            isinstance(self.license, str)
+            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
+        ):
+            msg = "Setting {key} to an SPDX license expression is supported only when emitting metadata version >= 2.4"
+            errors.config_error(msg, key="project.license")
+
+        if (
+            self.license_files is not None
+            and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
+        ):
+            msg = "{key} is supported only when emitting metadata version >= 2.4"
+            errors.config_error(msg, key="project.license-files")
+
+        errors.finalize("Metadata validation failed")
 
     def _write_metadata(  # noqa: C901
         self, smart_message: _SmartMessageSetter | _JSonMessageSetter
