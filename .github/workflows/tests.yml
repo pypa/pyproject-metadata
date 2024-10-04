@@ -18,21 +18,21 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - 'windows-latest'
-          - 'ubuntu-latest'
+          - "windows-latest"
+          - "ubuntu-latest"
         python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
         include:
           - os: macos-13
-            python: '3.7'
+            python: "3.7"
           - os: macos-14
-            python: '3.12'
+            python: "3.12"
 
     steps:
       - name: Checkout
@@ -55,7 +55,6 @@ jobs:
           flags: tests
           env_vars: PYTHON
           name: ${{ matrix.python }}
-
 
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass: # This job does nothing and is only used for the branch protection

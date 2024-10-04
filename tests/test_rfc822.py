@@ -119,7 +119,7 @@ import pyproject_metadata.constants
     ],
 )
 def test_headers(
-    items: list[tuple[str, str]], data: str, monkeypatch: pytest.MonkeyPatch
+    items: list[tuple[str, None | str]], data: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     message = pyproject_metadata.RFC822Message()
     smart_message = pyproject_metadata._SmartMessageSetter(message)
