@@ -28,7 +28,8 @@ def __dir__() -> list[str]:
 
 
 class ConfigurationError(Exception):
-    """Error in the backend metadata."""
+    """Error in the backend metadata. Has an optional key attribute, which will be non-None
+    if the error is related to a single key in the pyproject.toml file."""
 
     def __init__(self, msg: str, *, key: str | None = None):
         super().__init__(msg)

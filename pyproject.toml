@@ -94,7 +94,8 @@ ignore = [
   "PLR09",  # Design related (too many X)
 ]
 
-
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.coverage]
 run.dynamic_context = "test_function"

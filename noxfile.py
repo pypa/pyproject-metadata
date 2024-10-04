@@ -6,25 +6,37 @@ import os.path
 
 import nox
 
-nox.options.sessions = ["mypy", "test"]
+nox.needs_version = ">=2024.4.15"
 nox.options.reuse_existing_virtualenvs = True
+
+ALL_PYTHONS = [
+    c.split()[-1]
+    for c in nox.project.load_toml("pyproject.toml")["project"]["classifiers"]
+    if c.startswith("Programming Language :: Python :: 3.")
+]
 
 
 @nox.session(python="3.7")
 def mypy(session: nox.Session) -> None:
+    """
+    Run a type checker.
+    """
     session.install(".", "mypy", "nox", "pytest")
 
     session.run("mypy", "pyproject_metadata", "tests", "noxfile.py")
 
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"])
+@nox.session(python=ALL_PYTHONS)
 def test(session: nox.Session) -> None:
+    """
+    Run the test suite.
+    """
     htmlcov_output = os.path.join(session.virtualenv.location, "htmlcov")
     xmlcov_output = os.path.join(
         session.virtualenv.location, f"coverage-{session.python}.xml"
     )
 
-    session.install(".[test]")
+    session.install("-e.[test]")
 
     session.run(
         "pytest",
@@ -37,7 +49,7 @@ def test(session: nox.Session) -> None:
     )
 
 
-@nox.session()
+@nox.session(default=False)
 def docs(session: nox.Session) -> None:
     """
     Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
@@ -68,22 +80,3 @@ def docs(session: nox.Session) -> None:
         session.run("sphinx-autobuild", "--open-browser", *shared_args)
     else:
         session.run("sphinx-build", "--keep-going", *shared_args)
-
-
-@nox.session()
-def build_api_docs(session: nox.Session) -> None:
-    """
-    Build (regenerate) API docs.
-    """
-
-    session.install("sphinx")
-    session.chdir("docs")
-    session.run(
-        "sphinx-apidoc",
-        "-o",
-        "api/",
-        "--no-toc",
-        "--force",
-        "--module-first",
-        "../pyproject_metadata",
-    )

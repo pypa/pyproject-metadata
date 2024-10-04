@@ -1,10 +1,11 @@
-pyproject\_metadata package
-===========================
+API Reference
+=============
 
 .. automodule:: pyproject_metadata
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: ConfigurationError
 
 Submodules
 ----------
@@ -29,14 +30,6 @@ pyproject\_metadata.project\_table module
 -----------------------------------------
 
 .. automodule:: pyproject_metadata.project_table
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyproject\_metadata.pyproject module
-------------------------------------
-
-.. automodule:: pyproject_metadata.pyproject
    :members:
    :undoc-members:
    :show-inheritance:

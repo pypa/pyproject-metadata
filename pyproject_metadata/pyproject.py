@@ -37,12 +37,22 @@ def __dir__() -> list[str]:
 
 @dataclasses.dataclass(frozen=True)
 class License:
+    """
+    This represents a classic license, which contains text, and optionally a
+    file path. Modern licenses are just SPDX identifiers, which are strings.
+    """
+
     text: str
     file: pathlib.Path | None
 
 
 @dataclasses.dataclass(frozen=True)
 class Readme:
+    """
+    This represents a readme, which contains text and a content type, and
+    optionally a file path.
+    """
+
     text: str
     file: pathlib.Path | None
     content_type: str
