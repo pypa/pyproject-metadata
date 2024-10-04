@@ -14,6 +14,7 @@ import contextlib
 import dataclasses
 import sys
 import typing
+import warnings
 
 __all__ = [
     "ConfigurationError",
@@ -76,9 +77,23 @@ class ErrorCollector:
     collect_errors: bool
     errors: list[Exception] = dataclasses.field(default_factory=list)
 
-    def config_error(self, msg: str, key: str | None = None) -> None:
+    def config_error(
+        self,
+        msg: str,
+        *,
+        key: str | None = None,
+        got: typing.Any = None,
+        warn: bool = False,
+        **kwargs: typing.Any,
+    ) -> None:
         """Raise a configuration error, or add it to the error list."""
-        if self.collect_errors:
+        msg = msg.format(key=f"'{key}'", **kwargs)
+        if got is not None:
+            msg = f"{msg} (got {got!r})"
+
+        if warn:
+            warnings.warn(msg, ConfigurationWarning, stacklevel=3)
+        elif self.collect_errors:
             self.errors.append(ConfigurationError(msg, key=key))
         else:
             raise ConfigurationError(msg, key=key)
