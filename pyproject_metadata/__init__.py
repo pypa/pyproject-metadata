@@ -246,7 +246,7 @@ class StandardMetadata:
     """
     metadata_version: str | None = None
     """
-    This is the target metadata version. If None, it will be computed as a minimum based on the fields set.
+    Thi is the target metadata version. If None, it will be computed as a minimum based on the fields set.
     """
     all_errors: bool = False
     """

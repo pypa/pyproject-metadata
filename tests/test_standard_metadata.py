@@ -55,7 +55,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 name = true
                 version = "0.1.0"
             """,
-            'Field "project.name" has an invalid type, expecting a string (got True)',
+            'Field "project.name" has an invalid type, expecting a string (got bool)',
             id="Invalid name type",
         ),
         pytest.param(
@@ -89,7 +89,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                     3,
                 ]
             """,
-            'Field "project.dynamic" contains item with invalid type, expecting a string (got 3)',
+            'Field "project.dynamic" contains item with invalid type, expecting a string (got int)',
             id="Unsupported type in project.dynamic",
         ),
         pytest.param(
@@ -98,7 +98,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 name = "test"
                 version = true
             """,
-            'Field "project.version" has an invalid type, expecting a string (got True)',
+            'Field "project.version" has an invalid type, expecting a string (got bool)',
             id="Invalid version type",
         ),
         pytest.param(
@@ -125,7 +125,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license = true
             """,
-            'Field "project.license" has an invalid type, expecting a string or dictionary of strings (got True)',
+            'Field "project.license" has an invalid type, expecting a string or table of strings (got bool)',
             id="License invalid type",
         ),
         pytest.param(
@@ -168,7 +168,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license = { file = true }
             """,
-            'Field "project.license.file" has an invalid type, expecting a string (got True)',
+            'Field "project.license.file" has an invalid type, expecting a string (got bool)',
             id="Invalid type for license.file",
         ),
         pytest.param(
@@ -178,7 +178,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license = { text = true }
             """,
-            'Field "project.license.text" has an invalid type, expecting a string (got True)',
+            'Field "project.license.text" has an invalid type, expecting a string (got bool)',
             id="Invalid type for license.text",
         ),
         pytest.param(
@@ -200,7 +200,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.readme" has an invalid type, expecting either '
-                "a string or dictionary of strings (got True)"
+                "a string or table of strings (got bool)"
             ),
             id="Invalid readme type",
         ),
@@ -254,7 +254,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 readme = { file = true }
             """,
-            'Field "project.readme.file" has an invalid type, expecting a string (got True)',
+            'Field "project.readme.file" has an invalid type, expecting a string (got bool)',
             id="Invalid type for readme.file",
         ),
         pytest.param(
@@ -264,7 +264,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 readme = { text = true }
             """,
-            'Field "project.readme.text" has an invalid type, expecting a string (got True)',
+            'Field "project.readme.text" has an invalid type, expecting a string (got bool)',
             id="Invalid type for readme.text",
         ),
         pytest.param(
@@ -294,7 +294,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 readme = { file = 'README.md', content-type = true }
             """,
-            'Field "project.readme.content-type" has an invalid type, expecting a string (got True)',
+            'Field "project.readme.content-type" has an invalid type, expecting a string (got bool)',
             id="Wrong content-type type for readme",
         ),
         pytest.param(
@@ -314,7 +314,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 description = true
             """,
-            'Field "project.description" has an invalid type, expecting a string (got True)',
+            'Field "project.description" has an invalid type, expecting a string (got bool)',
             id="Invalid description type",
         ),
         pytest.param(
@@ -324,7 +324,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 dependencies = "some string!"
             """,
-            "Field \"project.dependencies\" has an invalid type, expecting a list of strings (got 'some string!')",
+            'Field "project.dependencies" has an invalid type, expecting a list of strings (got str)',
             id="Invalid dependencies type",
         ),
         pytest.param(
@@ -336,7 +336,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                     99,
                 ]
             """,
-            'Field "project.dependencies" contains item with invalid type, expecting a string (got 99)',
+            'Field "project.dependencies" contains item with invalid type, expecting a string (got int)',
             id="Invalid dependencies item type",
         ),
         pytest.param(
@@ -363,7 +363,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.optional-dependencies" has an invalid type, '
-                "expecting a dictionary of PEP 508 requirement strings (got True)"
+                "expecting a table of PEP 508 requirement strings (got bool)"
             ),
             id="Invalid optional-dependencies type",
         ),
@@ -377,7 +377,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.optional-dependencies.test" has an invalid type, '
-                "expecting a dictionary PEP 508 requirement strings (got 'some string!')"
+                "expecting a table of PEP 508 requirement strings (got str)"
             ),
             id="Invalid optional-dependencies not list",
         ),
@@ -393,7 +393,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.optional-dependencies.test" has an invalid type, '
-                "expecting a PEP 508 requirement string (got True)"
+                "expecting a PEP 508 requirement string (got bool)"
             ),
             id="Invalid optional-dependencies item type",
         ),
@@ -420,7 +420,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 requires-python = true
             """,
-            'Field "project.requires-python" has an invalid type, expecting a string (got True)',
+            'Field "project.requires-python" has an invalid type, expecting a string (got bool)',
             id="Invalid requires-python type",
         ),
         pytest.param(
@@ -440,8 +440,18 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 keywords = "some string!"
             """,
-            "Field \"project.keywords\" has an invalid type, expecting a list of strings (got 'some string!')",
+            'Field "project.keywords" has an invalid type, expecting a list of strings (got str)',
             id="Invalid keywords type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                keywords = [3]
+            """,
+            'Field "project.keywords" contains item with invalid type, expecting a string (got int)',
+            id="Invalid keyword type",
         ),
         pytest.param(
             """
@@ -452,7 +462,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                     true,
                 ]
             """,
-            'Field "project.keywords" contains item with invalid type, expecting a string (got True)',
+            'Field "project.keywords" contains item with invalid type, expecting a string (got bool)',
             id="Invalid keywords item type",
         ),
         pytest.param(
@@ -464,7 +474,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.authors" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got {})'
+                'tables containing the "name" and/or "email" keys (got dict)'
             ),
             id="Invalid authors type",
         ),
@@ -479,7 +489,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.authors" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got [True])'
+                'tables containing the "name" and/or "email" keys (got list with bool)'
             ),
             id="Invalid authors item type",
         ),
@@ -492,7 +502,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.maintainers" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got {})'
+                'tables containing the "name" and/or "email" keys (got dict)'
             ),
             id="Invalid maintainers type",
         ),
@@ -507,7 +517,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.maintainers" has an invalid type, expecting a list of '
-                'dictionaries containing the "name" and/or "email" keys (got [10])'
+                'tables containing the "name" and/or "email" keys (got list with int)'
             ),
             id="Invalid maintainers item type",
         ),
@@ -516,9 +526,39 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
+                maintainers = [
+                    {"name" = 12}
+                ]
+            """,
+            (
+                'Field "project.maintainers" has an invalid type, expecting a list of '
+                'tables containing the "name" and/or "email" keys (got list with dict with int)'
+            ),
+            id="Invalid maintainers nested type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                maintainers = [
+                    {"name" = "me", "other" = "you"}
+                ]
+            """,
+            (
+                'Field "project.maintainers" has an invalid type, expecting a list of '
+                'tables containing the "name" and/or "email" keys (got list with dict with extra keys "other")'
+            ),
+            id="Invalid maintainers nested type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
                 classifiers = "some string!"
             """,
-            "Field \"project.classifiers\" has an invalid type, expecting a list of strings (got 'some string!')",
+            'Field "project.classifiers" has an invalid type, expecting a list of strings (got str)',
             id="Invalid classifiers type",
         ),
         pytest.param(
@@ -530,7 +570,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                     true,
                 ]
             """,
-            'Field "project.classifiers" contains item with invalid type, expecting a string (got True)',
+            'Field "project.classifiers" contains item with invalid type, expecting a string (got bool)',
             id="Invalid classifiers item type",
         ),
         pytest.param(
@@ -541,7 +581,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project.urls]
                 homepage = true
             """,
-            'Field "project.urls.homepage" has an invalid type, expecting a string (got True)',
+            'Field "project.urls.homepage" has an invalid type, expecting a string (got bool)',
             id="Invalid urls homepage type",
         ),
         pytest.param(
@@ -552,7 +592,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project.urls]
                 documentation = true
             """,
-            'Field "project.urls.documentation" has an invalid type, expecting a string (got True)',
+            'Field "project.urls.documentation" has an invalid type, expecting a string (got bool)',
             id="Invalid urls documentation type",
         ),
         pytest.param(
@@ -563,7 +603,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project.urls]
                 repository = true
             """,
-            'Field "project.urls.repository" has an invalid type, expecting a string (got True)',
+            'Field "project.urls.repository" has an invalid type, expecting a string (got bool)',
             id="Invalid urls repository type",
         ),
         pytest.param(
@@ -574,7 +614,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project.urls]
                 changelog = true
             """,
-            'Field "project.urls.changelog" has an invalid type, expecting a string (got True)',
+            'Field "project.urls.changelog" has an invalid type, expecting a string (got bool)',
             id="Invalid urls changelog type",
         ),
         pytest.param(
@@ -584,7 +624,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 scripts = []
             """,
-            'Field "project.scripts" has an invalid type, expecting a dictionary of strings (got [])',
+            'Field "project.scripts" has an invalid type, expecting a table of strings (got list)',
             id="Invalid scripts type",
         ),
         pytest.param(
@@ -594,7 +634,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 gui-scripts = []
             """,
-            'Field "project.gui-scripts" has an invalid type, expecting a dictionary of strings (got [])',
+            'Field "project.gui-scripts" has an invalid type, expecting a table of strings (got list)',
             id="Invalid gui-scripts type",
         ),
         pytest.param(
@@ -606,7 +646,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.entry-points" has an invalid type, '
-                "expecting a dictionary of entrypoint sections (got [])"
+                "expecting a table of entrypoint sections (got list)"
             ),
             id="Invalid entry-points type",
         ),
@@ -619,7 +659,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             (
                 'Field "project.entry-points.section" has an invalid type, '
-                "expecting a dictionary of entrypoints (got 'something')"
+                "expecting a table of entrypoints (got str)"
             ),
             id="Invalid entry-points section type",
         ),
@@ -631,7 +671,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project.entry-points.section]
                 entrypoint = []
             """,
-            'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got [])',
+            'Field "project.entry-points.section.entrypoint" has an invalid type, expecting a string (got list)',
             id="Invalid entry-points entrypoint type",
         ),
         pytest.param(
@@ -688,7 +728,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license-files = [12]
             """,
-            'Field "project.license-files" contains item with invalid type, expecting a string (got 12)',
+            'Field "project.license-files" contains item with invalid type, expecting a string (got int)',
             id="Parent license-files invalid type",
         ),
         pytest.param(
@@ -698,7 +738,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license-files = ['this', 12]
             """,
-            'Field "project.license-files" contains item with invalid type, expecting a string (got 12)',
+            'Field "project.license-files" contains item with invalid type, expecting a string (got int)',
             id="Parent license-files invalid type",
         ),
         pytest.param(
@@ -776,7 +816,7 @@ def test_load(
             """,
             [
                 "Unsupported field 'name' in \"project.dynamic\"",
-                'Field "project.name" has an invalid type, expecting a string (got True)',
+                'Field "project.name" has an invalid type, expecting a string (got bool)',
             ],
             id="Unsupported field in project.dynamic",
         ),
@@ -790,8 +830,8 @@ def test_load(
                 ]
             """,
             [
-                'Field "project.dynamic" contains item with invalid type, expecting a string (got 3)',
-                'Field "project.name" has an invalid type, expecting a string (got True)',
+                'Field "project.dynamic" contains item with invalid type, expecting a string (got int)',
+                'Field "project.name" has an invalid type, expecting a string (got bool)',
             ],
             id="Unsupported type in project.dynamic",
         ),
@@ -804,7 +844,7 @@ def test_load(
                 license-files = [12]
             """,
             [
-                'Field "project.license-files" contains item with invalid type, expecting a string (got 12)',
+                'Field "project.license-files" contains item with invalid type, expecting a string (got int)',
                 "Could not infer content type for readme file 'README.jpg'",
             ],
             id="Unsupported filename in readme",
@@ -822,7 +862,7 @@ def test_load(
             """,
             [
                 "Extra keys present in \"project\": 'not-valid', 'other-entry'",
-                'Field "project.license-files" contains item with invalid type, expecting a string (got 12)',
+                'Field "project.license-files" contains item with invalid type, expecting a string (got int)',
                 "Could not infer content type for readme file 'README.jpg'",
                 "Field \"project.entry-points\" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
             ],
