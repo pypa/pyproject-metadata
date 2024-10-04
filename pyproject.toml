@@ -48,7 +48,7 @@ changelog = "https://pep621.readthedocs.io/en/stable/changelog.html"
 homepage = "https://github.com/pypa/pyproject-metadata"
 
 [tool.flit.sdist]
-include = ["LICENSE", "tests/**", "docs/**", "CHANGELOG.rst"]
+include = ["LICENSE", "tests/**", "docs/**", ".gitignore"]
 
 
 [tool.pytest.ini_options]
