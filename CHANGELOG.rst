@@ -5,8 +5,6 @@ Changelog
 0.8.1 (07-10-2024)
 ==================
 
-Features:
-
 - Validate project name
 - Validate entrypoint group names
 - Correct typing for emails
