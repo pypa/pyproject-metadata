@@ -1,16 +1,5 @@
 # Changelog
 
-## 0.9.0 (beta 7: 04-10-2024)
-
-Refactoring:
-
-- Revert to double quotes in error messages for field names
-- Show the types instead of values in error messages
-
-Docs:
-
-- Better API section
-
 ## 0.9.0 (WIP)
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
@@ -22,8 +11,6 @@ Features:
 
 - Added PEP 639 support for SPDX license and license files, METADATA 2.4
 - Validate extra keys (warning, opt-in error)
-- Validate project name
-- Validate entrypoint group names
 - Setting a non-dynamic field is an error
 - Add TypedDict's in new module for typing pyproject.toml dicts
 - `all_errors=True` causes `ExceptionGroup`'s to be emitted
@@ -31,7 +18,6 @@ Features:
 
 Fixes:
 
-- Correct typing for emails
 - Match EmailMessage spacing
 - Handle multilines the way setuptools does with smart indentation
 - Warn on multiline Summary (`project.description`)
@@ -51,20 +37,16 @@ Refactoring:
 - Spit up over multiple files
 - Remove `DataFetcher`, use static types wherever possible
 - Reformat single quotes to double quotes to match packaging
-- Produce standard Python repr style in error messages
+- Produce standard Python repr style in error messages (keeping double quotes
+  for key names)
+- Show the types instead of values in error messages
 
 Internal and CI:
 
-- Add 3.13 to testing
-- Add ruff-format
-- Actions and dependabot
 - Better changelog auto-generation
-- Generate GitHub attestations for releases
-- Add PyPI attestations
 - `macos-latest` now points at `macos-14`
 - Refactor and cleanup tests
 - Add human readable IDs to tests
-- Fix coverage context
 - Require 100% coverage
 
 Docs:
@@ -72,6 +54,19 @@ Docs:
 - Include extra badge in readme
 - Rework docs, include README and more classes
 - Changelog is now in markdown
+- Better API section
+
+## 0.8.1 (07-10-2024)
+
+- Validate project name
+- Validate entrypoint group names
+- Correct typing for emails
+- Add 3.13 to testing
+- Add ruff-format
+- Actions and dependabot
+- Generate GitHub attestations for releases
+- Add PyPI attestations
+- Fix coverage context
 
 ## 0.8.0 (17-04-2024)
 
