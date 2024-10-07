@@ -2,6 +2,20 @@
 Changelog
 +++++++++
 
+0.8.1 (07-10-2024)
+==================
+
+- Validate project name
+- Validate entrypoint group names
+- Correct typing for emails
+- Add 3.13 to testing
+- Add ruff-format
+- Actions and dependabot
+- Generate GitHub attestations for releases
+- Add PyPI attestations
+- Fix coverage context
+
+
 0.8.0 (17-04-2024)
 ==================
 
