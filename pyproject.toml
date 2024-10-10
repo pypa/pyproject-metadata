@@ -42,10 +42,18 @@ test = [
     'tomli>=1.0.0;python_version<"3.11"',
     'exceptiongroup;python_version<"3.11"',  # Optional
 ]
+cli = [
+    "tomli;python_version<'3.11'",
+    'exceptiongroup;python_version<"3.11"',
+]
 
 [project.urls]
 changelog = "https://pep621.readthedocs.io/en/stable/changelog.html"
 homepage = "https://github.com/pypa/pyproject-metadata"
+
+[project.scripts]
+pyproject-metadata = "pyproject_metadata.__main__:main"
+
 
 [tool.flit.sdist]
 include = ["LICENSE", "tests/**", "docs/**", ".gitignore"]
