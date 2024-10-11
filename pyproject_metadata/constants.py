@@ -58,9 +58,9 @@ KNOWN_METADATA_FIELDS = {
     "classifier",
     "description",
     "description-content-type",
-    "download-url",  # Not specified via pyproject standards
+    "download-url",  # Not specified via pyproject standards, deprecated by PEP 753
     "dynamic",  # Can't be in dynamic
-    "home-page",  # Not specified via pyproject standards
+    "home-page",  # Not specified via pyproject standards, deprecated by PEP 753
     "keywords",
     "license",
     "license-expression",

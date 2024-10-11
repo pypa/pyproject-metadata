@@ -50,6 +50,12 @@ homepage = "https://github.com/pypa/pyproject-metadata"
 [tool.flit.sdist]
 include = ["LICENSE", "tests/**", "docs/**", ".gitignore"]
 
+[tool.uv]
+dev-dependencies = ["pyproject-metadata[test]"]
+environments = [
+  "python_version >= '3.10'",
+]
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -93,7 +99,8 @@ extend-select = [
 ]
 ignore = [
   "ISC001",  # conflicts with formatter
-  "PLR09",  # Design related (too many X)
+  "PLR09",   # Design related (too many X)
+  "PLR2004", # Magic value in comparison
 ]
 
 [tool.ruff.format]
