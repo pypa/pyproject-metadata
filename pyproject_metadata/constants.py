@@ -48,7 +48,7 @@ PROJECT_TO_METADATA = {
     "version": frozenset(["Version"]),
 }
 
-KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool"}
+KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}
 KNOWN_PROJECT_FIELDS = set(PROJECT_TO_METADATA)
 
