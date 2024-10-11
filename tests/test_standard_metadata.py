@@ -1479,9 +1479,7 @@ def test_missing_keys_okay() -> None:
 
 def test_extra_top_level() -> None:
     assert not pyproject_metadata.extras_top_level(
-        {
-            "project": {},
-        }
+        {"project": {}, "dependency-groups": {}}
     )
     assert {"also-not-real", "not-real"} == pyproject_metadata.extras_top_level(
         {
