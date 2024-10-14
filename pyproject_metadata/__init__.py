@@ -481,6 +481,7 @@ class StandardMetadata:
         - License classifiers deprecated for metadata_version >= 2.4 (warning)
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
         - ``license_files`` is supported only for metadata_version >= 2.4
+        - ``project_url`` can't contain keys over 32 characters
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -544,6 +545,11 @@ class StandardMetadata:
             msg = "{key} is supported only when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license-files")
 
+        for name in self.urls:
+            if len(name) > 32:
+                msg = "{key} names cannot be more than 32 characters long"
+                errors.config_error(msg, key="project.urls", got=name)
+
         errors.finalize("Metadata validation failed")
 
     def _write_metadata(  # noqa: C901
@@ -565,8 +571,7 @@ class StandardMetadata:
         if self.description:
             smart_message["Summary"] = self.description
         smart_message["Keywords"] = ",".join(self.keywords) or None
-        if "homepage" in self.urls:
-            smart_message["Home-page"] = self.urls["homepage"]
+        # skip 'Home-page'
         # skip 'Download-URL'
         smart_message["Author"] = _name_list(self.authors)
         smart_message["Author-Email"] = _email_list(self.authors)
@@ -588,7 +593,7 @@ class StandardMetadata:
         # skip 'Obsoletes-Dist'
         # skip 'Requires-External'
         for name, url in self.urls.items():
-            smart_message["Project-URL"] = f"{name.capitalize()}, {url}"
+            smart_message["Project-URL"] = f"{name}, {url}"
         if self.requires_python:
             smart_message["Requires-Python"] = str(self.requires_python)
         for dep in self.dependencies:

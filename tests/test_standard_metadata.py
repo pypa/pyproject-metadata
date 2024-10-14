@@ -590,9 +590,9 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 name = "test"
                 version = "0.1.0"
                 [project.urls]
-                documentation = true
+                Documentation = true
             """,
-            'Field "project.urls.documentation" has an invalid type, expecting a string (got bool)',
+            'Field "project.urls.Documentation" has an invalid type, expecting a string (got bool)',
             id="Invalid urls documentation type",
         ),
         pytest.param(
@@ -605,6 +605,17 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             'Field "project.urls.repository" has an invalid type, expecting a string (got bool)',
             id="Invalid urls repository type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                [project.urls]
+                "I am really really too long for this place" = "url"
+            """,
+            "\"project.urls\" names cannot be more than 32 characters long (got 'I am really really too long for this place')",
+            id="URL name too long",
         ),
         pytest.param(
             """
@@ -1097,17 +1108,16 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
         ],
         "description": "some readme 👋\n",
         "description_content_type": "text/markdown",
-        "home_page": "example.com",
         "keywords": ["trampolim", "is", "interesting"],
         "license": "some license text",
         "maintainer_email": "Other Example <other@example.com>",
         "metadata_version": "2.1",
         "name": "full_metadata",
         "project_url": [
-            "Homepage, example.com",
-            "Documentation, readthedocs.org",
-            "Repository, github.com/some/repo",
-            "Changelog, github.com/some/repo/blob/master/CHANGELOG.rst",
+            "homepage, example.com",
+            "documentation, readthedocs.org",
+            "repository, github.com/some/repo",
+            "changelog, github.com/some/repo/blob/master/CHANGELOG.rst",
         ],
         "provides_extra": ["test"],
         "requires_dist": [
@@ -1138,17 +1148,16 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ("Version", "3.2.1"),
         ("Summary", "A package with all the metadata :)"),
         ("Keywords", "trampolim,is,interesting"),
-        ("Home-page", "example.com"),
         ("Author", "Example!"),
         ("Author-Email", "Unknown <example@example.com>"),
         ("Maintainer-Email", "Other Example <other@example.com>"),
         ("License", "some license text"),
         ("Classifier", "Development Status :: 4 - Beta"),
         ("Classifier", "Programming Language :: Python"),
-        ("Project-URL", "Homepage, example.com"),
-        ("Project-URL", "Documentation, readthedocs.org"),
-        ("Project-URL", "Repository, github.com/some/repo"),
-        ("Project-URL", "Changelog, github.com/some/repo/blob/master/CHANGELOG.rst"),
+        ("Project-URL", "homepage, example.com"),
+        ("Project-URL", "documentation, readthedocs.org"),
+        ("Project-URL", "repository, github.com/some/repo"),
+        ("Project-URL", "changelog, github.com/some/repo/blob/master/CHANGELOG.rst"),
         ("Requires-Python", ">=3.8"),
         ("Requires-Dist", "dependency1"),
         ("Requires-Dist", "dependency2>1.0.0"),
