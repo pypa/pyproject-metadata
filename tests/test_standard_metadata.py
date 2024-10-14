@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import pathlib
 import re
 import shutil
@@ -19,6 +20,7 @@ else:
     import tomllib
 
 import pyproject_metadata
+import pyproject_metadata.constants
 
 DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -27,6 +29,11 @@ try:
     import exceptiongroup
 except ImportError:
     exceptiongroup = None  # type: ignore[assignment]
+
+
+@pytest.fixture(params=pyproject_metadata.constants.KNOWN_METADATA_VERSIONS)
+def metadata_version(request: pytest.FixtureRequest) -> str:
+    return request.param  # type: ignore[no-any-return]
 
 
 @pytest.fixture(params=["one_error", "all_errors", "exceptiongroup"])
@@ -1245,6 +1252,33 @@ def test_as_rfc822_spdx_empty_glob(
                 )
 
 
+def test_license_file_24(
+    metadata_version: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(DIR / "packages/fulltext_license")
+    pre_spdx = (
+        metadata_version in pyproject_metadata.constants.PRE_SPDX_METADATA_VERSIONS
+    )
+    with contextlib.nullcontext() if pre_spdx else pytest.warns(  # type: ignore[attr-defined]
+        pyproject_metadata.errors.ConfigurationWarning
+    ):
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "fulltext_license",
+                    "version": "0.1.0",
+                    "license": {"file": "LICENSE.txt"},
+                },
+            },
+            metadata_version=metadata_version,
+        )
+    message = str(metadata.as_rfc822())
+    if metadata_version in pyproject_metadata.constants.PRE_SPDX_METADATA_VERSIONS:
+        assert "License-File: LICENSE.txt" not in message
+    else:
+        assert "License-File: LICENSE.txt" in message
+
+
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/dynamic-description")
 
@@ -1260,7 +1294,6 @@ def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
     ]
 
 
-@pytest.mark.parametrize("metadata_version", ["2.1", "2.2", "2.3"])
 def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
