@@ -49,13 +49,6 @@ A backend is also expected to copy entries from `project.licence_files`, which
 are paths relative to the project directory, into the `dist-info/licenses`
 folder, preserving the original source structure.
 
-## Modifying metadata
-
-By default, `StandardMetadata` metadata fields are immutable unless a field is
-listed in `dynaimc` (not to be confused with `dynamic_metadata`). If you want to
-modify fields that are not dynamic, you can use the `dataclasses.replace` /
-`copy.replace` (Python 3.13+) function.
-
 ## Dynamic Metadata (METADATA 2.2+)
 
 Pyproject-metadata supports dynamic metadata. To use it, specify your METADATA
