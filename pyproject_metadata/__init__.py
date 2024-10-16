@@ -126,7 +126,6 @@ class _SmartMessageSetter:
     reduce boilerplate.
 
     If a value is None, do nothing.
-    If a value contains a newline, indent it (may produce a warning in the future).
     """
 
     message: email.message.Message
@@ -252,22 +251,9 @@ class StandardMetadata:
     """
     If True, all errors will be collected and raised in an ExceptionGroup.
     """
-    _locked_metadata: bool = False
-    """
-    Internal flag to prevent setting non-dynamic fields after initialization.
-    """
 
     def __post_init__(self) -> None:
         self.validate()
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if self._locked_metadata:
-            metadata_name = name.replace("_", "-")
-            locked_fields = constants.KNOWN_METADATA_FIELDS - set(self.dynamic)
-            if metadata_name in locked_fields:
-                msg = f"Field {name!r} is not dynamic"
-                raise AttributeError(msg)
-        super().__setattr__(name, value)
 
     @property
     def auto_metadata_version(self) -> str:
@@ -442,7 +428,6 @@ class StandardMetadata:
                 metadata_version=metadata_version,
                 all_errors=all_errors,
             )
-            self._locked_metadata = True
 
         pyproject.finalize("Failed to parse pyproject.toml")
         assert self is not None
