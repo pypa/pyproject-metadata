@@ -586,6 +586,12 @@ class StandardMetadata:
         if self.license_files is not None:
             for license_file in sorted(set(self.license_files)):
                 smart_message["License-File"] = os.fspath(license_file.as_posix())
+        elif (
+            self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS
+            and isinstance(self.license, License)
+            and self.license.file
+        ):
+            smart_message["License-File"] = os.fspath(self.license.file.as_posix())
 
         for classifier in self.classifiers:
             smart_message["Classifier"] = classifier

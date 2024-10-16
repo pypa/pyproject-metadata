@@ -82,7 +82,8 @@ By default, a warning (`pyproject_metadata.errors.ExtraKeyWarning`) will be
 issued for extra fields at the project table. You can pass `allow_extra_keys=`
 to either avoid the check (`True`) or hard error (`False`). If you want to
 detect extra keys, you can get them with `pyproject_metadata.extra_top_level`
-and `pyproject_metadata.extra_build_sytem`.
+and `pyproject_metadata.extra_build_system`. It is recommended that build
+systems only warn on failures with these extra keys.
 
 ## Validating classifiers
 
