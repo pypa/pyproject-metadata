@@ -44,8 +44,15 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
+      - name: Prepare nox
+        run: pipx install nox
+
+      - name: Limit virtualenv on 3.7
+        if: matrix.python == '3.7'
+        run: pipx inject --force nox 'virtualenv<20.27.0'
+
       - name: Run tests
-        run: pipx run nox -s test-${{ matrix.python }}
+        run: nox -s test-${{ matrix.python }}
 
       - name: Send coverage report
         uses: codecov/codecov-action@v4
