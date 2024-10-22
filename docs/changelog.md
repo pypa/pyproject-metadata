@@ -1,15 +1,6 @@
 # Changelog
 
-## 0.9.0 RC 1
-
-Changes since last beta:
-
-- Remove attribute locking
-- Fix for METADATA 2.4 being set and PEP 639 recommendation
-- Support PEP 735 in top level validation
-- Adjust URL handling to better match PEP 753
-
-## 0.9.0 (WIP)
+## 0.9.0 (22-10-2024)
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
 and adds a lot of validation (including warnings and opt-in errors), a way to
