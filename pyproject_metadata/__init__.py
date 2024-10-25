@@ -40,7 +40,6 @@ import email.utils
 import os
 import os.path
 import pathlib
-import re
 import sys
 import typing
 import warnings
@@ -474,11 +473,9 @@ class StandardMetadata:
             msg = "The metadata_version must be one of {versions} or None (default)"
             errors.config_error(msg, versions=constants.KNOWN_METADATA_VERSIONS)
 
-        # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
-        # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
-        if not re.match(
-            r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
-        ):
+        try:
+            packaging.utils.canonicalize_name(self.name, validate=True)
+        except packaging.utils.InvalidName:
             msg = (
                 "Invalid project name {name!r}. A valid name consists only of ASCII letters and "
                 "numbers, period, underscore and hyphen. It must start and end with a letter or number"
@@ -543,13 +540,15 @@ class StandardMetadata:
         """
         Write the metadata to the message. Handles JSON or Message.
         """
-        self.validate(warn=False)
+        errors = ErrorCollector(collect_errors=self.all_errors)
+        with errors.collect():
+            self.validate(warn=False)
 
         smart_message["Metadata-Version"] = self.auto_metadata_version
         smart_message["Name"] = self.name
         if not self.version:
-            msg = "Missing version field"
-            raise ConfigurationError(msg)
+            msg = "Field {key} missing"
+            errors.config_error(msg, key="project.version")
         smart_message["Version"] = str(self.version)
         # skip 'Platform'
         # skip 'Supported-Platform'
@@ -604,12 +603,14 @@ class StandardMetadata:
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
                 if field.lower() in {"name", "version", "dynamic"}:
-                    msg = f"Field cannot be set as dynamic metadata: {field}"
-                    raise ConfigurationError(msg)
+                    msg = f"Field cannot be set as dynamic metadata: {field!r}"
+                    errors.config_error(msg)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f"Field is not known: {field}"
-                    raise ConfigurationError(msg)
+                    msg = f"Field is not known: {field!r}"
+                    errors.config_error(msg)
                 smart_message["Dynamic"] = field
+
+        errors.finalize("Failed to write metadata")
 
 
 def _name_list(people: list[tuple[str, str | None]]) -> str | None:
