@@ -603,10 +603,10 @@ class StandardMetadata:
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
                 if field.lower() in {"name", "version", "dynamic"}:
-                    msg = f"Field cannot be set as dynamic metadata: {field!r}"
+                    msg = f"Metadata field {field!r} cannot be declared dynamic"
                     errors.config_error(msg)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f"Field is not known: {field!r}"
+                    msg = f"Unknown metadata field {field!r} cannot be declared dynamic"
                     errors.config_error(msg)
                 smart_message["Dynamic"] = field
 
