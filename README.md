@@ -42,7 +42,9 @@ METADATA 2.4+ will be used. A user is expected to validate and normalize
 
 ```python
 if isinstance(metadata.license, str):
-    metadata.license = packaging.licenses.canonicalize_license_expression(metadata.license)
+    metadata.license = packaging.licenses.canonicalize_license_expression(
+        metadata.license
+    )
 ```
 
 A backend is also expected to copy entries from `project.licence_files`, which
