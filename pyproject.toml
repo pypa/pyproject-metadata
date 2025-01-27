@@ -7,7 +7,7 @@ name = "pyproject-metadata"
 dynamic = ["version"]
 description = "PEP 621 metadata parsing"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Filipe Laíns", email = "lains@riseup.net" },
 ]
@@ -15,7 +15,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -25,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "packaging>=19.0",
-    "typing_extensions; python_version<'3.8'",
 ]
 
 [project.optional-dependencies]
@@ -52,9 +50,6 @@ include = ["LICENSE", "tests/**", "docs/**", ".gitignore"]
 
 [tool.uv]
 dev-dependencies = ["pyproject-metadata[test]"]
-environments = [
-  "python_version >= '3.10'",
-]
 
 
 [tool.pytest.ini_options]

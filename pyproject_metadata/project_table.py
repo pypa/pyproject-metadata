@@ -14,16 +14,12 @@ import sys
 import typing
 from typing import Any, Dict, List, Union
 
-if sys.version_info < (3, 11):
+if sys.version_info < (3, 11):  # pragma: nocover
     from typing_extensions import Required
 else:
     from typing import Required
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal, TypedDict
-else:
-    from typing import Literal, TypedDict
-
+from typing import Literal, TypedDict
 
 __all__ = [
     "BuildSystemTable",

@@ -21,7 +21,6 @@ jobs:
           - "windows-latest"
           - "ubuntu-latest"
         python:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
@@ -30,7 +29,7 @@ jobs:
           - "3.13"
         include:
           - os: macos-13
-            python: "3.7"
+            python: "3.8"
           - os: macos-14
             python: "3.12"
 
@@ -46,10 +45,6 @@ jobs:
 
       - name: Prepare nox
         run: pipx install nox
-
-      - name: Limit virtualenv on 3.7
-        if: matrix.python == '3.7'
-        run: pipx inject --force nox 'virtualenv<20.27.0'
 
       - name: Run tests
         run: nox -s test-${{ matrix.python }}

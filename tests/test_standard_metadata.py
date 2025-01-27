@@ -1259,7 +1259,7 @@ def test_license_file_24(
     pre_spdx = (
         metadata_version in pyproject_metadata.constants.PRE_SPDX_METADATA_VERSIONS
     )
-    with contextlib.nullcontext() if pre_spdx else pytest.warns(  # type: ignore[attr-defined]
+    with contextlib.nullcontext() if pre_spdx else pytest.warns(
         pyproject_metadata.errors.ConfigurationWarning
     ):
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(
@@ -1444,8 +1444,8 @@ def test_statically_defined_dynamic_field() -> None:
     "value",
     [
         "<3.10",
-        ">3.7,<3.11",
-        ">3.7,<3.11,!=3.8.4",
+        ">3.8,<3.11",
+        ">3.8,<3.11,!=3.8.4",
         "~=3.10,!=3.10.3",
     ],
 )
