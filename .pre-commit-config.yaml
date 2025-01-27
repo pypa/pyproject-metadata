@@ -17,7 +17,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.7.4"
+    rev: "v0.9.3"
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -37,7 +37,7 @@ repos:
         additional_dependencies: [black==24.*]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.3.3"
+    rev: "v3.4.2"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -52,7 +52,7 @@ repos:
           - flit-core
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
       - id: codespell
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
@@ -63,12 +63,12 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.11.18
+    rev: 2025.01.20
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.4
+    rev: 0.31.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -77,6 +77,6 @@ repos:
         files: \.schema\.json
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2024.08.19
+    rev: 2025.01.22
     hooks:
       - id: sp-repo-review
