@@ -76,10 +76,10 @@ __all__ = [
     "RFC822Policy",
     "Readme",
     "StandardMetadata",
-    "field_to_metadata",
     "extras_build_system",
     "extras_project",
     "extras_top_level",
+    "field_to_metadata",
 ]
 
 
