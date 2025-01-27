@@ -16,7 +16,7 @@ ALL_PYTHONS = [
 ]
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def mypy(session: nox.Session) -> None:
     """
     Run a type checker.
