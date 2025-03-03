@@ -183,6 +183,8 @@ class RFC822Policy(email.policy.EmailPolicy):
             msg = f"Unknown field {name!r}"
             raise ConfigurationError(msg, key=name)
         size = len(name) + 2
+        value = value.replace("\x0b", "\n")
+        value = value.replace("\x0c", "\n")
         value = value.replace("\n", "\n" + " " * size)
         return (name, value)
 
