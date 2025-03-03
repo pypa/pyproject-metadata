@@ -8,6 +8,7 @@ import nox
 
 nox.needs_version = ">=2024.4.15"
 nox.options.reuse_existing_virtualenvs = True
+nox.options.default_venv_backend = "uv|virtualenv"
 
 ALL_PYTHONS = [
     c.split()[-1]
