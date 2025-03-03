@@ -194,18 +194,10 @@ class RFC822Policy(email.policy.EmailPolicy):
         return (name, value)
 
     if sys.version_info < (3, 12, 4):
-
+        # Work around Python bug https://github.com/python/cpython/issues/117313
         def _fold(
             self, name: str, value: Any, refold_binary: bool = False
         ) -> str:  # pragma: no cover
-            """
-            Need to override this from email.policy.EmailPolicy to stop it treating chars other than
-            CR and LF as newlines
-            :param name:
-            :param value:
-            :param refold_binary:
-            :return:
-            """
             if hasattr(value, "name"):
                 return value.fold(policy=self)  # type: ignore[no-any-return]
             maxlen = self.max_line_length if self.max_line_length else sys.maxsize
