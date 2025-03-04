@@ -18,7 +18,7 @@ ALL_PYTHONS = nox.project.python_versions(nox.project.load_toml("pyproject.toml"
 ALL_PYTHONS += ["3.14", "pypy-3.10"]
 
 
-@nox.session(python="3.7")
+@nox.session(python="3.8")
 def mypy(session: nox.Session) -> None:
     """
     Run a type checker.
