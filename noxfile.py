@@ -15,7 +15,7 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.default_venv_backend = "uv|virtualenv"
 
 ALL_PYTHONS = nox.project.python_versions(nox.project.load_toml("pyproject.toml"))
-ALL_PYTHONS.append("pypy-3.10")
+ALL_PYTHONS += ["3.14", "pypy-3.10"]
 
 
 @nox.session(python="3.7")
