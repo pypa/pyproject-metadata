@@ -1280,6 +1280,30 @@ def test_license_file_24(
     else:
         assert "License-File: LICENSE.txt" in message
 
+    bmessage = bytes(metadata.as_rfc822())
+    if metadata_version in pyproject_metadata.constants.PRE_SPDX_METADATA_VERSIONS:
+        assert b"License-File: LICENSE.txt" not in bmessage
+    else:
+        assert b"License-File: LICENSE.txt" in bmessage
+
+
+def test_license_file_broken(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / "packages/broken_license")
+
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "broken_license",
+                "version": "0.1.0",
+                "license": {"file": "LICENSE"},
+            },
+        },
+    )
+    message = str(metadata.as_rfc822())
+    assert "License-File: LICENSE" not in message
+    bmessage = bytes(metadata.as_rfc822())
+    assert b"License-File: LICENSE" not in bmessage
+
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/dynamic-description")

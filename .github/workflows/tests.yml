@@ -33,6 +33,8 @@ jobs:
             python: "3.7"
           - os: macos-14
             python: "3.12"
+          - os: ubuntu-latest
+            python: "pypy-3.10"
 
     steps:
       - name: Checkout

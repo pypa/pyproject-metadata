@@ -67,6 +67,13 @@ import packaging.specifiers
 import packaging.utils
 import packaging.version
 
+if sys.version_info < (3, 12, 4):
+    import re
+
+    RE_EOL_STR = re.compile(r"[\r\n]+")
+    RE_EOL_BYTES = re.compile(rb"[\r\n]+")
+
+
 __version__ = "0.9.0"
 
 __all__ = [
@@ -185,6 +192,37 @@ class RFC822Policy(email.policy.EmailPolicy):
         size = len(name) + 2
         value = value.replace("\n", "\n" + " " * size)
         return (name, value)
+
+    if sys.version_info < (3, 12, 4):
+        # Work around Python bug https://github.com/python/cpython/issues/117313
+        def _fold(
+            self, name: str, value: Any, refold_binary: bool = False
+        ) -> str:  # pragma: no cover
+            if hasattr(value, "name"):
+                return value.fold(policy=self)  # type: ignore[no-any-return]
+            maxlen = self.max_line_length if self.max_line_length else sys.maxsize
+
+            # this is from the library version, and it improperly breaks on chars like 0x0c, treating
+            # them as 'form feed' etc.
+            # we need to ensure that only CR/LF is used as end of line
+            # lines = value.splitlines()
+
+            # this is a workaround which splits only on CR/LF characters
+            if isinstance(value, bytes):
+                lines = RE_EOL_BYTES.split(value)
+            else:
+                lines = RE_EOL_STR.split(value)
+
+            refold = self.refold_source == "all" or (
+                self.refold_source == "long"
+                and (
+                    (lines and len(lines[0]) + len(name) + 2 > maxlen)
+                    or any(len(x) > maxlen for x in lines[1:])
+                )
+            )
+            if refold or (refold_binary and email.policy._has_surrogates(value)):  # type: ignore[attr-defined]
+                return self.header_factory(name, "".join(lines)).fold(policy=self)  # type: ignore[arg-type,no-any-return]
+            return name + ": " + self.linesep.join(lines) + self.linesep  # type: ignore[arg-type]
 
 
 class RFC822Message(email.message.EmailMessage):

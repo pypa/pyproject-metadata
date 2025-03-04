@@ -2,6 +2,8 @@ ci:
   autofix_prs: false
   autoupdate_commit_msg: "pre-commit: bump repositories"
 
+exclude: ^tests/packages/broken_license/LICENSE$
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
