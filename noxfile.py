@@ -1,19 +1,21 @@
 # SPDX-License-Identifier: MIT
 
+# /// script
+# dependencies = ["nox >=2025.2.9"]
+# ///
+
 import argparse
 import os
 import os.path
 
 import nox
 
-nox.needs_version = ">=2024.4.15"
+nox.needs_version = ">=2025.2.9"
 nox.options.reuse_existing_virtualenvs = True
+nox.options.default_venv_backend = "uv|virtualenv"
 
-ALL_PYTHONS = [
-    c.split()[-1]
-    for c in nox.project.load_toml("pyproject.toml")["project"]["classifiers"]
-    if c.startswith("Programming Language :: Python :: 3.")
-]
+ALL_PYTHONS = nox.project.python_versions(nox.project.load_toml("pyproject.toml"))
+ALL_PYTHONS.append("pypy-3.10")
 
 
 @nox.session(python="3.8")
@@ -81,3 +83,7 @@ def docs(session: nox.Session) -> None:
         session.run("sphinx-autobuild", "--open-browser", *shared_args)
     else:
         session.run("sphinx-build", "--keep-going", *shared_args)
+
+
+if __name__ == "__main__":
+    nox.main()
