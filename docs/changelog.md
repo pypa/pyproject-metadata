@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+- Remove Python 3.7 support
+
+## 0.9.1 (04-03-2024)
+
+This release fixes form feeds in License files using pre-PEP 639 syntax when
+using Python older than 3.12.4; this is a regression in 0.9.0 from moving to the
+standard library email module. Some other small fixes to validation messages
+were applied.
+
+Fixes:
+
+- Handle form feed for Python <3.12.4
+- Some touchup based on packaging PR
+
+Docs:
+
+- Fix `packaging.licenses` example code
+
+Internal and CI:
+
+- Speed up CI a bit, add Python 3.14 alpha testing
+
 ## 0.9.0 (22-10-2024)
 
 This release adds PEP 639 support (METADATA 2.4), refactors the RFC messages,
