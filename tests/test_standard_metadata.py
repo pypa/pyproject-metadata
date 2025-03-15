@@ -780,6 +780,46 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             "Setting \"project.license\" to an SPDX license expression is not compatible with 'License ::' classifiers",
             id="SPDX license and License trove classifiers",
         ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                sbom-files = ['../sbom.json']
+            """,
+            "'../sbom.json' is an invalid \"project.sbom-files\" glob: the pattern must match files within the project directory",
+            id="Parent sbom-files glob",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                sbom-files = [12]
+            """,
+            'Field "project.sbom-files" contains item with invalid type, expecting a string (got int)',
+            id="Parent sbom-files invalid type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                sbom-files = ['this', 12]
+            """,
+            'Field "project.sbom-files" contains item with invalid type, expecting a string (got int)',
+            id="Parent sbom-files invalid type",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                sbom-files = ['/sbom.json']
+            """,
+            "'/sbom.json' is an invalid \"project.sbom-files\" glob: the pattern must match files within the project directory",
+            id="Absolute sbom-files glob",
+        ),
     ],
 )
 def test_load(
@@ -942,6 +982,17 @@ def test_load_multierror(
             '"project.license-files" is supported only when emitting metadata version >= 2.4',
             "2.3",
             id="license-files with metadata_version 2.3",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                sbom-files = ['README.md']
+            """,
+            '"project.sbom-files" is supported only when emitting metadata version >= 2.5',
+            "2.4",
+            id="sbom-files with metadata_version 2.4",
         ),
     ],
 )
@@ -1303,6 +1354,40 @@ def test_license_file_broken(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "License-File: LICENSE" not in message
     bmessage = bytes(metadata.as_rfc822())
     assert b"License-File: LICENSE" not in bmessage
+
+
+def test_as_json_sbom(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / "packages/sbom")
+
+    with open("pyproject.toml", "rb") as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    core_metadata = metadata.as_json()
+    assert core_metadata == {
+        "sbom_file": [
+            "bom.json",
+            "sboms/newbom.json",
+        ],
+        "metadata_version": "2.5",
+        "name": "test-sbom",
+        "version": "0.1.0",
+    }
+
+
+def test_as_rfc822_sbom(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / "packages/sbom")
+
+    with open("pyproject.toml", "rb") as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ("Metadata-Version", "2.5"),
+        ("Name", "test-sbom"),
+        ("Version", "0.1.0"),
+        ("Sbom-File", "bom.json"),
+        ("Sbom-File", "sboms/newbom.json"),
+    ]
+
+    assert core_metadata.get_payload() is None
 
 
 def test_as_rfc822_dynamic(monkeypatch: pytest.MonkeyPatch) -> None:
