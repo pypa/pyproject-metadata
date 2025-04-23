@@ -430,7 +430,10 @@ class StandardMetadata:
         dynamic = project.get("dynamic", [])
 
         for field in dynamic:
-            if field in data["project"] and field != "name":
+            if (
+                field in data["project"]
+                and field not in constants.PROJECT_DYNAMIC_STATIC
+            ):
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
                 error_collector.config_error(msg, key=f"project.{field}")
 
