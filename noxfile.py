@@ -17,6 +17,7 @@ PYPROJECT = nox.project.load_toml("pyproject.toml")
 ALL_PYTHONS = nox.project.python_versions(PYPROJECT)
 ALL_PYTHONS += ["3.14", "pypy-3.10"]
 
+
 @nox.session(python="3.8")
 def mypy(session: nox.Session) -> None:
     """
@@ -50,6 +51,7 @@ def test(session: nox.Session) -> None:
         "tests/",
         *session.posargs,
     )
+
 
 @nox.session(venv_backend="uv", default=False, python=ALL_PYTHONS)
 def minimums(session: nox.Session) -> None:
