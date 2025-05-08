@@ -16,6 +16,7 @@ __all__ = [
     "KNOWN_PROJECT_FIELDS",
     "KNOWN_TOPLEVEL_FIELDS",
     "PRE_SPDX_METADATA_VERSIONS",
+    "PROJECT_DYNAMIC_STATIC",
     "PROJECT_TO_METADATA",
 ]
 
@@ -47,6 +48,22 @@ PROJECT_TO_METADATA = {
     "urls": frozenset(["Project-URL"]),
     "version": frozenset(["Version"]),
 }
+
+PROJECT_DYNAMIC_STATIC = {
+    "authors",
+    "classifiers",
+    "dependencies",
+    "keywords",
+    "license-files",
+    "maintainers",
+    "urls",
+    "entry-points",
+    "gui-scripts",
+    "optional-dependencies",
+    "scripts",
+    "license",
+}
+
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}

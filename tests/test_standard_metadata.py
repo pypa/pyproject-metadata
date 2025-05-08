@@ -1466,6 +1466,21 @@ def test_statically_defined_dynamic_field() -> None:
         )
 
 
+def test_dual_defined_dynamic_field() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        }
+    )
+    assert len(metadata.dependencies) == 1
+    assert metadata.dynamic == ["dependencies"]
+
+
 @pytest.mark.parametrize(
     "value",
     [
