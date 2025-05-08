@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit-core"]
+requires = ["flit-core>=3.11"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -8,11 +8,12 @@ dynamic = ["version"]
 description = "PEP 621 metadata parsing"
 readme = "README.md"
 requires-python = ">=3.8"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Filipe Laíns", email = "lains@riseup.net" },
 ]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
