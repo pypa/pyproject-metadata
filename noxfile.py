@@ -11,10 +11,10 @@ import os.path
 import nox
 
 nox.needs_version = ">=2025.2.9"
-nox.options.reuse_existing_virtualenvs = True
 nox.options.default_venv_backend = "uv|virtualenv"
 
-ALL_PYTHONS = nox.project.python_versions(nox.project.load_toml("pyproject.toml"))
+PYPROJECT = nox.project.load_toml("pyproject.toml")
+ALL_PYTHONS = nox.project.python_versions(PYPROJECT)
 ALL_PYTHONS += ["3.14", "pypy-3.10"]
 
 
@@ -38,12 +38,36 @@ def test(session: nox.Session) -> None:
         session.virtualenv.location, f"coverage-{session.python}.xml"
     )
 
-    session.install("-e.[test]")
+    test_grp = nox.project.dependency_groups(PYPROJECT, "test")
+    session.install("-e.", *test_grp)
 
     session.run(
         "pytest",
         "--cov",
         f"--cov-report=html:{htmlcov_output}",
+        f"--cov-report=xml:{xmlcov_output}",
+        "--cov-report=term-missing",
+        "--cov-context=test",
+        "tests/",
+        *session.posargs,
+    )
+
+
+@nox.session(venv_backend="uv", default=False, python=ALL_PYTHONS)
+def minimums(session: nox.Session) -> None:
+    """
+    Check minimum requirements.
+    """
+    test_grp = nox.project.dependency_groups(PYPROJECT, "test")
+    session.install("-e.", "--resolution=lowest-direct", *test_grp, silent=False)
+
+    xmlcov_output = os.path.join(
+        session.virtualenv.location, f"coverage-{session.python}-min.xml"
+    )
+
+    session.run(
+        "pytest",
+        "--cov",
         f"--cov-report=xml:{xmlcov_output}",
         "--cov-report=term-missing",
         "--cov-context=test",
@@ -66,7 +90,8 @@ def docs(session: nox.Session) -> None:
 
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
-    session.install("-e.[docs]", *extra_installs)
+    docs_grp = nox.project.dependency_groups(PYPROJECT, "docs")
+    session.install("-e.", *docs_grp, *extra_installs)
 
     session.chdir("docs")
 

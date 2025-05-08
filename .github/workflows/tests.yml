@@ -57,6 +57,9 @@ jobs:
       - name: Run tests
         run: uv run noxfile.py -s test-${{ matrix.python }}
 
+      - name: Run minimum tests
+        run: uv run noxfile.py -s minimums-${{ matrix.python }}
+
       - name: Send coverage report
         uses: codecov/codecov-action@v5
         env:
