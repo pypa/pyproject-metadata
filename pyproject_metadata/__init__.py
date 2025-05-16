@@ -360,7 +360,10 @@ class StandardMetadata:
         dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
-            if field in data["project"]:
+            if (
+                field in data["project"]
+                and field not in constants.PROJECT_DYNAMIC_STATIC
+            ):
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
                 pyproject.config_error(msg, key=f"project.{field}")
 
