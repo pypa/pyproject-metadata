@@ -95,7 +95,6 @@ extend-select = [
   "PD",          # pandas-vet
 ]
 ignore = [
-  "ISC001",  # conflicts with formatter
   "PLR09",   # Design related (too many X)
   "PLR2004", # Magic value in comparison
 ]
