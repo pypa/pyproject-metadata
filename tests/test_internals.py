@@ -18,6 +18,6 @@ def test_all() -> None:
 def test_project_table_all() -> None:
     if sys.version_info < (3, 11):
         pytest.importorskip("typing_extensions")
-    import pyproject_metadata.project_table
+    import pyproject_metadata.project_table  # noqa: PLC0415
 
     assert "annotations" not in dir(pyproject_metadata.project_table)
