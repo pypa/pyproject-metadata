@@ -1259,11 +1259,12 @@ def test_license_file_24(
     pre_spdx = (
         metadata_version in pyproject_metadata.constants.PRE_SPDX_METADATA_VERSIONS
     )
-    with (
+    ctx = (
         contextlib.nullcontext()
         if pre_spdx
         else pytest.warns(pyproject_metadata.errors.ConfigurationWarning)
-    ):
+    )
+    with ctx:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(
             {
                 "project": {
