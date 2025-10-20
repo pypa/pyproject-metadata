@@ -271,6 +271,8 @@ class StandardMetadata:
     keywords: list[str] = dataclasses.field(default_factory=list)
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
+    import_names: list[str] = dataclasses.field(default_factory=list)
+    import_namespaces: list[str] = dataclasses.field(default_factory=list)
     dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
@@ -460,6 +462,14 @@ class StandardMetadata:
                     project.get("gui-scripts", {}), "project.gui-scripts"
                 )
                 or {},
+                import_names=pyproject.ensure_list(
+                    project.get("import-names", []), "project.import-names"
+                )
+                or [],
+                import_namespaces=pyproject.ensure_list(
+                    project.get("import-namespaces", []), "project.import-namespaces"
+                )
+                or [],
                 dynamic=dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
@@ -504,6 +514,7 @@ class StandardMetadata:
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
         - ``license_files`` is supported only for metadata_version >= 2.4
         - ``project_url`` can't contain keys over 32 characters
+        - ``import-names(paces)`` is only supported on metadata_version >= 2.5
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -569,6 +580,20 @@ class StandardMetadata:
             if len(name) > 32:
                 msg = "{key} names cannot be more than 32 characters long"
                 errors.config_error(msg, key="project.urls", got=name)
+
+        if (
+            self.import_names
+            and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
+        ):
+            msg = "{key} is only supported when emitting metadata version >= 2.5"
+            errors.config_error(msg, key="project.import_names")
+
+        if (
+            self.import_namespaces
+            and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
+        ):
+            msg = "{key} is only supported when emitting metadata version >= 2.5"
+            errors.config_error(msg, key="project.import_namespaces")
 
         errors.finalize("Metadata validation failed")
 
@@ -637,6 +662,10 @@ class StandardMetadata:
             if self.readme.content_type:
                 smart_message["Description-Content-Type"] = self.readme.content_type
             smart_message.set_payload(self.readme.text)
+        for import_name in self.import_names:
+            smart_message["Import-Name"] = import_name
+        for import_namespace in self.import_namespaces:
+            smart_message["Import-Namespace"] = import_namespace
         # Core Metadata 2.2
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
