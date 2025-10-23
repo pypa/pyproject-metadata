@@ -37,6 +37,8 @@ import dataclasses
 import email.message
 import email.policy
 import email.utils
+import itertools
+import keyword
 import os
 import os.path
 import pathlib
@@ -50,7 +52,7 @@ from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .pyproject import License, PyProjectReader, Readme
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Generator, Mapping
     from typing import Any
 
     from packaging.requirements import Requirement
@@ -223,6 +225,46 @@ class RFC822Policy(email.policy.EmailPolicy):
             if refold or (refold_binary and email.policy._has_surrogates(value)):  # type: ignore[attr-defined]
                 return self.header_factory(name, "".join(lines)).fold(policy=self)  # type: ignore[arg-type,no-any-return]
             return name + ": " + self.linesep.join(lines) + self.linesep  # type: ignore[arg-type]
+
+
+def _validate_import_names(
+    names: list[str], key: str, *, errors: ErrorCollector
+) -> Generator[str, None, None]:
+    """
+    Returns normalized names for comparisons.
+    """
+    for fullname in names:
+        name, simicolon, private = fullname.partition(";")
+        if simicolon and private.lstrip() != "private":
+            msg = "{key} contains an ending tag other than '; private', got {value}"
+            errors.config_error(msg, key=key, value=fullname)
+        name = name.rstrip()
+
+        for ident in name.split("."):
+            if not ident.isidentifier():
+                msg = "{key} contains {value}, which is not a valid identifier"
+                errors.config_error(msg, key=key, value=fullname)
+
+            elif keyword.iskeyword(ident):
+                msg = "{key} contains a Python keyword, which is not a valid import name, got {value}"
+                errors.config_error(msg, key=key, value=fullname)
+
+        yield name
+
+
+def _validate_dotted_names(names: frozenset[str], *, errors: ErrorCollector) -> None:
+    """
+    Checks to make sure every name is accounted for. Takes the union of de-tagged names.
+    """
+
+    for name in names:
+        for parent in itertools.accumulate(
+            name.split(".")[:-1], lambda a, b: f"{a}.{b}"
+        ):
+            if parent not in names:
+                msg = "{key} is missing {value}, but children of this are present elsewhere"
+                errors.config_error(msg, key="project.import-namespaces", value=parent)
+                continue
 
 
 class RFC822Message(email.message.EmailMessage):
@@ -514,7 +556,9 @@ class StandardMetadata:
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
         - ``license_files`` is supported only for metadata_version >= 2.4
         - ``project_url`` can't contain keys over 32 characters
-        - ``import-names(paces)`` is only supported on metadata_version >= 2.5
+        - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
+        - ``import-name(space)s`` must be valid names, optionally with ``; private``
+        - ``import-names`` and ``import-namespaces`` cannot overlap
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -586,14 +630,29 @@ class StandardMetadata:
             and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
         ):
             msg = "{key} is only supported when emitting metadata version >= 2.5"
-            errors.config_error(msg, key="project.import_names")
+            errors.config_error(msg, key="project.import-names")
 
         if (
             self.import_namespaces
             and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
         ):
             msg = "{key} is only supported when emitting metadata version >= 2.5"
-            errors.config_error(msg, key="project.import_namespaces")
+            errors.config_error(msg, key="project.import-namespaces")
+
+        import_names = frozenset(
+            _validate_import_names(self.import_names, "import-names", errors=errors)
+        )
+        import_namespaces = frozenset(
+            _validate_import_names(
+                self.import_namespaces, "import-namespaces", errors=errors
+            )
+        )
+        in_both = import_names & import_namespaces
+        if in_both:
+            msg = "{key} overlaps with 'project.import-namespaces': {in_both}"
+            errors.config_error(msg, key="project.import-names")
+
+        _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
         errors.finalize("Metadata validation failed")
 
