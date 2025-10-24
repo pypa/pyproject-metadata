@@ -252,7 +252,7 @@ def _validate_import_names(
         yield name
 
 
-def _validate_dotted_names(names: frozenset[str], *, errors: ErrorCollector) -> None:
+def _validate_dotted_names(names: set[str], *, errors: ErrorCollector) -> None:
     """
     Checks to make sure every name is accounted for. Takes the union of de-tagged names.
     """
