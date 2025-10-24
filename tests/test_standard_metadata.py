@@ -958,6 +958,22 @@ def test_load(
             ],
             id="Four errors including extra keys",
         ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = "0.1.0"
+                import-names = ["test", "other"]
+                import-namespaces = ["other.one.two", "invalid name", "not; public"]
+            """,
+            [
+                "\"import-namespaces\" contains 'invalid name', which is not a valid identifier",
+                "\"import-namespaces\" contains an ending tag other than '; private', got 'not; public'",
+                "\"import-namespaces\" contains a Python keyword, which is not a valid import name, got 'not; public'",
+                "\"project.import-namespaces\" is missing 'other.one', but submodules are present elsewhere",
+            ],
+            id="Multiple errors related to names/namespaces",
+        ),
     ],
 )
 def test_load_multierror(
@@ -1130,6 +1146,25 @@ def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
         "test_dependency[test_extra]",
         'test_dependency[test_extra2]>3.0; os_name == "nt"',
     ]
+
+
+@pytest.mark.parametrize("after_rfc", [False, True])
+def test_value_25(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / "packages/metadata-2.5")
+    with open("pyproject.toml", "rb") as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+
+    if after_rfc:
+        metadata.as_rfc822()
+
+    assert metadata.auto_metadata_version == "2.5"
+
+    assert isinstance(metadata.license, str)
+    assert metadata.license == "MIT"
+    assert metadata.license_files == [pathlib.Path("LICENSE")]
+
+    assert metadata.import_names == ["metadata25"]
+    assert metadata.import_namespaces == []
 
 
 def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
