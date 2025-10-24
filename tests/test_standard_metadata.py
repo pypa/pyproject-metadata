@@ -1164,7 +1164,7 @@ def test_value_25(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     assert metadata.license_files == [pathlib.Path("LICENSE")]
 
     assert metadata.import_names == ["metadata25"]
-    assert metadata.import_namespaces == []
+    assert metadata.import_namespaces is None
 
 
 def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1290,11 +1290,53 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
     assert core_metadata.get_payload() == "some readme 👋\n"
 
 
+def test_rfc822_empty_import_name() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {"project": {"name": "test", "version": "0.1.0", "import-names": []}}
+    )
+    assert metadata.import_names == []
+    assert metadata.import_namespaces is None
+
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ("Metadata-Version", "2.5"),
+        ("Name", "test"),
+        ("Version", "0.1.0"),
+        ("Import-Name", ""),
+    ]
+
+
+def test_rfc822_full_import_name() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "test",
+                "version": "0.1.0",
+                "import-names": ["one", "two"],
+                "import-namespaces": ["three"],
+            }
+        }
+    )
+    assert metadata.import_names == ["one", "two"]
+    assert metadata.import_namespaces == ["three"]
+
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ("Metadata-Version", "2.5"),
+        ("Name", "test"),
+        ("Version", "0.1.0"),
+        ("Import-Name", "one"),
+        ("Import-Name", "two"),
+        ("Import-Namespace", "three"),
+    ]
+
+
 def test_as_json_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/spdx")
 
     with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+
     core_metadata = metadata.as_json()
     assert core_metadata == {
         "license_expression": "MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)",

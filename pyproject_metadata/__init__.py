@@ -139,7 +139,7 @@ class _SmartMessageSetter:
     message: email.message.Message
 
     def __setitem__(self, name: str, value: str | None) -> None:
-        if not value:
+        if value is None:
             return
         self.message[name] = value
 
@@ -313,8 +313,8 @@ class StandardMetadata:
     keywords: list[str] = dataclasses.field(default_factory=list)
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
-    import_names: list[str] = dataclasses.field(default_factory=list)
-    import_namespaces: list[str] = dataclasses.field(default_factory=list)
+    import_names: list[str] | None = None
+    import_namespaces: list[str] | None = None
     dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
@@ -345,7 +345,7 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
-        if self.import_names or self.import_namespaces:
+        if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
             return "2.4"
@@ -507,13 +507,11 @@ class StandardMetadata:
                 )
                 or {},
                 import_names=pyproject.ensure_list(
-                    project.get("import-names", []), "project.import-names"
-                )
-                or [],
+                    project.get("import-names", None), "project.import-names"
+                ),
                 import_namespaces=pyproject.ensure_list(
-                    project.get("import-namespaces", []), "project.import-namespaces"
-                )
-                or [],
+                    project.get("import-namespaces", None), "project.import-namespaces"
+                ),
                 dynamic=dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
@@ -628,25 +626,27 @@ class StandardMetadata:
                 errors.config_error(msg, key="project.urls", got=name)
 
         if (
-            self.import_names
+            self.import_names is not None
             and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
         ):
             msg = "{key} is only supported when emitting metadata version >= 2.5"
             errors.config_error(msg, key="project.import-names")
 
         if (
-            self.import_namespaces
+            self.import_namespaces is not None
             and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
         ):
             msg = "{key} is only supported when emitting metadata version >= 2.5"
             errors.config_error(msg, key="project.import-namespaces")
 
         import_names = set(
-            _validate_import_names(self.import_names, "import-names", errors=errors)
+            _validate_import_names(
+                self.import_names or [], "import-names", errors=errors
+            )
         )
         import_namespaces = set(
             _validate_import_names(
-                self.import_namespaces, "import-namespaces", errors=errors
+                self.import_namespaces or [], "import-namespaces", errors=errors
             )
         )
         in_both = import_names & import_namespaces
@@ -723,10 +723,13 @@ class StandardMetadata:
             if self.readme.content_type:
                 smart_message["Description-Content-Type"] = self.readme.content_type
             smart_message.set_payload(self.readme.text)
-        for import_name in self.import_names:
+        for import_name in self.import_names or []:
             smart_message["Import-Name"] = import_name
-        for import_namespace in self.import_namespaces:
+        for import_namespace in self.import_namespaces or []:
             smart_message["Import-Namespace"] = import_namespace
+        # Special case for empty import-names
+        if self.import_names is not None and not self.import_names:
+            smart_message["Import-Name"] = ""
         # Core Metadata 2.2
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
