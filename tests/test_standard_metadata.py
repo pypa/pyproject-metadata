@@ -780,6 +780,78 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             "Setting \"project.license\" to an SPDX license expression is not compatible with 'License ::' classifiers",
             id="SPDX license and License trove classifiers",
         ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["is"]
+            """,
+            "\"import-names\" contains a Python keyword, which is not a valid import name, got 'is'",
+            id="Setting import-names to keyword",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-namespaces = ["from"]
+            """,
+            "\"import-namespaces\" contains a Python keyword, which is not a valid import name, got 'from'",
+            id="Setting import-namespaces to keyword",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["2two"]
+            """,
+            "\"import-names\" contains '2two', which is not a valid identifier",
+            id="Setting import-names invalid identifier",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-namespaces = ["3"]
+            """,
+            "\"import-namespaces\" contains '3', which is not a valid identifier",
+            id="Setting import-namespaces to invalid identifier",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one", "two"]
+                import-namespaces = ["one", "three"]
+            """,
+            "\"project.import-names\" overlaps with 'project.import-namespaces': {'one'}",
+            id="Matching entry in import-names and import-namespaces",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one; private", "two"]
+                import-namespaces = ["one", "three    ;   private"]
+            """,
+            "\"project.import-names\" overlaps with 'project.import-namespaces': {'one'}",
+            id="Matching entry in import-names and import-namespaces with private tags",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one.two"]
+            """,
+            "\"project.import-namespaces\" is missing 'one', but submodules are present elsewhere",
+            id="Matching entry in import-names and import-namespaces",
+        ),
     ],
 )
 def test_load(

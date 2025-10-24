@@ -236,17 +236,17 @@ def _validate_import_names(
     for fullname in names:
         name, simicolon, private = fullname.partition(";")
         if simicolon and private.lstrip() != "private":
-            msg = "{key} contains an ending tag other than '; private', got {value}"
+            msg = "{key} contains an ending tag other than '; private', got {value!r}"
             errors.config_error(msg, key=key, value=fullname)
         name = name.rstrip()
 
         for ident in name.split("."):
             if not ident.isidentifier():
-                msg = "{key} contains {value}, which is not a valid identifier"
+                msg = "{key} contains {value!r}, which is not a valid identifier"
                 errors.config_error(msg, key=key, value=fullname)
 
             elif keyword.iskeyword(ident):
-                msg = "{key} contains a Python keyword, which is not a valid import name, got {value}"
+                msg = "{key} contains a Python keyword, which is not a valid import name, got {value!r}"
                 errors.config_error(msg, key=key, value=fullname)
 
         yield name
@@ -262,7 +262,7 @@ def _validate_dotted_names(names: frozenset[str], *, errors: ErrorCollector) -> 
             name.split(".")[:-1], lambda a, b: f"{a}.{b}"
         ):
             if parent not in names:
-                msg = "{key} is missing {value}, but children of this are present elsewhere"
+                msg = "{key} is missing {value!r}, but submodules are present elsewhere"
                 errors.config_error(msg, key="project.import-namespaces", value=parent)
                 continue
 
@@ -345,6 +345,8 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
+        if self.import_names or self.import_namespaces:
+            return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
             return "2.4"
         if self.dynamic_metadata:
@@ -639,10 +641,10 @@ class StandardMetadata:
             msg = "{key} is only supported when emitting metadata version >= 2.5"
             errors.config_error(msg, key="project.import-namespaces")
 
-        import_names = frozenset(
+        import_names = set(
             _validate_import_names(self.import_names, "import-names", errors=errors)
         )
-        import_namespaces = frozenset(
+        import_namespaces = set(
             _validate_import_names(
                 self.import_namespaces, "import-namespaces", errors=errors
             )
@@ -650,7 +652,7 @@ class StandardMetadata:
         in_both = import_names & import_namespaces
         if in_both:
             msg = "{key} overlaps with 'project.import-namespaces': {in_both}"
-            errors.config_error(msg, key="project.import-names")
+            errors.config_error(msg, key="project.import-names", in_both=in_both)
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
