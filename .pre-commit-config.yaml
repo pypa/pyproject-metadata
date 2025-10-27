@@ -82,3 +82,4 @@ repos:
     rev: 2025.10.20
     hooks:
       - id: sp-repo-review
+        args: [--show=err]
