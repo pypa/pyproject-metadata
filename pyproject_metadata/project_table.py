@@ -68,6 +68,8 @@ Dynamic = Literal[
     "scripts",
     "urls",
     "version",
+    "import-names",
+    "import-namespaces",
 ]
 
 ProjectTable = TypedDict(
@@ -90,6 +92,8 @@ ProjectTable = TypedDict(
         "keywords": List[str],
         "scripts": Dict[str, str],
         "gui-scripts": Dict[str, str],
+        "import-names": List[str],
+        "import-namespaces": List[str],
         "dynamic": List[Dynamic],
     },
     total=False,

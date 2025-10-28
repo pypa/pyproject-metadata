@@ -780,6 +780,78 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             "Setting \"project.license\" to an SPDX license expression is not compatible with 'License ::' classifiers",
             id="SPDX license and License trove classifiers",
         ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["is"]
+            """,
+            "\"import-names\" contains a Python keyword, which is not a valid import name, got 'is'",
+            id="Setting import-names to keyword",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-namespaces = ["from"]
+            """,
+            "\"import-namespaces\" contains a Python keyword, which is not a valid import name, got 'from'",
+            id="Setting import-namespaces to keyword",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["2two"]
+            """,
+            "\"import-names\" contains '2two', which is not a valid identifier",
+            id="Setting import-names invalid identifier",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-namespaces = ["3"]
+            """,
+            "\"import-namespaces\" contains '3', which is not a valid identifier",
+            id="Setting import-namespaces to invalid identifier",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one", "two"]
+                import-namespaces = ["one", "three"]
+            """,
+            "\"project.import-names\" overlaps with 'project.import-namespaces': {'one'}",
+            id="Matching entry in import-names and import-namespaces",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one; private", "two"]
+                import-namespaces = ["one", "three    ;   private"]
+            """,
+            "\"project.import-names\" overlaps with 'project.import-namespaces': {'one'}",
+            id="Matching entry in import-names and import-namespaces with private tags",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ["one.two"]
+            """,
+            "\"project.import-namespaces\" is missing 'one', but submodules are present elsewhere",
+            id="Matching entry in import-names and import-namespaces",
+        ),
     ],
 )
 def test_load(
@@ -885,6 +957,22 @@ def test_load(
                 "Field \"project.entry-points\" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
             ],
             id="Four errors including extra keys",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = "0.1.0"
+                import-names = ["test", "other"]
+                import-namespaces = ["other.one.two", "invalid name", "not; public"]
+            """,
+            [
+                "\"import-namespaces\" contains 'invalid name', which is not a valid identifier",
+                "\"import-namespaces\" contains an ending tag other than '; private', got 'not; public'",
+                "\"import-namespaces\" contains a Python keyword, which is not a valid import name, got 'not; public'",
+                "\"project.import-namespaces\" is missing 'other.one', but submodules are present elsewhere",
+            ],
+            id="Multiple errors related to names/namespaces",
         ),
     ],
 )
@@ -1060,6 +1148,25 @@ def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     ]
 
 
+@pytest.mark.parametrize("after_rfc", [False, True])
+def test_value_25(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(DIR / "packages/metadata-2.5")
+    with open("pyproject.toml", "rb") as f:
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+
+    if after_rfc:
+        metadata.as_rfc822()
+
+    assert metadata.auto_metadata_version == "2.5"
+
+    assert isinstance(metadata.license, str)
+    assert metadata.license == "MIT"
+    assert metadata.license_files == [pathlib.Path("LICENSE")]
+
+    assert metadata.import_names == ["metadata25"]
+    assert metadata.import_namespaces is None
+
+
 def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/full-metadata2")
     with open("pyproject.toml", "rb") as f:
@@ -1183,11 +1290,53 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
     assert core_metadata.get_payload() == "some readme 👋\n"
 
 
+def test_rfc822_empty_import_name() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {"project": {"name": "test", "version": "0.1.0", "import-names": []}}
+    )
+    assert metadata.import_names == []
+    assert metadata.import_namespaces is None
+
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ("Metadata-Version", "2.5"),
+        ("Name", "test"),
+        ("Version", "0.1.0"),
+        ("Import-Name", ""),
+    ]
+
+
+def test_rfc822_full_import_name() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "test",
+                "version": "0.1.0",
+                "import-names": ["one", "two"],
+                "import-namespaces": ["three"],
+            }
+        }
+    )
+    assert metadata.import_names == ["one", "two"]
+    assert metadata.import_namespaces == ["three"]
+
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata.items() == [
+        ("Metadata-Version", "2.5"),
+        ("Name", "test"),
+        ("Version", "0.1.0"),
+        ("Import-Name", "one"),
+        ("Import-Name", "two"),
+        ("Import-Namespace", "three"),
+    ]
+
+
 def test_as_json_spdx(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/spdx")
 
     with open("pyproject.toml", "rb") as f:
         metadata = pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
+
     core_metadata = metadata.as_json()
     assert core_metadata == {
         "license_expression": "MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)",
