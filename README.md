@@ -47,7 +47,7 @@ if isinstance(metadata.license, str):
     )
 ```
 
-A backend is also expected to copy entries from `project.licence_files`, which
+A backend is also expected to copy entries from `project.license_files`, which
 are paths relative to the project directory, into the `dist-info/licenses`
 folder, preserving the original source structure.
 
