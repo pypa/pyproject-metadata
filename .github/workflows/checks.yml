@@ -17,8 +17,7 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install nox
-        run: python -m pip install nox
+      - uses: astral-sh/setup-uv@v7
 
       - name: Run check for type
-        run: nox -s mypy
+        run: uv run noxfile.py -s mypy

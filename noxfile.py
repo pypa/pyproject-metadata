@@ -15,7 +15,7 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 ALL_PYTHONS = nox.project.python_versions(PYPROJECT)
-ALL_PYTHONS += ["pypy-3.10"]
+ALL_PYTHONS += ["pypy-3.11"]
 
 
 @nox.session(python="3.8")
@@ -23,9 +23,8 @@ def mypy(session: nox.Session) -> None:
     """
     Run a type checker.
     """
-    session.install(".", "mypy", "nox", "pytest")
-
-    session.run("mypy", "pyproject_metadata", "tests", "noxfile.py")
+    session.install("-e.", "mypy", "nox", "pytest")
+    session.run("mypy")
 
 
 @nox.session(python=ALL_PYTHONS)

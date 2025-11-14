@@ -67,6 +67,7 @@ testpaths = ["tests"]
 strict = true
 warn_unreachable = false
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+files = ["pyproject_metadata", "tests", "noxfile.py"]
 
 
 [tool.ruff]
