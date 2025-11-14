@@ -31,7 +31,7 @@ class ConfigurationError(Exception):
     """Error in the backend metadata. Has an optional key attribute, which will be non-None
     if the error is related to a single key in the pyproject.toml file."""
 
-    def __init__(self, msg: str, *, key: str | None = None):
+    def __init__(self, msg: str, *, key: str | None = None) -> None:
         super().__init__(msg)
         self._key = key
 
@@ -48,7 +48,7 @@ if sys.version_info >= (3, 11):
     ExceptionGroup = builtins.ExceptionGroup
 else:
 
-    class ExceptionGroup(Exception):
+    class ExceptionGroup(Exception):  # noqa: N818
         """A minimal implementation of `ExceptionGroup` from Python 3.11.
 
         Users can replace this with a more complete implementation, such as from
@@ -83,10 +83,10 @@ class ErrorCollector:
         msg: str,
         *,
         key: str | None = None,
-        got: typing.Any = None,
+        got: object = None,
         got_type: type[typing.Any] | None = None,
         warn: bool = False,
-        **kwargs: typing.Any,
+        **kwargs: object,
     ) -> None:
         """Raise a configuration error, or add it to the error list."""
         msg = msg.format(key=f'"{key}"', **kwargs)
