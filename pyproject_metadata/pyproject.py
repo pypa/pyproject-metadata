@@ -301,7 +301,6 @@ class PyProjectReader(ErrorCollector):
 
     def get_dependencies(self, project: ProjectTable) -> list[Requirement]:
         """Get the dependencies from the project table."""
-
         requirement_strings: list[str] | None = None
         requirement_strings_raw = project.get("dependencies")
         if requirement_strings_raw is not None:
@@ -326,7 +325,6 @@ class PyProjectReader(ErrorCollector):
         project: ProjectTable,
     ) -> dict[str, list[Requirement]]:
         """Get the optional dependencies from the project table."""
-
         val = project.get("optional-dependencies")
         if not val:
             return {}
@@ -378,7 +376,6 @@ class PyProjectReader(ErrorCollector):
 
     def get_entrypoints(self, project: ProjectTable) -> dict[str, dict[str, str]]:
         """Get the entrypoints from the project table."""
-
         val = project.get("entry-points", None)
         if val is None:
             return {}
@@ -437,7 +434,6 @@ class PyProjectReader(ErrorCollector):
         self, project_dir: pathlib.Path, globs: Iterable[str]
     ) -> Generator[pathlib.Path, None, None]:
         """Given a list of globs, get files that match."""
-
         for glob in globs:
             if glob.startswith(("..", "/")):
                 msg = "{glob!r} is an invalid {key} glob: the pattern must match files within the project directory"

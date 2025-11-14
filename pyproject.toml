@@ -79,10 +79,12 @@ ignore = [
   "PLR09",   # Design related (too many X)
   "PLR2004", # Magic value in comparison
   "COM812",  # Trailing commas inform the formatter
-  "D",       # Docstring stuff (TODO)
   "E501",    # Not worried about long lines in strings
+  "D200",    # Don't force single line docstring (for now)
+  "D205",    # Some of our summaries are more than a line (for now)
 ]
 flake8-builtins.ignorelist = ["copyright"]
+pydocstyle.convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
@@ -95,7 +97,9 @@ flake8-builtins.ignorelist = ["copyright"]
 "docs/**" = [
   "INP001",  # Docs don't need an __init__
   "ERA001",  # Commented out code in conf.py
+  "D",
 ]
+"noxfile.py" = ["D"]
 
 [tool.ruff.format]
 docstring-code-format = true

@@ -188,6 +188,9 @@ class RFC822Policy(email.policy.EmailPolicy):
     max_line_length = 0
 
     def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
+        """
+        Require known headers, and replace newlines with spaces.
+        """
         if name.lower() not in constants.KNOWN_METADATA_FIELDS:
             msg = f"Unknown field {name!r}"
             raise ConfigurationError(msg, key=name)
@@ -235,7 +238,7 @@ def _validate_import_names(
     names: list[str], key: str, *, errors: ErrorCollector
 ) -> Generator[str, None, None]:
     """
-    Returns normalized names for comparisons.
+    Return normalized names for comparisons.
     """
     for fullname in names:
         name, simicolon, private = fullname.partition(";")
@@ -258,9 +261,8 @@ def _validate_import_names(
 
 def _validate_dotted_names(names: set[str], *, errors: ErrorCollector) -> None:
     """
-    Checks to make sure every name is accounted for. Takes the union of de-tagged names.
+    Check to make sure every name is accounted for. Takes the union of de-tagged names.
     """
-
     for name in names:
         for parent in itertools.accumulate(
             name.split(".")[:-1], lambda a, b: f"{a}.{b}"
@@ -279,6 +281,9 @@ class RFC822Message(email.message.EmailMessage):
     """
 
     def __init__(self) -> None:
+        """
+        Create a new message with RFC822Policy.
+        """
         super().__init__(policy=RFC822Policy())
 
     def as_bytes(
@@ -287,7 +292,7 @@ class RFC822Message(email.message.EmailMessage):
         policy: email.policy.Policy | None = None,
     ) -> bytes:
         """
-        This handles unicode encoding.
+        Will always handle unicode encoding.
         """
         return self.as_string(unixfrom, policy=policy).encode("utf-8")
 
@@ -340,6 +345,9 @@ class StandardMetadata:
     """
 
     def __post_init__(self) -> None:
+        """
+        Validate the fields on construction.
+        """
         self.validate()
 
     @property
@@ -548,9 +556,11 @@ class StandardMetadata:
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
         """
-        Validate metadata for consistency and correctness. Will also produce
-        warnings if ``warn`` is given. Respects ``all_errors``. This is called
-        when loading a pyproject.toml, and when making metadata. Checks:
+        Validate metadata for consistency and correctness.
+
+        Will also produce warnings if ``warn`` is given. Respects
+        ``all_errors``. This is called when loading a pyproject.toml, and when
+        making metadata. Checks:
 
         - ``metadata_version`` is a known version or None
         - ``name`` is a valid project name
@@ -564,7 +574,7 @@ class StandardMetadata:
         - ``project_url`` can't contain keys over 32 characters
         - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
-        - ``import-names`` and ``import-namespaces`` cannot overlap
+        - ``import-names`` and ``import-namespaces`` cannot overlap.
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 

@@ -28,15 +28,25 @@ def __dir__() -> list[str]:
 
 
 class ConfigurationError(Exception):
-    """Error in the backend metadata. Has an optional key attribute, which will be non-None
-    if the error is related to a single key in the pyproject.toml file."""
+    """
+    Error in the backend metadata.
+
+    Has an optional key attribute, which will be non-None if the error is
+    related to a single key in the pyproject.toml file.
+    """
 
     def __init__(self, msg: str, *, key: str | None = None) -> None:
+        """
+        Create a new error with a key (can be None).
+        """
         super().__init__(msg)
         self._key = key
 
     @property
     def key(self) -> str | None:  # pragma: no cover
+        """
+        Return the stored key.
+        """
         return self._key
 
 
@@ -61,10 +71,16 @@ else:
         exceptions: list[Exception]
 
         def __init__(self, message: str, exceptions: list[Exception]) -> None:
+            """
+            Create a new group with a message and a list of exceptions.
+            """
             self.message = message
             self.exceptions = exceptions
 
         def __repr__(self) -> str:
+            """
+            Return a repr similar to the stdlib ExceptionGroup.
+            """
             return f"{self.__class__.__name__}({self.message!r}, {self.exceptions!r})"
 
 

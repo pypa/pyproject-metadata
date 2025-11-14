@@ -38,11 +38,19 @@ def __dir__() -> list[str]:
 
 
 class ContactTable(TypedDict, total=False):
+    """
+    Can have either name or email.
+    """
+
     name: str
     email: str
 
 
 class LicenseTable(TypedDict, total=False):
+    """
+    Can have either text or file. Legacy.
+    """
+
     text: str
     file: str
 
