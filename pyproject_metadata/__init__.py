@@ -198,7 +198,10 @@ class RFC822Policy(email.policy.EmailPolicy):
     if sys.version_info < (3, 12, 4):
         # Work around Python bug https://github.com/python/cpython/issues/117313
         def _fold(
-            self, name: str, value: Any, refold_binary: bool = False
+            self,
+            name: str,
+            value: Any,  # noqa: ANN401
+            refold_binary: bool = False,  # noqa: FBT001, FBT002
         ) -> str:  # pragma: no cover
             if hasattr(value, "name"):
                 return value.fold(policy=self)  # type: ignore[no-any-return]
@@ -207,7 +210,6 @@ class RFC822Policy(email.policy.EmailPolicy):
             # this is from the library version, and it improperly breaks on chars like 0x0c, treating
             # them as 'form feed' etc.
             # we need to ensure that only CR/LF is used as end of line
-            # lines = value.splitlines()
 
             # this is a workaround which splits only on CR/LF characters
             if isinstance(value, bytes):
@@ -222,7 +224,9 @@ class RFC822Policy(email.policy.EmailPolicy):
                     or any(len(x) > maxlen for x in lines[1:])
                 )
             )
-            if refold or (refold_binary and email.policy._has_surrogates(value)):  # type: ignore[attr-defined]
+            if refold or (
+                refold_binary and email.policy._has_surrogates(value)  # type: ignore[attr-defined] # noqa: SLF001
+            ):
                 return self.header_factory(name, "".join(lines)).fold(policy=self)  # type: ignore[arg-type,no-any-return]
             return name + ": " + self.linesep.join(lines) + self.linesep  # type: ignore[arg-type]
 
@@ -278,7 +282,9 @@ class RFC822Message(email.message.EmailMessage):
         super().__init__(policy=RFC822Policy())
 
     def as_bytes(
-        self, unixfrom: bool = False, policy: email.policy.Policy | None = None
+        self,
+        unixfrom: bool = False,  # noqa: FBT001, FBT002
+        policy: email.policy.Policy | None = None,
     ) -> bytes:
         """
         This handles unicode encoding.
@@ -772,7 +778,7 @@ def _build_extra_req(
     """
     requirement = copy.copy(requirement)
     if requirement.marker:
-        if "or" in requirement.marker._markers:
+        if "or" in requirement.marker._markers:  # noqa: SLF001
             requirement.marker = packaging.markers.Marker(
                 f"({requirement.marker}) and extra == {extra!r}"
             )
