@@ -33,7 +33,7 @@ jobs:
           - os: macos-14
             python: "3.12"
           - os: ubuntu-latest
-            python: "pypy-3.10"
+            python: "pypy-3.11"
           - os: windows-latest
             python: "3.8"
           - os: windows-latest
