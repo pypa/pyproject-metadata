@@ -9,7 +9,6 @@ the top-level package.
 from __future__ import annotations
 
 import dataclasses
-import pathlib
 import re
 import typing
 
@@ -18,6 +17,7 @@ import packaging.requirements
 from .errors import ErrorCollector
 
 if typing.TYPE_CHECKING:
+    import pathlib
     from collections.abc import Generator, Iterable, Sequence
 
     from packaging.requirements import Requirement
@@ -312,13 +312,13 @@ class PyProjectReader(ErrorCollector):
             return []
 
         requirements: list[Requirement] = []
-        for req in requirement_strings:
-            try:
+        try:
+            for req in requirement_strings:
                 requirements.append(packaging.requirements.Requirement(req))
-            except packaging.requirements.InvalidRequirement as e:
-                msg = "Field {key} contains an invalid PEP 508 requirement string {req!r} ({error!r})"
-                self.config_error(msg, key="project.dependencies", req=req, error=e)
-                return []
+        except packaging.requirements.InvalidRequirement as e:
+            msg = "Field {key} contains an invalid PEP 508 requirement string {req!r} ({error!r})"
+            self.config_error(msg, key="project.dependencies", req=req, error=e)
+            return []
         return requirements
 
     def get_optional_dependencies(

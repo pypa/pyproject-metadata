@@ -6,8 +6,7 @@
 # ///
 
 import argparse
-import os
-import os.path
+from pathlib import Path
 
 import nox
 
@@ -34,10 +33,8 @@ def test(session: nox.Session) -> None:
     """
     Run the test suite.
     """
-    htmlcov_output = os.path.join(session.virtualenv.location, "htmlcov")
-    xmlcov_output = os.path.join(
-        session.virtualenv.location, f"coverage-{session.python}.xml"
-    )
+    htmlcov_output = Path(session.virtualenv.location) / "htmlcov"
+    xmlcov_output = Path(session.virtualenv.location) / f"coverage-{session.python}.xml"
 
     test_grp = nox.project.dependency_groups(PYPROJECT, "test")
     session.install("-e.", *test_grp)
@@ -62,8 +59,8 @@ def minimums(session: nox.Session) -> None:
     test_grp = nox.project.dependency_groups(PYPROJECT, "test")
     session.install("-e.", "--resolution=lowest-direct", *test_grp, silent=False)
 
-    xmlcov_output = os.path.join(
-        session.virtualenv.location, f"coverage-{session.python}-min.xml"
+    xmlcov_output = (
+        Path(session.virtualenv.location) / f"coverage-{session.python}-min.xml"
     )
 
     session.run(
