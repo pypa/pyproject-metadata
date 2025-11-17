@@ -319,6 +319,16 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
+                readme = { file = "pyproject.toml" }
+            """,
+            'Field "project.readme.content-type" missing',
+            id="Missing content-type for readme file",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
                 description = true
             """,
             'Field "project.description" has an invalid type, expecting a string (got bool)',
@@ -1016,7 +1026,7 @@ def test_load_multierror(
                 version = "0.1.0"
                 license = 'MIT'
             """,
-            'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4',
+            'Setting "project.license" to an SPDX license expression is only supported when emitting metadata version >= 2.4',
             "2.3",
             id="SPDX with metadata_version 2.3",
         ),
@@ -1027,9 +1037,31 @@ def test_load_multierror(
                 version = "0.1.0"
                 license-files = ['README.md']
             """,
-            '"project.license-files" is supported only when emitting metadata version >= 2.4',
+            '"project.license-files" is only supported when emitting metadata version >= 2.4',
             "2.3",
             id="license-files with metadata_version 2.3",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-names = ['one']
+            """,
+            '"project.import-names" is only supported when emitting metadata version >= 2.5',
+            "2.4",
+            id="import-names with metadata_version 2.4",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                import-namespaces = ['one']
+            """,
+            '"project.import-namespaces" is only supported when emitting metadata version >= 2.5',
+            "2.4",
+            id="import-names with metadata_version 2.4",
         ),
     ],
 )
@@ -1109,6 +1141,7 @@ def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
         ("Example!", None),
     ]
     assert metadata.maintainers == [
+        ("Emailless", None),
         ("Other Example", "other@example.com"),
     ]
     assert metadata.keywords == ["trampolim", "is", "interesting"]
@@ -1224,6 +1257,7 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
         "description_content_type": "text/markdown",
         "keywords": ["trampolim", "is", "interesting"],
         "license": "some license text",
+        "maintainer": "Emailless",
         "maintainer_email": "Other Example <other@example.com>",
         "metadata_version": "2.1",
         "name": "full_metadata",
@@ -1250,6 +1284,20 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
     }
 
 
+def test_readme_text() -> None:
+    pyproject = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "foo",
+                "version": "1.2.3",
+                "readme": {"text": "onetwothree", "content-type": "text/plain"},
+            }
+        }
+    )
+    assert pyproject.readme
+    assert pyproject.readme.text == "onetwothree"
+
+
 def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/full-metadata")
 
@@ -1264,6 +1312,7 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ("Keywords", "trampolim,is,interesting"),
         ("Author", "Example!"),
         ("Author-Email", "Unknown <example@example.com>"),
+        ("Maintainer", "Emailless"),
         ("Maintainer-Email", "Other Example <other@example.com>"),
         ("License", "some license text"),
         ("Classifier", "Development Status :: 4 - Beta"),
