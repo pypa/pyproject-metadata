@@ -626,14 +626,14 @@ class StandardMetadata:
             isinstance(self.license, str)
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "Setting {key} to an SPDX license expression is supported only when emitting metadata version >= 2.4"
+            msg = "Setting {key} to an SPDX license expression is only supported when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license")
 
         if (
             self.license_files is not None
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "{key} is supported only when emitting metadata version >= 2.4"
+            msg = "{key} is only supported when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license-files")
 
         for name in self.urls:
@@ -736,8 +736,8 @@ class StandardMetadata:
                     _build_extra_req(norm_extra, requirement)
                 )
         if self.readme:
-            if self.readme.content_type:
-                smart_message["Description-Content-Type"] = self.readme.content_type
+            assert self.readme.content_type  # verified earlier
+            smart_message["Description-Content-Type"] = self.readme.content_type
             smart_message.set_payload(self.readme.text)
         for import_name in self.import_names or []:
             smart_message["Import-Name"] = import_name

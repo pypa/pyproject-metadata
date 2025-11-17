@@ -10,6 +10,7 @@ authors = [
     { name = 'Example!' },
 ]
 maintainers = [
+    { name = 'Emailless' },
     { name = 'Other Example', email = 'other@example.com' },
 ]
 classifiers = [

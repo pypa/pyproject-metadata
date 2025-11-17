@@ -106,7 +106,10 @@ pydocstyle.convention = "pep257"
 docstring-code-format = true
 
 [tool.coverage]
+run.branch = true
+run.source_pkgs = ["pyproject_metadata"]
 html.show_contexts = true
+report.show_missing = true
 report.exclude_also = [
     "if typing.TYPE_CHECKING:",
 ]
