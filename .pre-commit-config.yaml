@@ -19,7 +19,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.4"
+    rev: "v0.14.5"
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
@@ -46,7 +46,7 @@ repos:
         args: [--prose-wrap=always]
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.2.0"
+    rev: "v1.3.0"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -65,12 +65,12 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.11.04
+    rev: 2025.11.14
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.1
+    rev: 0.35.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
