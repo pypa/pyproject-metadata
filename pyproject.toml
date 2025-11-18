@@ -101,7 +101,6 @@ pydocstyle.convention = "pep257"
   "D",
 ]
 "noxfile.py" = ["D"]
-"pyproject_metadata/project_table.py" = ["ERA001"]
 
 [tool.ruff.format]
 docstring-code-format = true

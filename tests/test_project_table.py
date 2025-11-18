@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import re
 import sys
 
 import pytest
 
+from pyproject_metadata.errors import ExceptionGroup
 from pyproject_metadata.project_table import (
     BuildSystemTable,
     IncludeGroupTable,
@@ -194,7 +194,7 @@ def test_conversion_fn(toml_string: str) -> None:
             name = "one"
             version = "0.1.0"
             """,
-            '"dependency-groups.one[]" does not match any type in str | IncludeGroupTable',
+            '"dependency-groups.one[1]" does not match any type in str | IncludeGroupTable',
             id="bad nested in dictionary type",
         ),
         pytest.param(
@@ -223,7 +223,7 @@ def test_conversion_fn(toml_string: str) -> None:
             name = "example"
             dynamic = ["notreal"]
             """,
-            '"project.dynamic[]" expected one of',
+            '"project.dynamic[0]" expected one of',
             id="Invalid dynamic value",
         ),
         pytest.param(
@@ -239,7 +239,49 @@ def test_conversion_fn(toml_string: str) -> None:
         ),
     ],
 )
-def test_conversion_fn_bad_type(toml_string: str, expected_msg: str) -> None:
+def test_conversion_error(toml_string: str, expected_msg: str) -> None:
     data = tomllib.loads(toml_string)
-    with pytest.raises(TypeError, match=re.escape(expected_msg)):
+    with pytest.raises(ExceptionGroup) as err:
         to_project_table(data)
+    assert expected_msg in repr(err.value)
+
+
+@pytest.mark.parametrize(
+    ("toml_string", "expected_msgs"),
+    [
+        pytest.param(
+            """
+            [project.entry-points]
+            console_scripts = { bad = 123 }
+            """,
+            [
+                'Key "project.name" is required if "project" is present',
+                '"project.entry-points.console_scripts.bad" expected str, got int',
+            ],
+            id="missing name and bad entry-point",
+        ),
+        pytest.param(
+            """
+            [build-system]
+            build-backend = "one"
+            requires = "two"  # should be list[str]
+            [project]
+            name = 123
+            """,
+            [
+                '"build-system.requires" expected list, got str',
+                '"project.name" expected str, got int',
+            ],
+            id="name and build-system.requires bad types",
+        ),
+    ],
+)
+def test_conversion_errors(toml_string: str, expected_msgs: list[str]) -> None:
+    data = tomllib.loads(toml_string)
+    with pytest.raises(ExceptionGroup) as exc_info:
+        to_project_table(data)
+
+    # Python 3.10+ could use strict=True
+    assert len(exc_info.value.exceptions) == len(expected_msgs)
+    for error, expected_msg in zip(exc_info.value.exceptions, expected_msgs):
+        assert expected_msg in str(error)
