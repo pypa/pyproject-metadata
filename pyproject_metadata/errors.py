@@ -85,14 +85,37 @@ else:
 
 
 @dataclasses.dataclass
-class ErrorCollector:
+class SimpleErrorCollector:
+    """
+    Collect errors.
+    """
+
+    errors: list[Exception] = dataclasses.field(default_factory=list, init=False)
+
+    def finalize(self, msg: str) -> None:
+        """Raise a group exception if there are any errors."""
+        if self.errors:
+            raise ExceptionGroup(msg, self.errors)
+
+    @contextlib.contextmanager
+    def collect(self) -> typing.Generator[None, None, None]:
+        """Collect errors into the error list. Must be inside loops."""
+        try:
+            yield
+        except ExceptionGroup as error:
+            self.errors.extend(error.exceptions)
+        except Exception as error:  # noqa: BLE001
+            self.errors.append(error)
+
+
+@dataclasses.dataclass()
+class ErrorCollector(SimpleErrorCollector):
     """
     Collect errors and raise them as a group at the end (if collect_errors is True),
     otherwise raise them immediately.
     """
 
     collect_errors: bool
-    errors: list[Exception] = dataclasses.field(default_factory=list)
 
     def config_error(
         self,
@@ -118,18 +141,11 @@ class ErrorCollector:
         else:
             raise ConfigurationError(msg, key=key)
 
-    def finalize(self, msg: str) -> None:
-        """Raise a group exception if there are any errors."""
-        if self.errors:
-            raise ExceptionGroup(msg, self.errors)
-
     @contextlib.contextmanager
     def collect(self) -> typing.Generator[None, None, None]:
         """Support nesting; add any grouped errors to the error list."""
         if self.collect_errors:
-            try:
+            with super().collect():
                 yield
-            except ExceptionGroup as error:
-                self.errors.extend(error.exceptions)
         else:
             yield
