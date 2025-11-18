@@ -155,12 +155,16 @@ def is_typed_dict(type_hint: object) -> bool:
     return hasattr(type_hint, "__annotations__") and hasattr(type_hint, "__total__")
 
 
-def _cast(type_hint: type[T], data: object, prefix: str) -> T:  # noqa: C901
+def _cast(type_hint: type[Any], data: object, prefix: str) -> None:  # noqa: C901
     """
     Runtime cast for types.
 
     Just enough to cover the dicts above (not general or public).
     """
+    # Any accepts everything, so no validation
+    if type_hint is Any:  # type: ignore[comparison-overlap]
+        return
+
     # TypedDict
     if is_typed_dict(type_hint):
         if not isinstance(data, dict):
@@ -176,14 +180,16 @@ def _cast(type_hint: type[T], data: object, prefix: str) -> T:  # noqa: C901
                 _cast(typ, data[key], prefix + f".{key}" if prefix else key)
             # Required keys could be enforced here on 3.11+ eventually
 
-        return typing.cast("T", data)
+        return
 
     origin = typing.get_origin(type_hint)
+    args = typing.get_args(type_hint)
+
     # Special case Required on 3.10
     if origin is Required:
-        (type_hint,) = typing.get_args(type_hint)
-        origin = typing.get_origin(type_hint)
-    args = typing.get_args(type_hint)
+        (inner_type_hint,) = args
+        _cast(inner_type_hint, data, prefix)
+        return
 
     # Literal
     if origin is typing.Literal:
@@ -191,11 +197,7 @@ def _cast(type_hint: type[T], data: object, prefix: str) -> T:  # noqa: C901
             arg_names = ", ".join(repr(a) for a in args)
             msg = f'"{prefix}" expected one of {arg_names}, got {data!r}'
             raise TypeError(msg)
-        return typing.cast("T", data)
-
-    # Any accepts everything, so no validation
-    if type_hint is Any:  # type: ignore[comparison-overlap]
-        return typing.cast("T", data)
+        return
 
     # List[T]
     if origin is list:
@@ -203,9 +205,9 @@ def _cast(type_hint: type[T], data: object, prefix: str) -> T:  # noqa: C901
             msg = f'"{prefix}" expected list, got {type(data).__name__}'
             raise TypeError(msg)
         item_type = args[0]
-        return typing.cast(
-            "T", [_cast(item_type, item, f"{prefix}[]") for item in data]
-        )
+        for item in data:
+            _cast(item_type, item, prefix + "[]")
+        return
 
     # Dict[str, T]
     if origin is dict:
@@ -213,28 +215,26 @@ def _cast(type_hint: type[T], data: object, prefix: str) -> T:  # noqa: C901
             msg = f'"{prefix}" expected dict, got {type(data).__name__}'
             raise TypeError(msg)
         _, value_type = args
-        return typing.cast(
-            "T",
-            {
-                key: _cast(value_type, value, f"{prefix}.{key}")
-                for key, value in data.items()
-            },
-        )
+        for key, value in data.items():
+            _cast(value_type, value, prefix + f".{key}")
+        return
+
     # Union[T1, T2, ...]
     if origin is typing.Union:
         for arg in args:
             try:
                 _cast(arg, data, prefix)
-                return typing.cast("T", data)
             except TypeError:  # noqa: PERF203
                 continue
+            else:
+                return
         arg_names = " | ".join(a.__name__ for a in args)
         msg = f'"{prefix}" does not match any type in {arg_names}'
         raise TypeError(msg)
 
     # Base case (str, etc.)
     if isinstance(data, origin or type_hint):
-        return typing.cast("T", data)
+        return
 
     msg = f'"{prefix}" expected {type_hint.__name__}, got {type(data).__name__}'
     raise TypeError(msg)
@@ -252,4 +252,5 @@ def to_project_table(data: dict[str, Any], /) -> PyProjectTable:
     if name is None:
         msg = 'Key "project.name" is required if "project" is present'
         raise TypeError(msg)
-    return _cast(PyProjectTable, data, "")
+    _cast(PyProjectTable, data, "")
+    return typing.cast("PyProjectTable", data)
