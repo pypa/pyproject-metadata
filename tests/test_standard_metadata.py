@@ -906,7 +906,7 @@ def test_load(
             "[project]",
             [
                 'Field "project.name" is required if "project" is present',
-                # 'Field "project.version" missing and \'version\' not specified in "project.dynamic"',
+                'Field "project.version" missing and \'version\' not specified in "project.dynamic"',
             ],
             id="Missing project name",
         ),
@@ -958,7 +958,7 @@ def test_load(
             """,
             [
                 'Field "project.license-files[0]" has an invalid type, expecting str (got int)',
-                # "Could not infer content type for readme file 'README.jpg'",
+                "Could not infer content type for readme file 'README.jpg'",
             ],
             id="Unsupported filename in readme",
         ),
@@ -975,9 +975,9 @@ def test_load(
             """,
             [
                 'Field "project.license-files[0]" has an invalid type, expecting str (got int)',
-                # "Extra keys present in \"project\": 'not-valid', 'other-entry'",
-                # "Could not infer content type for readme file 'README.jpg'",
-                # "Field \"project.entry-points\" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
+                "Extra keys present in \"project\": 'not-valid', 'other-entry'",
+                "Could not infer content type for readme file 'README.jpg'",
+                "Field \"project.entry-points\" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
             ],
             id="Four errors including extra keys",
         ),
