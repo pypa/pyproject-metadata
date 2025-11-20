@@ -89,7 +89,7 @@ def test_project_table_type_only() -> None:
             ]
 
             [project.entry-points]
-            some-ep = { thing = "thing:main" }
+            "some.ep" = { thing = "thing:main" }
 
             [project.scripts]
             my-script = "thing:cli"
