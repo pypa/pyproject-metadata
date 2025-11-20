@@ -11,6 +11,7 @@ from __future__ import annotations
 import dataclasses
 import re
 import typing
+from typing import Any
 
 import packaging.requirements
 
@@ -18,11 +19,11 @@ from .errors import ErrorCollector
 
 if typing.TYPE_CHECKING:
     import pathlib
-    from collections.abc import Generator, Iterable, Sequence
+    from collections.abc import Generator, Iterable
 
     from packaging.requirements import Requirement
 
-    from .project_table import ContactTable, Dynamic, ProjectTable
+    from .project_table import ProjectTable
 
 
 __all__ = [
@@ -72,72 +73,42 @@ class PyProjectReader(ErrorCollector):
     as this is an internal class.
     """
 
-    def ensure_str(self, value: str, key: str) -> str | None:
+    def ensure_str(self, value: object) -> str | None:
         """Ensure that a value is a string."""
         if isinstance(value, str):
             return value
-
-        msg = "Field {key} has an invalid type, expecting a string"
-        self.config_error(msg, key=key, got_type=type(value))
         return None
 
-    def ensure_list(self, val: list[T] | None, key: str) -> list[T] | None:
+    def ensure_list(self, val: object) -> list[T] | None:
         """Ensure that a value is a list of strings."""
         if val is None:
             return None
         if not isinstance(val, list):
-            msg = "Field {key} has an invalid type, expecting a list of strings"
-            self.config_error(msg, key=key, got_type=type(val))
             return None
         for item in val:
             if not isinstance(item, str):
-                msg = "Field {key} contains item with invalid type, expecting a string"
-                self.config_error(msg, key=key, got_type=type(item))
                 return None
 
         return val
 
-    def ensure_dict(self, val: dict[str, str], key: str) -> dict[str, str] | None:
+    def ensure_dict(self, val: object) -> dict[str, str] | None:
         """Ensure that a value is a dictionary of strings."""
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a table of strings"
-            self.config_error(msg, key=key, got_type=type(val))
             return None
-        for subkey, item in val.items():
+        for item in val.values():
             if not isinstance(item, str):
-                msg = "Field {key} has an invalid type, expecting a string"
-                self.config_error(msg, key=f"{key}.{subkey}", got_type=type(item))
                 return None
         return val
 
-    def ensure_people(
-        self, val: Sequence[ContactTable], key: str
-    ) -> list[tuple[str, str | None]]:
+    def ensure_people(self, val: object, key: str) -> list[tuple[str, str | None]]:
         """Ensure that a value is a list of tables with optional "name" and "email" keys."""
         if not isinstance(val, list):
-            msg = (
-                "Field {key} has an invalid type, expecting a list of "
-                'tables containing the "name" and/or "email" keys'
-            )
-            self.config_error(msg, key=key, got_type=type(val))
             return []
         for each in val:
             if not isinstance(each, dict):
-                msg = (
-                    "Field {key} has an invalid type, expecting a list of "
-                    'tables containing the "name" and/or "email" keys'
-                    " (got list with {type_name})"
-                )
-                self.config_error(msg, key=key, type_name=type(each).__name__)
                 return []
             for value in each.values():
                 if not isinstance(value, str):
-                    msg = (
-                        "Field {key} has an invalid type, expecting a list of "
-                        'tables containing the "name" and/or "email" keys'
-                        " (got list with dict with {type_name})"
-                    )
-                    self.config_error(msg, key=key, type_name=type(value).__name__)
                     return []
             extra_keys = set(each) - {"name", "email"}
             if extra_keys:
@@ -168,12 +139,10 @@ class PyProjectReader(ErrorCollector):
             return val
 
         if isinstance(val, dict):
-            _license = self.ensure_dict(val, "project.license")  # type: ignore[arg-type]
+            _license = self.ensure_dict(val)
             if _license is None:
                 return None
         else:
-            msg = "Field {key} has an invalid type, expecting a string or table of strings"
-            self.config_error(msg, key="project.license", got_type=type(val))
             return None
 
         for field in _license:
@@ -205,7 +174,7 @@ class PyProjectReader(ErrorCollector):
         return License(text, file)
 
     def get_license_files(
-        self, project: ProjectTable, project_dir: pathlib.Path
+        self, project: dict[str, Any], project_dir: pathlib.Path
     ) -> list[pathlib.Path] | None:
         """Get the license-files list of files from the project table.
 
@@ -215,13 +184,13 @@ class PyProjectReader(ErrorCollector):
         license_files = project.get("license-files")
         if license_files is None:
             return None
-        if self.ensure_list(license_files, "project.license-files") is None:
+        if self.ensure_list(license_files) is None:
             return None
 
         return list(self._get_files_from_globs(project_dir, license_files))
 
     def get_readme(  # noqa: C901
-        self, project: ProjectTable, project_dir: pathlib.Path
+        self, project: dict[str, Any], project_dir: pathlib.Path
     ) -> Readme | None:
         """Get the text of the readme from the project table.
 
@@ -258,20 +227,18 @@ class PyProjectReader(ErrorCollector):
 
             content_type_raw = readme.get("content-type")
             if content_type_raw is not None:
-                content_type = self.ensure_str(
-                    content_type_raw, "project.readme.content-type"
-                )
+                content_type = self.ensure_str(content_type_raw)
                 if content_type is None:
                     return None
             filename_raw = readme.get("file")
             if filename_raw is not None:
-                filename = self.ensure_str(filename_raw, "project.readme.file")
+                filename = self.ensure_str(filename_raw)
                 if filename is None:
                     return None
 
             text_raw = readme.get("text")
             if text_raw is not None:
-                text = self.ensure_str(text_raw, "project.readme.text")
+                text = self.ensure_str(text_raw)
                 if text is None:
                     return None
 
@@ -284,8 +251,6 @@ class PyProjectReader(ErrorCollector):
                 self.config_error(msg, key="project.readme.content-type")
                 return None
         else:
-            msg = "Field {key} has an invalid type, expecting either a string or table of strings"
-            self.config_error(msg, key="project.readme", got_type=type(readme))
             return None
 
         if filename:
@@ -299,14 +264,12 @@ class PyProjectReader(ErrorCollector):
         assert text is not None
         return Readme(text, file, content_type)
 
-    def get_dependencies(self, project: ProjectTable) -> list[Requirement]:
+    def get_dependencies(self, project: dict[str, Any]) -> list[Requirement]:
         """Get the dependencies from the project table."""
         requirement_strings: list[str] | None = None
         requirement_strings_raw = project.get("dependencies")
         if requirement_strings_raw is not None:
-            requirement_strings = self.ensure_list(
-                requirement_strings_raw, "project.dependencies"
-            )
+            requirement_strings = self.ensure_list(requirement_strings_raw)
         if requirement_strings is None:
             return []
 
@@ -322,7 +285,7 @@ class PyProjectReader(ErrorCollector):
 
     def get_optional_dependencies(
         self,
-        project: ProjectTable,
+        project: dict[str, Any],
     ) -> dict[str, list[Requirement]]:
         """Get the optional dependencies from the project table."""
         val = project.get("optional-dependencies")
@@ -331,30 +294,14 @@ class PyProjectReader(ErrorCollector):
 
         requirements_dict: dict[str, list[Requirement]] = {}
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a table of PEP 508 requirement strings"
-            self.config_error(
-                msg, key="project.optional-dependencies", got_type=type(val)
-            )
             return {}
         for extra, requirements in val.copy().items():
             assert isinstance(extra, str)
             if not isinstance(requirements, list):
-                msg = "Field {key} has an invalid type, expecting a table of PEP 508 requirement strings"
-                self.config_error(
-                    msg,
-                    key=f"project.optional-dependencies.{extra}",
-                    got_type=type(requirements),
-                )
                 return {}
             requirements_dict[extra] = []
             for req in requirements:
                 if not isinstance(req, str):
-                    msg = "Field {key} has an invalid type, expecting a PEP 508 requirement string"
-                    self.config_error(
-                        msg,
-                        key=f"project.optional-dependencies.{extra}",
-                        got_type=type(req),
-                    )
                     return {}
                 try:
                     requirements_dict[extra].append(
@@ -374,14 +321,12 @@ class PyProjectReader(ErrorCollector):
                     return {}
         return dict(requirements_dict)
 
-    def get_entrypoints(self, project: ProjectTable) -> dict[str, dict[str, str]]:
+    def get_entrypoints(self, project: dict[str, Any]) -> dict[str, dict[str, str]]:
         """Get the entrypoints from the project table."""
-        val = project.get("entry-points", None)
+        val = project.get("entry-points")
         if val is None:
             return {}
         if not isinstance(val, dict):
-            msg = "Field {key} has an invalid type, expecting a table of entrypoint sections"
-            self.config_error(msg, key="project.entry-points", got_type=type(val))
             return {}
         for section, entrypoints in val.items():
             assert isinstance(section, str)
@@ -393,42 +338,19 @@ class PyProjectReader(ErrorCollector):
                 self.config_error(msg, key="project.entry-points", got=section)
                 return {}
             if not isinstance(entrypoints, dict):
-                msg = (
-                    "Field {key} has an invalid type, expecting a table of entrypoints"
-                )
-                self.config_error(
-                    msg,
-                    key=f"project.entry-points.{section}",
-                    got_type=type(entrypoints),
-                )
                 return {}
             for name, entrypoint in entrypoints.items():
                 assert isinstance(name, str)
                 if not isinstance(entrypoint, str):
-                    msg = "Field {key} has an invalid type, expecting a string"
-                    self.config_error(
-                        msg,
-                        key=f"project.entry-points.{section}.{name}",
-                        got_type=type(entrypoint),
-                    )
                     return {}
         return val
 
-    def get_dynamic(self, project: ProjectTable) -> list[Dynamic]:
+    def get_dynamic(self, project: dict[str, Any]) -> list[str]:
         """Get the dynamic fields from the project table.
 
         Returns an empty list if the field is not present or if an error occurred.
         """
-        dynamic = project.get("dynamic", [])
-
-        self.ensure_list(dynamic, "project.dynamic")
-
-        if "name" in dynamic:
-            msg = "Unsupported field 'name' in {key}"
-            self.config_error(msg, key="project.dynamic")
-            return []
-
-        return dynamic
+        return self.ensure_list(project.get("dynamic", [])) or []
 
     def _get_files_from_globs(
         self, project_dir: pathlib.Path, globs: Iterable[str]
