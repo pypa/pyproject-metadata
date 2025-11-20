@@ -243,6 +243,17 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
         error_collector.error(ConfigurationError(msg, key=prefix))
 
 
+@validate_via_prefix.register(r"project\.version")
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, str):
+        return
+    try:
+        packaging.version.Version(data)
+    except packaging.version.InvalidVersion:
+        msg = f'Field "{prefix}" is an invalid PEP 440 version string (got {data!r})'
+        error_collector.error(ConfigurationError(msg, key=prefix))
+
+
 @validate_via_prefix.register(
     r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]"
 )
