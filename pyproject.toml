@@ -84,7 +84,7 @@ ignore = [
   "D200",    # Don't force single line docstring (for now)
   "D205",    # Some of our summaries are more than a line (for now)
 ]
-flake8-builtins.ignorelist = ["copyright"]
+flake8-builtins.ignorelist = ["copyright", "license"]
 pydocstyle.convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
