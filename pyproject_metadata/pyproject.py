@@ -246,11 +246,8 @@ class PyProjectReader(ErrorCollector):
 
         requirements: list[Requirement] = []
         try:
-            for req in requirement_strings:
-                requirements.append(packaging.requirements.Requirement(req))
-        except packaging.requirements.InvalidRequirement as e:
-            msg = "Field {key} contains an invalid PEP 508 requirement string {req!r} ({error!r})"
-            self.config_error(msg, key="project.dependencies", req=req, error=e)
+            requirements.extend(packaging.requirements.Requirement(req) for req in requirement_strings)
+        except packaging.requirements.InvalidRequirement:
             return []
         return requirements
 
@@ -278,17 +275,7 @@ class PyProjectReader(ErrorCollector):
                     requirements_dict[extra].append(
                         packaging.requirements.Requirement(req)
                     )
-                except packaging.requirements.InvalidRequirement as e:
-                    msg = (
-                        "Field {key} contains "
-                        "an invalid PEP 508 requirement string {req!r} ({error!r})"
-                    )
-                    self.config_error(
-                        msg,
-                        key=f"project.optional-dependencies.{extra}",
-                        req=req,
-                        error=e,
-                    )
+                except packaging.requirements.InvalidRequirement:
                     return {}
         return dict(requirements_dict)
 
