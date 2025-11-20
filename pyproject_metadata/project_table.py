@@ -160,7 +160,7 @@ T = typing.TypeVar("T")
 
 
 @keydispatch
-def validate_typed_dict(
+def validate_via_prefix(
     prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector
 ) -> None:
     """
@@ -168,7 +168,7 @@ def validate_typed_dict(
     """
 
 
-@validate_typed_dict.register("project")
+@validate_via_prefix.register("project")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     with error_collector.collect():
         if "name" not in data:
@@ -176,8 +176,8 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
             raise ConfigurationError(msg, key=f"{prefix}.name")
 
 
-@validate_typed_dict.register("project.authors[]")
-@validate_typed_dict.register("project.maintainers[]")
+@validate_via_prefix.register("project.authors[]")
+@validate_via_prefix.register("project.maintainers[]")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     with error_collector.collect():
         if "name" not in data and "email" not in data:
@@ -192,7 +192,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
             raise ConfigurationError(msg, key=prefix)
 
 
-@validate_typed_dict.register("project.license")
+@validate_via_prefix.register("project.license")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     with error_collector.collect():
         if len({"text", "file"} & set(data.keys())) != 1:
@@ -207,7 +207,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
             raise ConfigurationError(msg, key=prefix)
 
 
-@validate_typed_dict.register("project.readme")
+@validate_via_prefix.register("project.readme")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     with error_collector.collect():
         extra_keys = set(data.keys()) - {"file", "text", "content-type"}
@@ -226,7 +226,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
 
 
 def _cast_typed_dict(
-    cls: type[Any], data: object, prefix: str, *, collect_errors: bool
+    cls: type[Any], data: object, prefix: str, error_collector: SimpleErrorCollector
 ) -> None:
     """
     Runtime cast for TypedDicts.
@@ -236,8 +236,7 @@ def _cast_typed_dict(
         raise ConfigurationTypeError(msg, key=prefix)
 
     hints = typing.get_type_hints(cls)
-    error_collector = SimpleErrorCollector(collect_errors=collect_errors)
-    validate_typed_dict(prefix, data, error_collector)
+    validate_via_prefix(prefix, data, error_collector)
     for key, typ in hints.items():
         if key in data:
             new_prefix = prefix + f".{key}" if prefix else key
@@ -246,25 +245,29 @@ def _cast_typed_dict(
                     typ,
                     data[key],
                     new_prefix,
-                    collect_errors=collect_errors,
+                    error_collector,
                 )
         # Required keys could be enforced here on 3.11+ eventually
-    error_collector.finalize(f'Errors in "{prefix}"')
 
 
 def _cast_literal(
     args: tuple[type[Any], ...],
     data: object,
     prefix: str,
+    error_collector: SimpleErrorCollector,
 ) -> None:
-    if data not in args:
-        arg_names = ", ".join(repr(a) for a in args)
-        msg = f'Field "{prefix}" expected one of {arg_names} (got {data!r})'
-        raise ConfigurationTypeError(msg, key=prefix)
+    with error_collector.collect():
+        if data not in args:
+            arg_names = ", ".join(repr(a) for a in args)
+            msg = f'Field "{prefix}" expected one of {arg_names} (got {data!r})'
+            raise ConfigurationTypeError(msg, key=prefix)
 
 
 def _cast_list(
-    args: tuple[type[Any], ...], data: object, prefix: str, *, collect_errors: bool
+    args: tuple[type[Any], ...],
+    data: object,
+    prefix: str,
+    error_collector: SimpleErrorCollector,
 ) -> None:
     """
     Runtime cast for List types.
@@ -273,19 +276,16 @@ def _cast_list(
     if not isinstance(data, list):
         msg = f'Field "{prefix}" has an invalid type, expecting list[{get_name(item_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
-    error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     for index, item in enumerate(data):
         with error_collector.collect():
-            _cast(item_type, item, prefix + f"[{index}]", collect_errors=collect_errors)
-    error_collector.finalize(f'Errors in "{prefix}"')
+            _cast(item_type, item, prefix + f"[{index}]", error_collector)
 
 
 def _cast_dict(
     args: tuple[type[Any], ...],
     data: object,
     prefix: str,
-    *,
-    collect_errors: bool,
+    error_collector: SimpleErrorCollector,
 ) -> None:
     """
     Runtime cast for Dict types.
@@ -294,15 +294,16 @@ def _cast_dict(
     if not isinstance(data, dict):
         msg = f'Field "{prefix}" has an invalid type, expecting dict[str, {get_name(value_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
-    error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     for key, value in data.items():
         with error_collector.collect():
-            _cast(value_type, value, f"{prefix}.{key}", collect_errors=collect_errors)
-    error_collector.finalize(f'Errors in "{prefix}"')
+            _cast(value_type, value, f"{prefix}.{key}", error_collector)
 
 
 def _cast_union(
-    args: tuple[type[Any], ...], data: object, prefix: str, *, collect_errors: bool
+    args: tuple[type[Any], ...],
+    data: object,
+    prefix: str,
+    error_collector: SimpleErrorCollector,
 ) -> None:
     """
     Runtime cast for Union types.
@@ -315,15 +316,19 @@ def _cast_union(
         if arg is str and isinstance(data, str):
             return
         if (arg is dict or is_typed_dict(arg)) and isinstance(data, dict):
-            _cast(arg, data, prefix, collect_errors=collect_errors)
+            _cast(arg, data, prefix, error_collector)
             return
+    # No variant matched, raise a union type error
     arg_names = " | ".join(get_name(a) for a in args)
     msg = f'Field "{prefix}" does not match any of: {arg_names} (got {get_name(type(data))})'
     raise ConfigurationTypeError(msg, key=prefix)
 
 
 def _cast(
-    type_hint: type[Any], data: object, prefix: str, *, collect_errors: bool
+    type_hint: type[Any],
+    data: object,
+    prefix: str,
+    error_collector: SimpleErrorCollector,
 ) -> None:
     """
     Runtime cast for types.
@@ -336,7 +341,7 @@ def _cast(
 
     # TypedDict
     if is_typed_dict(type_hint):
-        _cast_typed_dict(type_hint, data, prefix, collect_errors=collect_errors)
+        _cast_typed_dict(type_hint, data, prefix, error_collector)
         return
 
     origin = typing.get_origin(type_hint)
@@ -346,20 +351,19 @@ def _cast(
     # Special case Required, needed on 3.10 and older
     if origin is Required:
         (inner_type_hint,) = args
-        _cast(inner_type_hint, data, prefix, collect_errors=collect_errors)
+        _cast(inner_type_hint, data, prefix, error_collector)
     elif origin is typing.Literal:
-        _cast_literal(args, data, prefix)
+        _cast_literal(args, data, prefix, error_collector)
     elif origin is list:
-        _cast_list(args, data, prefix, collect_errors=collect_errors)
+        _cast_list(args, data, prefix, error_collector)
     elif origin is dict:
-        _cast_dict(args, data, prefix, collect_errors=collect_errors)
+        _cast_dict(args, data, prefix, error_collector)
     elif origin is typing.Union:
-        _cast_union(args, data, prefix, collect_errors=collect_errors)
-    elif isinstance(data, origin or type_hint):
-        return
-    else:
-        msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
-        raise ConfigurationTypeError(msg, key=prefix)
+        _cast_union(args, data, prefix, error_collector)
+    elif not isinstance(data, origin or type_hint):
+        with error_collector.collect():
+            msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
+            raise ConfigurationTypeError(msg, key=prefix)
 
 
 def to_project_table(
@@ -374,8 +378,7 @@ def to_project_table(
     """
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     # Handling Required here
-    with error_collector.collect():
-        _cast(PyProjectTable, data, "", collect_errors=collect_errors)
+    _cast(PyProjectTable, data, "", error_collector)
     error_collector.finalize('Errors in "pyproject.toml"')
 
     return typing.cast("PyProjectTable", data)
