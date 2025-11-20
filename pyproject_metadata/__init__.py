@@ -436,16 +436,11 @@ class StandardMetadata:
         if raw_version is not None:
             version_string = pyproject.ensure_str(raw_version)
             if version_string is not None:
-                try:
+                with contextlib.suppress(packaging.version.InvalidVersion):
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
-                    )
-                except packaging.version.InvalidVersion:
-                    msg = "Invalid {key} value, expecting a valid PEP 440 version"
-                    pyproject.config_error(
-                        msg, key="project.version", got=version_string
                     )
         elif "version" not in dynamic:
             msg = (

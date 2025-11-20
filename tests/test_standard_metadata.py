@@ -123,7 +123,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 name = "test"
                 version = "0.1.0-extra"
             """,
-            "Invalid \"project.version\" value, expecting a valid PEP 440 version (got '0.1.0-extra')",
+            "Field \"project.version\" is an invalid PEP 440 version string (got '0.1.0-extra')",
             id="Invalid version value",
         ),
         pytest.param(
