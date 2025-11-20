@@ -23,6 +23,7 @@ from typing import (
 )
 
 import packaging.requirements
+import packaging.specifiers
 
 from ._dispatch import get_name, is_typed_dict, keydispatch
 from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
@@ -266,6 +267,17 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
                 f" only alphanumeric, underscore, or dot characters (got {name!r})"
             )
             error_collector.error(ConfigurationTypeError(msg, key=prefix))
+
+
+@validate_via_prefix.register(r"project\.requires-python")
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, str):
+        return
+    try:
+        packaging.specifiers.SpecifierSet(data)
+    except packaging.specifiers.InvalidSpecifier:
+        msg = f'Field "{prefix}" is an invalid Python version specifier string (got {data!r})'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
 
 def _cast_typed_dict(

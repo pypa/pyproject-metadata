@@ -65,6 +65,8 @@ if typing.TYPE_CHECKING:
 
     from .project_table import Dynamic
 
+import contextlib
+
 import packaging.markers
 import packaging.specifiers
 import packaging.utils
@@ -466,14 +468,9 @@ class StandardMetadata:
         if requires_python_raw is not None:
             requires_python_string = pyproject.ensure_str(requires_python_raw)
             if requires_python_string is not None:
-                try:
+                with contextlib.suppress(packaging.specifiers.InvalidSpecifier):
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
-                    )
-                except packaging.specifiers.InvalidSpecifier:
-                    msg = "Invalid {key} value, expecting a valid specifier set"
-                    pyproject.config_error(
-                        msg, key="project.requires-python", got=requires_python_string
                     )
 
         self = None
