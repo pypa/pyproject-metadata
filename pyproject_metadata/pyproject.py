@@ -100,7 +100,7 @@ class PyProjectReader(ErrorCollector):
                 return None
         return val
 
-    def ensure_people(self, val: object, key: str) -> list[tuple[str, str | None]]:
+    def ensure_people(self, val: object) -> list[tuple[str, str | None]]:
         """Ensure that a value is a list of tables with optional "name" and "email" keys."""
         if not isinstance(val, list):
             return []
@@ -132,21 +132,11 @@ class PyProjectReader(ErrorCollector):
         else:
             return None
 
-        for field in _license:
-            if field not in ("file", "text"):
-                msg = "Unexpected field {key}"
-                self.config_error(msg, key=f"project.license.{field}")
-                return None
-
         file: pathlib.Path | None = None
         filename = _license.get("file")
         text = _license.get("text")
 
         if (filename and text) or (not filename and not text):
-            msg = (
-                'Invalid {key} contents, expecting a string or one key "file" or "text"'
-            )
-            self.config_error(msg, key="project.license", got=_license)
             return None
 
         if filename:
