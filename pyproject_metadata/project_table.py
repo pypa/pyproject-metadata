@@ -170,59 +170,51 @@ def validate_via_prefix(
 
 @validate_via_prefix.register("project")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
-    with error_collector.collect():
-        if "name" not in data:
-            msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
-            raise ConfigurationError(msg, key=f"{prefix}.name")
+    if "name" not in data:
+        msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
+        error_collector.error(ConfigurationError(msg, key=f"{prefix}.name"))
 
 
 @validate_via_prefix.register("project.authors[]")
 @validate_via_prefix.register("project.maintainers[]")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
-    with error_collector.collect():
-        if "name" not in data and "email" not in data:
-            msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
-            raise ConfigurationError(msg, key=prefix)
+    if "name" not in data and "email" not in data:
+        msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
-    with error_collector.collect():
-        extra_keys = set(data.keys()) - {"name", "email"}
-        if extra_keys:
-            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-            raise ConfigurationError(msg, key=prefix)
+    extra_keys = set(data.keys()) - {"name", "email"}
+    if extra_keys:
+        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
 
 @validate_via_prefix.register("project.license")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
-    with error_collector.collect():
-        if len({"text", "file"} & set(data.keys())) != 1:
-            msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
-            raise ConfigurationError(msg, key=prefix)
+    if len({"text", "file"} & set(data.keys())) != 1:
+        msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
-    with error_collector.collect():
-        extra_keys = set(data.keys()) - {"text", "file"}
-        if extra_keys:
-            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-            raise ConfigurationError(msg, key=prefix)
+    extra_keys = set(data.keys()) - {"text", "file"}
+    if extra_keys:
+        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
 
 @validate_via_prefix.register("project.readme")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
-    with error_collector.collect():
-        extra_keys = set(data.keys()) - {"file", "text", "content-type"}
-        if extra_keys:
-            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-            raise ConfigurationError(msg, key=prefix)
-    with error_collector.collect():
-        if len({"file", "text"} & set(data.keys())) != 1:
-            msg = f'Field "{prefix}" must have exactly one of "file" or "text" keys'
-            raise ConfigurationError(msg, key=prefix)
-    with error_collector.collect():
-        if "content-type" not in data:
-            msg = f'Field "{prefix}" is missing required key "content-type"'
-            raise ConfigurationError(msg, key=prefix)
+    extra_keys = set(data.keys()) - {"file", "text", "content-type"}
+    if extra_keys:
+        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+        error_collector.error(ConfigurationError(msg, key=prefix))
+    if len({"file", "text"} & set(data.keys())) != 1:
+        msg = f'Field "{prefix}" must have exactly one of "file" or "text" keys'
+        error_collector.error(ConfigurationError(msg, key=prefix))
+    if "content-type" not in data:
+        msg = f'Field "{prefix}" is missing required key "content-type"'
+        error_collector.error(ConfigurationError(msg, key=prefix))
 
 
 def _cast_typed_dict(
@@ -248,6 +240,7 @@ def _cast_typed_dict(
                     error_collector,
                 )
         # Required keys could be enforced here on 3.11+ eventually
+        # instead of in the validators
 
 
 def _cast_literal(
@@ -256,11 +249,10 @@ def _cast_literal(
     prefix: str,
     error_collector: SimpleErrorCollector,
 ) -> None:
-    with error_collector.collect():
-        if data not in args:
-            arg_names = ", ".join(repr(a) for a in args)
-            msg = f'Field "{prefix}" expected one of {arg_names} (got {data!r})'
-            raise ConfigurationTypeError(msg, key=prefix)
+    if data not in args:
+        arg_names = ", ".join(repr(a) for a in args)
+        msg = f'Field "{prefix}" expected one of {arg_names} (got {data!r})'
+        error_collector.error(ConfigurationTypeError(msg, key=prefix))
 
 
 def _cast_list(
@@ -269,9 +261,6 @@ def _cast_list(
     prefix: str,
     error_collector: SimpleErrorCollector,
 ) -> None:
-    """
-    Runtime cast for List types.
-    """
     (item_type,) = args
     if not isinstance(data, list):
         msg = f'Field "{prefix}" has an invalid type, expecting list[{get_name(item_type)}] (got {get_name(type(data))})'
@@ -287,9 +276,6 @@ def _cast_dict(
     prefix: str,
     error_collector: SimpleErrorCollector,
 ) -> None:
-    """
-    Runtime cast for Dict types.
-    """
     _, value_type = args
     if not isinstance(data, dict):
         msg = f'Field "{prefix}" has an invalid type, expecting dict[str, {get_name(value_type)}] (got {get_name(type(data))})'
@@ -333,7 +319,9 @@ def _cast(
     """
     Runtime cast for types.
 
-    Just enough to cover the dicts above (not general or public).
+    Just enough to cover the dicts above (not general or public). Calls validators as well.
+    This may raise ConfigurationError even when the error collector is collecting; this is used
+    to short-circuit further validation when the type is wrong.
     """
     # Any accepts everything, so no validation
     if type_hint is Any:  # type: ignore[comparison-overlap]
@@ -361,9 +349,8 @@ def _cast(
     elif origin is typing.Union:
         _cast_union(args, data, prefix, error_collector)
     elif not isinstance(data, origin or type_hint):
-        with error_collector.collect():
-            msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
-            raise ConfigurationTypeError(msg, key=prefix)
+        msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
+        error_collector.error(ConfigurationTypeError(msg, key=prefix))
 
 
 def to_project_table(
@@ -377,8 +364,8 @@ def to_project_table(
     the ConfigurationTypeError found.
     """
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
-    # Handling Required here
-    _cast(PyProjectTable, data, "", error_collector)
+    with error_collector.collect():
+        _cast(PyProjectTable, data, "", error_collector)
     error_collector.finalize('Errors in "pyproject.toml"')
 
     return typing.cast("PyProjectTable", data)
