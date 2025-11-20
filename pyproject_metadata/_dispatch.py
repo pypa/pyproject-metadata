@@ -13,17 +13,18 @@ from typing import Callable, Generic
 
 if sys.version_info < (3, 10):
     if typing.TYPE_CHECKING:
-        from typing_extensions import ParamSpec
+        from typing_extensions import Concatenate, ParamSpec
     else:
         ParamSpec = typing.TypeVar
+        Concatenate = object
 else:
-    from typing import ParamSpec
+    from typing import Concatenate, ParamSpec
 
 
 __all__ = [
     "get_name",
     "is_typed_dict",
-    "valuedispatch",
+    "keydispatch",
 ]
 
 
@@ -33,35 +34,43 @@ def __dir__() -> list[str]:
 
 P = ParamSpec("P")
 R = typing.TypeVar("R")
+T = typing.TypeVar("T")
+
+REMOVE_DIGITS = str.maketrans("", "", "0123456789")
 
 
-class ValueDispatcher(Generic[P, R]):
-    def __init__(self, func: Callable[P, R]) -> None:
-        self.default: Callable[P, R] = func
-        self.registry: dict[object, Callable[P, R]] = {}
+class KeyDispatcher(Generic[P, R]):
+    def __init__(self, func: Callable[Concatenate[str, P], R]) -> None:
+        self.default: Callable[Concatenate[str, P], R] = func
+        self.registry: dict[str, Callable[Concatenate[str, P], R]] = {}
         functools.update_wrapper(self, func)
 
-    def register(self, value: object) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def register(
+        self, value: str
+    ) -> Callable[[Callable[Concatenate[str, P], R]], Callable[Concatenate[str, P], R]]:
         """Register a function for an exact value."""
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[Concatenate[str, P], R],
+        ) -> Callable[Concatenate[str, P], R]:
             self.registry[value] = func
             return func
 
         return decorator
 
-    def dispatch(self, value: object) -> Callable[P, R]:
+    def dispatch(self, value: str) -> Callable[Concatenate[str, P], R]:
         """Return the registered implementation or the default."""
-        return self.registry.get(value, self.default)
+        result = value.translate(REMOVE_DIGITS)
+        return self.registry.get(result, self.default)
 
-    def __call__(self, value: object, *args: P.args, **kwargs: P.kwargs) -> R:
+    def __call__(self, value: str, *args: P.args, **kwargs: P.kwargs) -> R:
         impl = self.dispatch(value)
-        return impl(*args, **kwargs)
+        return impl(value, *args, **kwargs)
 
 
-def valuedispatch(func: Callable[P, R]) -> ValueDispatcher[P, R]:
-    """Decorate a function into a ValueDispatcher."""
-    return ValueDispatcher(func)
+def keydispatch(func: Callable[Concatenate[str, P], R]) -> KeyDispatcher[P, R]:
+    """Decorate a function into a KeyDispatcher."""
+    return KeyDispatcher(func)
 
 
 def is_typed_dict(type_hint: object) -> bool:
