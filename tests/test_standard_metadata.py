@@ -558,10 +558,24 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             (
-                'Field "project.maintainers" has an invalid type, expecting a list of '
-                'tables containing the "name" and/or "email" keys (got list with dict with extra keys "other")'
+                'Field "project.maintainers[0]" contains unexpected keys: "other"'
             ),
             id="Invalid maintainers nested type with extra key",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                maintainers = [
+                    {name = "me", email = "one@two.com"},
+                    {}
+                ]
+            """,
+            (
+                'Field "project.maintainers[1]" must have at least one of "name" or "email" keys'
+            ),
+            id="Invalid maintainers empty",
         ),
         pytest.param(
             """
