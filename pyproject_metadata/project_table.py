@@ -21,6 +21,8 @@ from typing import (
     Union,
 )
 
+import packaging.requirements
+
 from ._dispatch import get_name, is_typed_dict, keydispatch
 from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
 
@@ -226,6 +228,15 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
         msg = f'Field "{prefix}" is missing required key "content-type"'
         error_collector.error(ConfigurationError(msg, key=prefix))
 
+@validate_via_prefix.register(r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]")
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, str):
+        return
+    try:
+        packaging.requirements.Requirement(data)
+    except packaging.requirements.InvalidRequirement as exc:
+            msg = f'Field "{prefix}" is an invalid PEP 508 requirement string {data!r} ({exc!r})'
+            error_collector.error(ConfigurationError(msg, key=prefix))
 
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, error_collector: SimpleErrorCollector
@@ -362,9 +373,12 @@ def _cast(
     elif origin is typing.Union:
         # A union does not run the validator, the selected branch will
         _cast_union(args, data, prefix, error_collector)
-    elif not isinstance(data, origin or type_hint):
+    elif isinstance(data, origin or type_hint):
+        validate_via_prefix(prefix, data, error_collector)
+    else:
         msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
         error_collector.error(ConfigurationTypeError(msg, key=prefix))
+    
 
 
 def to_project_table(
