@@ -243,7 +243,11 @@ def _validate_import_names(
     """
     Return normalized names for comparisons.
     """
+    if not isinstance(names, list):
+        return
     for fullname in names:
+        if not isinstance(fullname, str):
+            continue
         name, simicolon, private = fullname.partition(";")
         if simicolon and private.lstrip() != "private":
             msg = "{key} contains an ending tag other than '; private', got {value!r}"
@@ -468,30 +472,37 @@ class StandardMetadata:
                         requires_python_string
                     )
 
+        authors = pyproject.ensure_people(project.get("authors", []))
+        maintainers = pyproject.ensure_people(project.get("maintainers", []))
+        license = pyproject.get_license(project, project_dir)
+        license_files = pyproject.get_license_files(project, project_dir)
+        readme = pyproject.get_readme(project, project_dir)
+        dependencies = pyproject.get_dependencies(project)
+        optional_dependencies = pyproject.get_optional_dependencies(project)
+        entrypoints = pyproject.get_entrypoints(project)
+
         self = None
         with pyproject.collect():
             self = cls(
                 name=name,
                 version=version,
                 description=description,
-                license=pyproject.get_license(project, project_dir),
-                license_files=pyproject.get_license_files(project, project_dir),
-                readme=pyproject.get_readme(project, project_dir),
+                license=license,
+                license_files=license_files,
+                readme=readme,
                 requires_python=requires_python,
-                dependencies=pyproject.get_dependencies(project),
-                optional_dependencies=pyproject.get_optional_dependencies(project),
-                entrypoints=pyproject.get_entrypoints(project),
-                authors=pyproject.ensure_people(project.get("authors", [])),
-                maintainers=pyproject.ensure_people(project.get("maintainers", [])),
-                urls=pyproject.ensure_dict(project.get("urls", {})) or {},
-                classifiers=pyproject.ensure_list(project.get("classifiers", [])) or [],
-                keywords=pyproject.ensure_list(project.get("keywords", [])) or [],
-                scripts=pyproject.ensure_dict(project.get("scripts", {})) or {},
-                gui_scripts=pyproject.ensure_dict(project.get("gui-scripts", {})) or {},
-                import_names=pyproject.ensure_list(project.get("import-names", None)),
-                import_namespaces=pyproject.ensure_list(
-                    project.get("import-namespaces", None)
-                ),
+                dependencies=dependencies,
+                optional_dependencies=optional_dependencies,
+                entrypoints=entrypoints,
+                authors=authors,
+                maintainers=maintainers,
+                urls=project.get("urls", {}),
+                classifiers=project.get("classifiers", []),
+                keywords=project.get("keywords", []),
+                scripts=project.get("scripts", {}),
+                gui_scripts=project.get("gui-scripts", {}),
+                import_names=project.get("import-names", None),
+                import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,  # type: ignore[arg-type]
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
