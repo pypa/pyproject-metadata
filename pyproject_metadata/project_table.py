@@ -10,9 +10,27 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 
 from __future__ import annotations
 
+import functools
 import sys
 import typing
-from typing import Any, Dict, List, Literal, TypedDict, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Literal,
+    TypedDict,
+    Union,
+)
+
+if sys.version_info < (3, 10):
+    if typing.TYPE_CHECKING:
+        from typing_extensions import ParamSpec
+    else:
+        ParamSpec = typing.TypeVar
+else:
+    from typing import ParamSpec
 
 from .errors import ConfigurationTypeError, SimpleErrorCollector
 
@@ -151,6 +169,55 @@ PyProjectTable = TypedDict(
 T = typing.TypeVar("T")
 
 
+P = ParamSpec("P")
+R = typing.TypeVar("R")
+
+
+class ValueDispatcher(Generic[P, R]):
+    def __init__(self, func: Callable[P, R]) -> None:
+        self.default: Callable[P, R] = func
+        self.registry: dict[type[Any], Callable[P, R]] = {}
+        functools.update_wrapper(self, func)
+
+    def register(self, value: type[Any]) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Register a function for an exact value."""
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            self.registry[value] = func
+            return func
+
+        return decorator
+
+    def dispatch(self, value: type[Any]) -> Callable[P, R]:
+        """Return the registered implementation or the default."""
+        return self.registry.get(value, self.default)
+
+    def __call__(self, value: type[Any], *args: P.args, **kwargs: P.kwargs) -> R:
+        impl = self.dispatch(value)
+        return impl(*args, **kwargs)
+
+
+def valuedispatch(func: Callable[P, R]) -> ValueDispatcher[P, R]:
+    """Decorate a function into a ValueDispatcher."""
+    return ValueDispatcher(func)
+
+
+@valuedispatch
+def validate_typed_dict(data: dict[str, Any], prefix: str) -> None:
+    """
+    Validate a TypedDict at runtime.
+
+    This is the default implementation that does nothing.
+    """
+
+
+@validate_typed_dict.register(ProjectTable)
+def _(data: dict[str, Any], prefix: str) -> None:
+    if "name" not in data:
+        msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
+        raise ConfigurationTypeError(msg, key=f"{prefix}.name")
+
+
 def _is_typed_dict(type_hint: object) -> bool:
     if sys.version_info >= (3, 10):
         return typing.is_typeddict(type_hint)
@@ -183,11 +250,14 @@ def _cast_typed_dict(
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     for key, typ in hints.items():
         if key in data:
+            new_prefix = prefix + f".{key}" if prefix else key
+            with error_collector.collect():
+                validate_typed_dict(typ, data[key], new_prefix)
             with error_collector.collect():
                 _cast(
                     typ,
                     data[key],
-                    prefix + f".{key}" if prefix else key,
+                    new_prefix,
                     collect_errors=collect_errors,
                 )
         # Required keys could be enforced here on 3.11+ eventually
@@ -314,11 +384,6 @@ def to_project_table(
     """
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     # Handling Required here
-    name = data.get("project", {"name": ""}).get("name")
-    with error_collector.collect():
-        if name is None:
-            msg = 'Field "project.name" is required if "project" is present'
-            raise ConfigurationTypeError(msg, key="project.name")
     with error_collector.collect():
         _cast(PyProjectTable, data, "", collect_errors=collect_errors)
     error_collector.finalize('Errors in "pyproject.toml"')
