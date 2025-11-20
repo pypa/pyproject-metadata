@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-This module focues on reading pyproject.toml fields with error collection. It is
+This module focuses on reading pyproject.toml fields with error collection. It is
 mostly internal, except for License and Readme classes, which are re-exported in
 the top-level package.
 """
