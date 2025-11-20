@@ -105,14 +105,16 @@ class SimpleErrorCollector:
             raise ExceptionGroup(msg, self.errors)
 
     @contextlib.contextmanager
-    def collect(self) -> typing.Generator[None, None, None]:
+    def collect(
+        self, err_cls: type[Exception] = Exception
+    ) -> typing.Generator[None, None, None]:
         """Collect errors into the error list. Must be inside loops."""
         if self.collect_errors:
             try:
                 yield
             except ExceptionGroup as error:
                 self.errors.extend(error.exceptions)
-            except Exception as error:  # noqa: BLE001
+            except err_cls as error:
                 self.errors.append(error)
         else:
             yield
