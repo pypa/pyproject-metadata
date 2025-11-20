@@ -696,6 +696,19 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
         pytest.param(
             """
                 [project]
+                name = "test"
+                version = "0.1.0"
+                [project.entry-points.bad-name]
+            """,
+            (
+                'Field "project.entry-points" has an invalid key, expecting a key containing only '
+                "alphanumeric, underscore, or dot characters (got 'bad-name')"
+            ),
+            id="Invalid entry-points name",
+        ),
+        pytest.param(
+            """
+                [project]
                 name = ".test"
                 version = "0.1.0"
             """,
@@ -704,19 +717,6 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 "numbers, period, underscore and hyphen. It must start and end with a letter or number"
             ),
             id="Invalid project name",
-        ),
-        pytest.param(
-            """
-                [project]
-                name = "test"
-                version = "0.1.0"
-                [project.entry-points.bad-name]
-            """,
-            (
-                'Field "project.entry-points" has an invalid value, expecting a name containing only '
-                "alphanumeric, underscore, or dot characters (got 'bad-name')"
-            ),
-            id="Invalid entry-points name",
         ),
         # both license files and classic license are not allowed
         pytest.param(
@@ -997,9 +997,9 @@ def test_load(
             """,
             [
                 'Field "project.license-files[0]" has an invalid type, expecting str (got int)',
+                "Field \"project.entry-points\" has an invalid key, expecting a key containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
                 "Extra keys present in \"project\": 'not-valid', 'other-entry'",
                 "Could not infer content type for readme file 'README.jpg'",
-                "Field \"project.entry-points\" has an invalid value, expecting a name containing only alphanumeric, underscore, or dot characters (got 'bad-name')",
             ],
             id="Four errors including extra keys",
         ),
