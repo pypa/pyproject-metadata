@@ -10,6 +10,7 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 
 from __future__ import annotations
 
+import re
 import sys
 import typing
 from typing import (
@@ -53,6 +54,9 @@ __all__ = [
     "ReadmeTable",
     "to_project_table",
 ]
+
+
+VALID_ENTRY_POINT = re.compile(r"^\w+(\.\w+)*$")
 
 
 def __dir__() -> list[str]:
@@ -161,6 +165,15 @@ PyProjectTable = TypedDict(
 T = typing.TypeVar("T")
 
 
+def join(prefix: str, name: str) -> str:
+    """
+    Join a prefix and a name.
+    """
+    if not prefix:
+        return name
+    return f"{prefix}.{name!r}" if "." in name else f"{prefix}.{name}"
+
+
 @keydispatch
 def validate_via_prefix(
     prefix: str, data: object, error_collector: SimpleErrorCollector
@@ -228,15 +241,32 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
         msg = f'Field "{prefix}" is missing required key "content-type"'
         error_collector.error(ConfigurationError(msg, key=prefix))
 
-@validate_via_prefix.register(r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]")
+
+@validate_via_prefix.register(
+    r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]"
+)
 def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
     if not isinstance(data, str):
         return
     try:
         packaging.requirements.Requirement(data)
     except packaging.requirements.InvalidRequirement as exc:
-            msg = f'Field "{prefix}" is an invalid PEP 508 requirement string {data!r} ({exc!r})'
-            error_collector.error(ConfigurationError(msg, key=prefix))
+        msg = f'Field "{prefix}" is an invalid PEP 508 requirement string {data!r} ({exc!r})'
+        error_collector.error(ConfigurationError(msg, key=prefix))
+
+
+@validate_via_prefix.register(r"project\.entry-points")
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, dict):
+        return
+    for name in data:
+        if not VALID_ENTRY_POINT.fullmatch(name):
+            msg = (
+                f'Field "{prefix}" has an invalid key, expecting a key containing'
+                f" only alphanumeric, underscore, or dot characters (got {name!r})"
+            )
+            error_collector.error(ConfigurationTypeError(msg, key=prefix))
+
 
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, error_collector: SimpleErrorCollector
@@ -251,12 +281,11 @@ def _cast_typed_dict(
     hints = typing.get_type_hints(cls)
     for key, typ in hints.items():
         if key in data:
-            new_prefix = prefix + f".{key}" if prefix else key
             with error_collector.collect(ConfigurationError):
                 _cast(
                     typ,
                     data[key],
-                    new_prefix,
+                    join(prefix, key),
                     error_collector,
                 )
         # Required keys could be enforced here on 3.11+ eventually
@@ -287,7 +316,7 @@ def _cast_list(
         raise ConfigurationTypeError(msg, key=prefix)
     for index, item in enumerate(data):
         with error_collector.collect(ConfigurationError):
-            _cast(item_type, item, prefix + f"[{index}]", error_collector)
+            _cast(item_type, item, f"{prefix}[{index}]", error_collector)
 
 
 def _cast_dict(
@@ -302,7 +331,7 @@ def _cast_dict(
         raise ConfigurationTypeError(msg, key=prefix)
     for key, value in data.items():
         with error_collector.collect(ConfigurationError):
-            _cast(value_type, value, f"{prefix}.{key}", error_collector)
+            _cast(value_type, value, join(prefix, key), error_collector)
 
 
 def _cast_union(
@@ -378,7 +407,6 @@ def _cast(
     else:
         msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
         error_collector.error(ConfigurationTypeError(msg, key=prefix))
-    
 
 
 def to_project_table(
