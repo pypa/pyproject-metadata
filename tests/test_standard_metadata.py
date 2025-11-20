@@ -350,7 +350,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             (
-                'Field "project.dependencies" contains an invalid PEP 508 requirement '
+                'Field "project.dependencies[0]" is an invalid PEP 508 requirement '
                 "string 'definitely not a valid PEP 508 requirement!' "
             ),
             id="Invalid dependencies item",
@@ -409,7 +409,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 ]
             """,
             (
-                'Field "project.optional-dependencies.test" contains an invalid '
+                'Field "project.optional-dependencies.test[0]" is an invalid '
                 "PEP 508 requirement string 'definitely not a valid PEP 508 requirement!' "
             ),
             id="Invalid optional-dependencies item",
