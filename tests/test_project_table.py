@@ -147,7 +147,7 @@ def test_project_table_type_only() -> None:
 )
 def test_conversion_fn(toml_string: str) -> None:
     data = tomllib.loads(toml_string)
-    table = to_project_table(data)
+    table = to_project_table(data, collect_errors=True)
     assert table == data
 
 
@@ -158,7 +158,7 @@ def test_conversion_fn(toml_string: str) -> None:
             """
             [project]
             """,
-            'Key "project.name" is required if "project" is present',
+            'Field "project.name" is required if "project" is present',
             id="missing required project.name",
         ),
         pytest.param(
@@ -166,7 +166,7 @@ def test_conversion_fn(toml_string: str) -> None:
             [project]
             name = 123
             """,
-            '"project.name" expected str, got int',
+            'Field "project.name" has an invalid type, expecting str (got int)',
             id="bad project.name type",
         ),
         pytest.param(
@@ -179,7 +179,7 @@ def test_conversion_fn(toml_string: str) -> None:
             name = "one"
             version = "0.1.0"
             """,
-            '"build-system.requires" expected list, got str',
+            'Field "build-system.requires" has an invalid type, expecting list[str] (got str)',
             id="bad build-system.requires type",
         ),
         pytest.param(
@@ -194,7 +194,7 @@ def test_conversion_fn(toml_string: str) -> None:
             name = "one"
             version = "0.1.0"
             """,
-            '"dependency-groups.one[1]" does not match any type in str | IncludeGroupTable',
+            'Field "dependency-groups.one[1].include-group" has an invalid type, expecting str (got int)',
             id="bad nested in dictionary type",
         ),
         pytest.param(
@@ -204,7 +204,7 @@ def test_conversion_fn(toml_string: str) -> None:
             [project.license]
             text = 123
             """,
-            '"project.license" does not match any type in LicenseTable | str',
+            'Field "project.license.text" has an invalid type, expecting str (got int)',
             id="project.license.text bad nested dict type",
         ),
         pytest.param(
@@ -214,7 +214,7 @@ def test_conversion_fn(toml_string: str) -> None:
             [project.entry-points]
             console_scripts = { bad = 123 }
             """,
-            '"project.entry-points.console_scripts.bad" expected str, got int',
+            'Field "project.entry-points.console_scripts.bad" has an invalid type, expecting str (got int)',
             id="nested dicts of dicts bad type",
         ),
         pytest.param(
@@ -223,7 +223,7 @@ def test_conversion_fn(toml_string: str) -> None:
             name = "example"
             dynamic = ["notreal"]
             """,
-            '"project.dynamic[0]" expected one of',
+            'Field "project.dynamic[0]" expected one of',
             id="Invalid dynamic value",
         ),
         pytest.param(
@@ -234,7 +234,7 @@ def test_conversion_fn(toml_string: str) -> None:
             [project.optional-dependencies]
             test = "notalist"
             """,
-            '"project.optional-dependencies.test" expected list, got str',
+            'Field "project.optional-dependencies.test" has an invalid type, expecting list[str] (got str)',
             id="bad optional-dependencies type",
         ),
     ],
@@ -242,7 +242,7 @@ def test_conversion_fn(toml_string: str) -> None:
 def test_conversion_error(toml_string: str, expected_msg: str) -> None:
     data = tomllib.loads(toml_string)
     with pytest.raises(ExceptionGroup) as err:
-        to_project_table(data)
+        to_project_table(data, collect_errors=True)
     assert expected_msg in repr(err.value)
 
 
@@ -255,8 +255,8 @@ def test_conversion_error(toml_string: str, expected_msg: str) -> None:
             console_scripts = { bad = 123 }
             """,
             [
-                'Key "project.name" is required if "project" is present',
-                '"project.entry-points.console_scripts.bad" expected str, got int',
+                'Field "project.name" is required if "project" is present',
+                'Field "project.entry-points.console_scripts.bad" has an invalid type, expecting str (got int)',
             ],
             id="missing name and bad entry-point",
         ),
@@ -269,8 +269,8 @@ def test_conversion_error(toml_string: str, expected_msg: str) -> None:
             name = 123
             """,
             [
-                '"build-system.requires" expected list, got str',
-                '"project.name" expected str, got int',
+                'Field "build-system.requires" has an invalid type, expecting list[str] (got str)',
+                'Field "project.name" has an invalid type, expecting str (got int)',
             ],
             id="name and build-system.requires bad types",
         ),
@@ -279,7 +279,7 @@ def test_conversion_error(toml_string: str, expected_msg: str) -> None:
 def test_conversion_errors(toml_string: str, expected_msgs: list[str]) -> None:
     data = tomllib.loads(toml_string)
     with pytest.raises(ExceptionGroup) as exc_info:
-        to_project_table(data)
+        to_project_table(data, collect_errors=True)
 
     # Python 3.10+ could use strict=True
     assert len(exc_info.value.exceptions) == len(expected_msgs)
