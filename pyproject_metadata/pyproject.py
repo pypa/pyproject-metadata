@@ -110,19 +110,6 @@ class PyProjectReader(ErrorCollector):
             for value in each.values():
                 if not isinstance(value, str):
                     return []
-            extra_keys = set(each) - {"name", "email"}
-            if extra_keys:
-                msg = (
-                    "Field {key} has an invalid type, expecting a list of "
-                    'tables containing the "name" and/or "email" keys'
-                    " (got list with dict with extra keys {extra_keys})"
-                )
-                self.config_error(
-                    msg,
-                    key=key,
-                    extra_keys=", ".join(sorted(f'"{k}"' for k in extra_keys)),
-                )
-                return []
         return [(entry.get("name", "Unknown"), entry.get("email")) for entry in val]
 
     def get_license(
