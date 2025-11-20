@@ -9,7 +9,6 @@ the top-level package.
 from __future__ import annotations
 
 import dataclasses
-import re
 import typing
 from typing import Any
 
@@ -246,7 +245,9 @@ class PyProjectReader(ErrorCollector):
 
         requirements: list[Requirement] = []
         try:
-            requirements.extend(packaging.requirements.Requirement(req) for req in requirement_strings)
+            requirements.extend(
+                packaging.requirements.Requirement(req) for req in requirement_strings
+            )
         except packaging.requirements.InvalidRequirement:
             return []
         return requirements
@@ -286,19 +287,10 @@ class PyProjectReader(ErrorCollector):
             return {}
         if not isinstance(val, dict):
             return {}
-        for section, entrypoints in val.items():
-            assert isinstance(section, str)
-            if not re.match(r"^\w+(\.\w+)*$", section):
-                msg = (
-                    "Field {key} has an invalid value, expecting a name "
-                    "containing only alphanumeric, underscore, or dot characters"
-                )
-                self.config_error(msg, key="project.entry-points", got=section)
-                return {}
+        for entrypoints in val.values():
             if not isinstance(entrypoints, dict):
                 return {}
-            for name, entrypoint in entrypoints.items():
-                assert isinstance(name, str)
+            for entrypoint in entrypoints.values():
                 if not isinstance(entrypoint, str):
                     return {}
         return val
