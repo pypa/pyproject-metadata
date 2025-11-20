@@ -489,12 +489,8 @@ class StandardMetadata:
                 dependencies=pyproject.get_dependencies(project),
                 optional_dependencies=pyproject.get_optional_dependencies(project),
                 entrypoints=pyproject.get_entrypoints(project),
-                authors=pyproject.ensure_people(
-                    project.get("authors", []), "project.authors"
-                ),
-                maintainers=pyproject.ensure_people(
-                    project.get("maintainers", []), "project.maintainers"
-                ),
+                authors=pyproject.ensure_people(project.get("authors", [])),
+                maintainers=pyproject.ensure_people(project.get("maintainers", [])),
                 urls=pyproject.ensure_dict(project.get("urls", {})) or {},
                 classifiers=pyproject.ensure_list(project.get("classifiers", [])) or [],
                 keywords=pyproject.ensure_list(project.get("keywords", [])) or [],

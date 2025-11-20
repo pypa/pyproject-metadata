@@ -160,29 +160,50 @@ T = typing.TypeVar("T")
 
 
 @valuedispatch
-def validate_typed_dict(data: dict[str, Any], prefix: str) -> None:
+def validate_typed_dict(
+    data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector
+) -> None:
     """
     Validate a TypedDict at runtime.
     """
 
 
 @validate_typed_dict.register(ProjectTable)
-def _(data: dict[str, Any], prefix: str) -> None:
-    if "name" not in data:
-        msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
-        raise ConfigurationError(msg, key=f"{prefix}.name")
+def _(data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector) -> None:
+    with error_collector.collect():
+        if "name" not in data:
+            msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
+            raise ConfigurationError(msg, key=f"{prefix}.name")
 
 
 @validate_typed_dict.register(ContactTable)
-def _(data: dict[str, Any], prefix: str) -> None:
-    if "name" not in data and "email" not in data:
-        msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
-        raise ConfigurationError(msg, key=prefix)
-    extra_keys = set(data.keys()) - {"name", "email"}
-    if extra_keys:
-        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-        raise ConfigurationError(msg, key=prefix)
+def _(data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector) -> None:
+    with error_collector.collect():
+        if "name" not in data and "email" not in data:
+            msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
+            raise ConfigurationError(msg, key=prefix)
+
+    with error_collector.collect():
+        extra_keys = set(data.keys()) - {"name", "email"}
+        if extra_keys:
+            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+            raise ConfigurationError(msg, key=prefix)
+
+
+@validate_typed_dict.register(LicenseTable)
+def _(data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector) -> None:
+    with error_collector.collect():
+        if len({"text", "file"} & set(data.keys())) != 1:
+            msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
+            raise ConfigurationError(msg, key=prefix)
+
+    with error_collector.collect():
+        extra_keys = set(data.keys()) - {"text", "file"}
+        if extra_keys:
+            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+            raise ConfigurationError(msg, key=prefix)
 
 
 def _cast_typed_dict(
@@ -197,8 +218,7 @@ def _cast_typed_dict(
 
     hints = typing.get_type_hints(cls)
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
-    with error_collector.collect():
-        validate_typed_dict(cls, data, prefix)
+    validate_typed_dict(cls, data, prefix, error_collector)
     for key, typ in hints.items():
         if key in data:
             new_prefix = prefix + f".{key}" if prefix else key
