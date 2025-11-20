@@ -198,8 +198,6 @@ class PyProjectReader(ErrorCollector):
             # readme is a dict containing either 'file' or 'text', and content-type
             for field in readme:
                 if field not in ("content-type", "file", "text"):
-                    msg = "Unexpected field {key}"
-                    self.config_error(msg, key=f"project.readme.{field}")
                     return None
 
             content_type_raw = readme.get("content-type")
@@ -220,12 +218,8 @@ class PyProjectReader(ErrorCollector):
                     return None
 
             if (filename and text) or (not filename and not text):
-                msg = 'Invalid {key} contents, expecting either "file" or "text"'
-                self.config_error(msg, key="project.readme", got=readme)
                 return None
             if not content_type:
-                msg = "Field {key} missing"
-                self.config_error(msg, key="project.readme.content-type")
                 return None
         else:
             return None
