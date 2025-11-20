@@ -431,7 +431,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 requires-python = "3.8"
             """,
-            "Invalid \"project.requires-python\" value, expecting a valid specifier set (got '3.8')",
+            "Field \"project.requires-python\" is an invalid Python version specifier string (got '3.8')",
             id="Invalid requires-python value",
         ),
         pytest.param(
