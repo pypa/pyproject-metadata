@@ -22,7 +22,7 @@ from typing import (
 )
 
 from ._dispatch import get_name, is_typed_dict, valuedispatch
-from .errors import ConfigurationTypeError, SimpleErrorCollector
+from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
 
 if sys.version_info < (3, 11):
     if typing.TYPE_CHECKING:
@@ -170,7 +170,19 @@ def validate_typed_dict(data: dict[str, Any], prefix: str) -> None:
 def _(data: dict[str, Any], prefix: str) -> None:
     if "name" not in data:
         msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
-        raise ConfigurationTypeError(msg, key=f"{prefix}.name")
+        raise ConfigurationError(msg, key=f"{prefix}.name")
+
+
+@validate_typed_dict.register(ContactTable)
+def _(data: dict[str, Any], prefix: str) -> None:
+    if "name" not in data and "email" not in data:
+        msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
+        raise ConfigurationError(msg, key=prefix)
+    extra_keys = set(data.keys()) - {"name", "email"}
+    if extra_keys:
+        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+        raise ConfigurationError(msg, key=prefix)
 
 
 def _cast_typed_dict(
@@ -185,11 +197,11 @@ def _cast_typed_dict(
 
     hints = typing.get_type_hints(cls)
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
+    with error_collector.collect():
+        validate_typed_dict(cls, data, prefix)
     for key, typ in hints.items():
         if key in data:
             new_prefix = prefix + f".{key}" if prefix else key
-            with error_collector.collect():
-                validate_typed_dict(typ, data[key], new_prefix)
             with error_collector.collect():
                 _cast(
                     typ,
