@@ -10,28 +10,18 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 
 from __future__ import annotations
 
-import functools
 import sys
 import typing
 from typing import (
     Any,
-    Callable,
     Dict,
-    Generic,
     List,
     Literal,
     TypedDict,
     Union,
 )
 
-if sys.version_info < (3, 10):
-    if typing.TYPE_CHECKING:
-        from typing_extensions import ParamSpec
-    else:
-        ParamSpec = typing.TypeVar
-else:
-    from typing import ParamSpec
-
+from ._dispatch import get_name, is_typed_dict, valuedispatch
 from .errors import ConfigurationTypeError, SimpleErrorCollector
 
 if sys.version_info < (3, 11):
@@ -169,39 +159,6 @@ PyProjectTable = TypedDict(
 T = typing.TypeVar("T")
 
 
-P = ParamSpec("P")
-R = typing.TypeVar("R")
-
-
-class ValueDispatcher(Generic[P, R]):
-    def __init__(self, func: Callable[P, R]) -> None:
-        self.default: Callable[P, R] = func
-        self.registry: dict[object, Callable[P, R]] = {}
-        functools.update_wrapper(self, func)
-
-    def register(self, value: object) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Register a function for an exact value."""
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            self.registry[value] = func
-            return func
-
-        return decorator
-
-    def dispatch(self, value: object) -> Callable[P, R]:
-        """Return the registered implementation or the default."""
-        return self.registry.get(value, self.default)
-
-    def __call__(self, value: object, *args: P.args, **kwargs: P.kwargs) -> R:
-        impl = self.dispatch(value)
-        return impl(*args, **kwargs)
-
-
-def valuedispatch(func: Callable[P, R]) -> ValueDispatcher[P, R]:
-    """Decorate a function into a ValueDispatcher."""
-    return ValueDispatcher(func)
-
-
 @valuedispatch
 def validate_typed_dict(data: dict[str, Any], prefix: str) -> None:
     """
@@ -216,24 +173,6 @@ def _(data: dict[str, Any], prefix: str) -> None:
         raise ConfigurationTypeError(msg, key=f"{prefix}.name")
 
 
-def _is_typed_dict(type_hint: object) -> bool:
-    if sys.version_info >= (3, 10):
-        return typing.is_typeddict(type_hint)
-    return hasattr(type_hint, "__annotations__") and hasattr(type_hint, "__total__")
-
-
-def _get_name(type_hint: type[Any]) -> str:
-    """
-    Get the name of a type hint as a readable modern Python type.
-    """
-    if origin := typing.get_origin(type_hint):
-        if args := typing.get_args(type_hint):
-            arg_names = ", ".join(_get_name(a) for a in args)
-            return f"{origin.__name__}[{arg_names}]"
-        return origin.__name__  # type: ignore[no-any-return]
-    return type_hint.__name__
-
-
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, *, collect_errors: bool
 ) -> None:
@@ -241,7 +180,7 @@ def _cast_typed_dict(
     Runtime cast for TypedDicts.
     """
     if not isinstance(data, dict):
-        msg = f'Field "{prefix}" has an invalid type, expecting {_get_name(cls)} (got {_get_name(type(data))})'
+        msg = f'Field "{prefix}" has an invalid type, expecting {get_name(cls)} (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
 
     hints = typing.get_type_hints(cls)
@@ -300,7 +239,7 @@ def _(
     """
     (item_type,) = args
     if not isinstance(data, list):
-        msg = f'Field "{prefix}" has an invalid type, expecting list[{_get_name(item_type)}] (got {_get_name(type(data))})'
+        msg = f'Field "{prefix}" has an invalid type, expecting list[{get_name(item_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     for index, item in enumerate(data):
@@ -323,7 +262,7 @@ def _(
     """
     _, value_type = args
     if not isinstance(data, dict):
-        msg = f'Field "{prefix}" has an invalid type, expecting dict[str, {_get_name(value_type)}] (got {_get_name(type(data))})'
+        msg = f'Field "{prefix}" has an invalid type, expecting dict[str, {get_name(value_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
     for key, value in data.items():
@@ -347,11 +286,11 @@ def _(
     for arg in args:
         if arg is str and isinstance(data, str):
             return True
-        if (arg is dict or _is_typed_dict(arg)) and isinstance(data, dict):
+        if (arg is dict or is_typed_dict(arg)) and isinstance(data, dict):
             _cast(arg, data, prefix, collect_errors=collect_errors)
             return True
-    arg_names = " | ".join(_get_name(a) for a in args)
-    msg = f'Field "{prefix}" does not match any of: {arg_names} (got {_get_name(type(data))})'
+    arg_names = " | ".join(get_name(a) for a in args)
+    msg = f'Field "{prefix}" does not match any of: {arg_names} (got {get_name(type(data))})'
     raise ConfigurationTypeError(msg, key=prefix)
 
 
@@ -368,7 +307,7 @@ def _cast(
         return
 
     # TypedDict
-    if _is_typed_dict(type_hint):
+    if is_typed_dict(type_hint):
         _cast_typed_dict(type_hint, data, prefix, collect_errors=collect_errors)
         return
 
@@ -384,7 +323,7 @@ def _cast(
     ) or isinstance(data, origin or type_hint):
         return
     else:
-        msg = f'Field "{prefix}" has an invalid type, expecting {_get_name(type_hint)} (got {_get_name(type(data))})'
+        msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
 
 
