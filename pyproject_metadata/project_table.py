@@ -175,8 +175,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
         error_collector.error(ConfigurationError(msg, key=f"{prefix}.name"))
 
 
-@validate_via_prefix.register("project.authors[]")
-@validate_via_prefix.register("project.maintainers[]")
+@validate_via_prefix.register(r"project\.(authors|maintainers)\[\d+\]")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     if "name" not in data and "email" not in data:
         msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
@@ -189,7 +188,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
         error_collector.error(ConfigurationError(msg, key=prefix))
 
 
-@validate_via_prefix.register("project.license")
+@validate_via_prefix.register(r"project\.license")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     if len({"text", "file"} & set(data.keys())) != 1:
         msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
@@ -202,7 +201,7 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
         error_collector.error(ConfigurationError(msg, key=prefix))
 
 
-@validate_via_prefix.register("project.readme")
+@validate_via_prefix.register(r"project\.readme")
 def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
     extra_keys = set(data.keys()) - {"file", "text", "content-type"}
     if extra_keys:
@@ -232,7 +231,7 @@ def _cast_typed_dict(
     for key, typ in hints.items():
         if key in data:
             new_prefix = prefix + f".{key}" if prefix else key
-            with error_collector.collect():
+            with error_collector.collect(ConfigurationError):
                 _cast(
                     typ,
                     data[key],
@@ -266,7 +265,7 @@ def _cast_list(
         msg = f'Field "{prefix}" has an invalid type, expecting list[{get_name(item_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
     for index, item in enumerate(data):
-        with error_collector.collect():
+        with error_collector.collect(ConfigurationError):
             _cast(item_type, item, prefix + f"[{index}]", error_collector)
 
 
@@ -281,7 +280,7 @@ def _cast_dict(
         msg = f'Field "{prefix}" has an invalid type, expecting dict[str, {get_name(value_type)}] (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
     for key, value in data.items():
-        with error_collector.collect():
+        with error_collector.collect(ConfigurationError):
             _cast(value_type, value, f"{prefix}.{key}", error_collector)
 
 
@@ -364,7 +363,7 @@ def to_project_table(
     the ConfigurationTypeError found.
     """
     error_collector = SimpleErrorCollector(collect_errors=collect_errors)
-    with error_collector.collect():
+    with error_collector.collect(ConfigurationError):
         _cast(PyProjectTable, data, "", error_collector)
     error_collector.finalize('Errors in "pyproject.toml"')
 
