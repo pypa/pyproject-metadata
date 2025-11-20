@@ -213,10 +213,10 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                readme = {}
+                readme = { content-type = "text/markdown" }
             """,
-            'Invalid "project.readme" contents, expecting either "file" or "text" (got {})',
-            id="Empty readme table",
+            'Field "project.readme" must have exactly one of "file" or "text" keys',
+            id="Missing file/text in readme table",
         ),
         pytest.param(
             """
@@ -233,12 +233,9 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                readme = { file = "...", text = "..." }
+                readme = { file = "...", text = "...", content-type = "text/markdown" }
             """,
-            (
-                'Invalid "project.readme" contents, expecting either "file" or "text"'
-                " (got {'file': '...', 'text': '...'})"
-            ),
+            ('Field "project.readme" must have exactly one of "file" or "text" keys'),
             id="Both readme fields",
         ),
         pytest.param(
@@ -246,9 +243,9 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                readme = { made-up = ":(" }
+                readme = { text="...", content-type="text/markdown", made-up = ":(" }
             """,
-            'Unexpected field "project.readme.made-up"',
+            'Field "project.readme" contains unexpected keys: "made-up"',
             id="Unexpected field in readme",
         ),
         pytest.param(
@@ -256,7 +253,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                readme = { file = true }
+                readme = { file = true, content-type = "text/markdown" }
             """,
             'Field "project.readme.file" has an invalid type, expecting str (got bool)',
             id="Invalid type for readme.file",
@@ -266,7 +263,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                readme = { text = true }
+                readme = { text = true, content-type = "text/markdown" }
             """,
             'Field "project.readme.text" has an invalid type, expecting str (got bool)',
             id="Invalid type for readme.text",
@@ -288,8 +285,8 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 readme = { file = "README.md" }
             """,
-            'Field "project.readme.content-type" missing',
-            id="Missing content-type for readme",
+            'Field "project.readme" is missing required key "content-type"',
+            id="Missing content-type for readme (file only)",
         ),
         pytest.param(
             """
@@ -308,18 +305,8 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 readme = { text = "..." }
             """,
-            'Field "project.readme.content-type" missing',
-            id="Missing content-type for readme",
-        ),
-        pytest.param(
-            """
-                [project]
-                name = "test"
-                version = "0.1.0"
-                readme = { file = "pyproject.toml" }
-            """,
-            'Field "project.readme.content-type" missing',
-            id="Missing content-type for readme file",
+            'Field "project.readme" is missing required key "content-type"',
+            id="Missing content-type for readme (text only)",
         ),
         pytest.param(
             """
@@ -956,6 +943,19 @@ def test_load(
                 "'scripts', 'urls', 'version' (got 3)",
             ],
             id="Unsupported type in project.dynamic",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                readme = { }
+            """,
+            [
+                'Field "project.readme" must have exactly one of "file" or "text" keys',
+                'Field "project.readme" is missing required key "content-type"',
+            ],
+            id="Empty readme table",
         ),
         pytest.param(
             """
