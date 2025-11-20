@@ -165,7 +165,7 @@ def _get_name(type_hint: type[Any]) -> str:
         if args := typing.get_args(type_hint):
             arg_names = ", ".join(_get_name(a) for a in args)
             return f"{origin.__name__}[{arg_names}]"
-        return origin.__name__
+        return origin.__name__  # type: ignore[no-any-return]
     return type_hint.__name__
 
 

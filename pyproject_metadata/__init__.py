@@ -402,11 +402,10 @@ class StandardMetadata:
             raise AssertionError(msg)  # pragma: no cover
 
         with pyproject.collect():
-            pyproject_table = to_project_table(dict(data), collect_errors=all_errors)
-        pyproject.finalize("Failed to parse pyproject.toml")
+            to_project_table(dict(data), collect_errors=all_errors)
 
-        assert "project" in pyproject_table
-        project = pyproject_table["project"]
+        assert "project" in data
+        project = data["project"]
         project_dir = pathlib.Path(project_dir)
 
         if not allow_extra_keys:
@@ -424,24 +423,16 @@ class StandardMetadata:
         dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
-            if field in data["project"]:
+            if field in data["project"] and field != "name":
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
                 pyproject.config_error(msg, key=f"project.{field}")
 
-        raw_name = project.get("name")
-        name = "UNKNOWN"
-        if raw_name is None:
-            msg = "Field {key} missing"
-            pyproject.config_error(msg, key="project.name")
-        else:
-            tmp_name = pyproject.ensure_str(raw_name, "project.name")
-            if tmp_name is not None:
-                name = tmp_name
+        name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
         version: packaging.version.Version | None = packaging.version.Version("0.0.0")
         raw_version = project.get("version")
         if raw_version is not None:
-            version_string = pyproject.ensure_str(raw_version, "project.version")
+            version_string = pyproject.ensure_str(raw_version)
             if version_string is not None:
                 try:
                     version = (
@@ -465,7 +456,7 @@ class StandardMetadata:
         # so leave it up to the users for now.
         project_description_raw = project.get("description")
         description = (
-            pyproject.ensure_str(project_description_raw, "project.description")
+            pyproject.ensure_str(project_description_raw)
             if project_description_raw is not None
             else None
         )
@@ -473,9 +464,7 @@ class StandardMetadata:
         requires_python_raw = project.get("requires-python")
         requires_python = None
         if requires_python_raw is not None:
-            requires_python_string = pyproject.ensure_str(
-                requires_python_raw, "project.requires-python"
-            )
+            requires_python_string = pyproject.ensure_str(requires_python_raw)
             if requires_python_string is not None:
                 try:
                     requires_python = packaging.specifiers.SpecifierSet(
@@ -506,31 +495,16 @@ class StandardMetadata:
                 maintainers=pyproject.ensure_people(
                     project.get("maintainers", []), "project.maintainers"
                 ),
-                urls=pyproject.ensure_dict(project.get("urls", {}), "project.urls")
-                or {},
-                classifiers=pyproject.ensure_list(
-                    project.get("classifiers", []), "project.classifiers"
-                )
-                or [],
-                keywords=pyproject.ensure_list(
-                    project.get("keywords", []), "project.keywords"
-                )
-                or [],
-                scripts=pyproject.ensure_dict(
-                    project.get("scripts", {}), "project.scripts"
-                )
-                or {},
-                gui_scripts=pyproject.ensure_dict(
-                    project.get("gui-scripts", {}), "project.gui-scripts"
-                )
-                or {},
-                import_names=pyproject.ensure_list(
-                    project.get("import-names", None), "project.import-names"
-                ),
+                urls=pyproject.ensure_dict(project.get("urls", {})) or {},
+                classifiers=pyproject.ensure_list(project.get("classifiers", [])) or [],
+                keywords=pyproject.ensure_list(project.get("keywords", [])) or [],
+                scripts=pyproject.ensure_dict(project.get("scripts", {})) or {},
+                gui_scripts=pyproject.ensure_dict(project.get("gui-scripts", {})) or {},
+                import_names=pyproject.ensure_list(project.get("import-names", None)),
                 import_namespaces=pyproject.ensure_list(
-                    project.get("import-namespaces", None), "project.import-namespaces"
+                    project.get("import-namespaces", None)
                 ),
-                dynamic=dynamic,
+                dynamic=dynamic,  # type: ignore[arg-type]
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
