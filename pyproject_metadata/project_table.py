@@ -161,7 +161,7 @@ T = typing.TypeVar("T")
 
 @keydispatch
 def validate_via_prefix(
-    prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector
+    prefix: str, data: object, error_collector: SimpleErrorCollector
 ) -> None:
     """
     Validate a TypedDict at runtime.
@@ -169,14 +169,20 @@ def validate_via_prefix(
 
 
 @validate_via_prefix.register("project")
-def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, dict):
+        return
+
     if "name" not in data:
         msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
         error_collector.error(ConfigurationError(msg, key=f"{prefix}.name"))
 
 
 @validate_via_prefix.register(r"project\.(authors|maintainers)\[\d+\]")
-def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, dict):
+        return
+
     if "name" not in data and "email" not in data:
         msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
         error_collector.error(ConfigurationError(msg, key=prefix))
@@ -189,7 +195,10 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
 
 
 @validate_via_prefix.register(r"project\.license")
-def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, dict):
+        return
+
     if len({"text", "file"} & set(data.keys())) != 1:
         msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
         error_collector.error(ConfigurationError(msg, key=prefix))
@@ -202,7 +211,9 @@ def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) 
 
 
 @validate_via_prefix.register(r"project\.readme")
-def _(prefix: str, data: dict[str, Any], error_collector: SimpleErrorCollector) -> None:
+def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
+    if not isinstance(data, dict):
+        return
     extra_keys = set(data.keys()) - {"file", "text", "content-type"}
     if extra_keys:
         extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
@@ -227,7 +238,6 @@ def _cast_typed_dict(
         raise ConfigurationTypeError(msg, key=prefix)
 
     hints = typing.get_type_hints(cls)
-    validate_via_prefix(prefix, data, error_collector)
     for key, typ in hints.items():
         if key in data:
             new_prefix = prefix + f".{key}" if prefix else key
@@ -322,30 +332,35 @@ def _cast(
     This may raise ConfigurationError even when the error collector is collecting; this is used
     to short-circuit further validation when the type is wrong.
     """
+    origin = typing.get_origin(type_hint)
+    # Special case Required, needed on 3.10 and older
+    if origin is Required:
+        (type_hint,) = typing.get_args(type_hint)
+        origin = typing.get_origin(type_hint)
+    args = typing.get_args(type_hint)
+
     # Any accepts everything, so no validation
     if type_hint is Any:  # type: ignore[comparison-overlap]
+        validate_via_prefix(prefix, data, error_collector)
         return
 
     # TypedDict
     if is_typed_dict(type_hint):
+        validate_via_prefix(prefix, data, error_collector)
         _cast_typed_dict(type_hint, data, prefix, error_collector)
         return
 
-    origin = typing.get_origin(type_hint)
-    args = typing.get_args(type_hint)
-
-    # Special case Required, needed on 3.10 and older
-    # Special case Required, needed on 3.10 and older
-    if origin is Required:
-        (inner_type_hint,) = args
-        _cast(inner_type_hint, data, prefix, error_collector)
-    elif origin is typing.Literal:
+    if origin is typing.Literal:
+        validate_via_prefix(prefix, data, error_collector)
         _cast_literal(args, data, prefix, error_collector)
     elif origin is list:
+        validate_via_prefix(prefix, data, error_collector)
         _cast_list(args, data, prefix, error_collector)
     elif origin is dict:
+        validate_via_prefix(prefix, data, error_collector)
         _cast_dict(args, data, prefix, error_collector)
     elif origin is typing.Union:
+        # A union does not run the validator, the selected branch will
         _cast_union(args, data, prefix, error_collector)
     elif not isinstance(data, origin or type_hint):
         msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
