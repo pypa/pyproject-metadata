@@ -143,7 +143,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license = {}
             """,
-            'Invalid "project.license" contents, expecting a string or one key "file" or "text" (got {})',
+            'Field "project.license" must have exactly one of "text" or "file" keys',
             id="Missing license keys",
         ),
         pytest.param(
@@ -153,10 +153,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 version = "0.1.0"
                 license = { file = "...", text = "..." }
             """,
-            (
-                'Invalid "project.license" contents, expecting a string or one key "file" or "text"'
-                " (got {'file': '...', 'text': '...'})"
-            ),
+            ('Field "project.license" must have exactly one of "text" or "file" keys'),
             id="Both keys for license",
         ),
         pytest.param(
@@ -164,9 +161,9 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
-                license = { made-up = ":(" }
+                license = { text = "...", made-up = ":(" }
             """,
-            'Unexpected field "project.license.made-up"',
+            'Field "project.license" contains unexpected keys: "made-up"',
             id="Got made-up license field",
         ),
         pytest.param(
@@ -557,9 +554,7 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                     {"name" = "me", "other" = "you"}
                 ]
             """,
-            (
-                'Field "project.maintainers[0]" contains unexpected keys: "other"'
-            ),
+            ('Field "project.maintainers[0]" contains unexpected keys: "other"'),
             id="Invalid maintainers nested type with extra key",
         ),
         pytest.param(
@@ -975,6 +970,19 @@ def test_load(
                 "Could not infer content type for readme file 'README.jpg'",
             ],
             id="Unsupported filename in readme",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = "0.1.0"
+                license = { made-up = ":(" }
+            """,
+            [
+                'Field "project.license" must have exactly one of "text" or "file" keys',
+                'Field "project.license" contains unexpected keys: "made-up"',
+            ],
+            id="Only made up license field",
         ),
         pytest.param(
             """
