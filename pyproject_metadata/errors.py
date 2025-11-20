@@ -117,6 +117,16 @@ class SimpleErrorCollector:
         else:
             yield
 
+    def error(
+        self,
+        error: Exception,
+    ) -> None:
+        """Add an error to the list, or raise it immediately."""
+        if self.collect_errors:
+            self.errors.append(error)
+        else:
+            raise error
+
 
 @dataclasses.dataclass()
 class ErrorCollector(SimpleErrorCollector):
@@ -144,7 +154,5 @@ class ErrorCollector(SimpleErrorCollector):
 
         if warn:
             warnings.warn(msg, ConfigurationWarning, stacklevel=3)
-        elif self.collect_errors:
-            self.errors.append(ConfigurationError(msg, key=key))
         else:
-            raise ConfigurationError(msg, key=key)
+            self.error(ConfigurationError(msg, key=key))
