@@ -49,6 +49,7 @@ import warnings
 # Build backends may vendor this package, so all imports are relative.
 from . import constants
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
+from .project_table import to_project_table
 from .pyproject import License, PyProjectReader, Readme
 
 if typing.TYPE_CHECKING:
@@ -62,7 +63,7 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import Dynamic, PyProjectTable
+    from .project_table import Dynamic
 
 import packaging.markers
 import packaging.specifiers
@@ -393,15 +394,18 @@ class StandardMetadata:
         in an ExceptionGroup instead of raising the first one.
         """
         pyproject = PyProjectReader(collect_errors=all_errors)
-
-        pyproject_table: PyProjectTable = data  # type: ignore[assignment]
-        if "project" not in pyproject_table:
+        if "project" not in data:
             msg = "Section {key} missing in pyproject.toml"
             pyproject.config_error(msg, key="project")
             pyproject.finalize("Failed to parse pyproject.toml")
             msg = "Unreachable code"  # pragma: no cover
             raise AssertionError(msg)  # pragma: no cover
 
+        with pyproject.collect():
+            pyproject_table = to_project_table(dict(data), collect_errors=all_errors)
+        pyproject.finalize("Failed to parse pyproject.toml")
+
+        assert "project" in pyproject_table
         project = pyproject_table["project"]
         project_dir = pathlib.Path(project_dir)
 
