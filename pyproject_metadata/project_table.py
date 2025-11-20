@@ -176,10 +176,10 @@ R = typing.TypeVar("R")
 class ValueDispatcher(Generic[P, R]):
     def __init__(self, func: Callable[P, R]) -> None:
         self.default: Callable[P, R] = func
-        self.registry: dict[type[Any], Callable[P, R]] = {}
+        self.registry: dict[object, Callable[P, R]] = {}
         functools.update_wrapper(self, func)
 
-    def register(self, value: type[Any]) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def register(self, value: object) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Register a function for an exact value."""
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -188,11 +188,11 @@ class ValueDispatcher(Generic[P, R]):
 
         return decorator
 
-    def dispatch(self, value: type[Any]) -> Callable[P, R]:
+    def dispatch(self, value: object) -> Callable[P, R]:
         """Return the registered implementation or the default."""
         return self.registry.get(value, self.default)
 
-    def __call__(self, value: type[Any], *args: P.args, **kwargs: P.kwargs) -> R:
+    def __call__(self, value: object, *args: P.args, **kwargs: P.kwargs) -> R:
         impl = self.dispatch(value)
         return impl(*args, **kwargs)
 
@@ -206,8 +206,6 @@ def valuedispatch(func: Callable[P, R]) -> ValueDispatcher[P, R]:
 def validate_typed_dict(data: dict[str, Any], prefix: str) -> None:
     """
     Validate a TypedDict at runtime.
-
-    This is the default implementation that does nothing.
     """
 
 
@@ -264,19 +262,39 @@ def _cast_typed_dict(
     error_collector.finalize(f'Errors in "{prefix}"')
 
 
-def _cast_literal(args: tuple[object, ...], data: object, prefix: str) -> None:
+@valuedispatch
+def _cast_type(
+    args: tuple[type[Any], ...],  # noqa: ARG001
+    data: object,  # noqa: ARG001
+    prefix: str,  # noqa: ARG001
+    *,
+    collect_errors: bool,  # noqa: ARG001
+) -> bool:
     """
-    Runtime cast for Literal types.
+    Runtime cast for types, returns True if handled.
     """
+    return False
+
+
+@_cast_type.register(Literal)
+def _(
+    args: tuple[type[Any], ...],
+    data: object,
+    prefix: str,
+    *,
+    collect_errors: bool,  # noqa: ARG001
+) -> bool:
     if data not in args:
         arg_names = ", ".join(repr(a) for a in args)
         msg = f'Field "{prefix}" expected one of {arg_names} (got {data!r})'
         raise ConfigurationTypeError(msg, key=prefix)
+    return True
 
 
-def _cast_list(
-    args: tuple[type[Any]], data: object, prefix: str, *, collect_errors: bool
-) -> None:
+@_cast_type.register(list)
+def _(
+    args: tuple[type[Any], ...], data: object, prefix: str, *, collect_errors: bool
+) -> bool:
     """
     Runtime cast for List types.
     """
@@ -289,15 +307,17 @@ def _cast_list(
         with error_collector.collect():
             _cast(item_type, item, prefix + f"[{index}]", collect_errors=collect_errors)
     error_collector.finalize(f'Errors in "{prefix}"')
+    return True
 
 
-def _cast_dict(
-    args: tuple[type[str], type[Any]],
+@_cast_type.register(dict)
+def _(
+    args: tuple[type[Any], ...],
     data: object,
     prefix: str,
     *,
     collect_errors: bool,
-) -> None:
+) -> bool:
     """
     Runtime cast for Dict types.
     """
@@ -310,11 +330,13 @@ def _cast_dict(
         with error_collector.collect():
             _cast(value_type, value, f"{prefix}.{key}", collect_errors=collect_errors)
     error_collector.finalize(f'Errors in "{prefix}"')
+    return True
 
 
-def _cast_union(
+@_cast_type.register(typing.Union)
+def _(
     args: tuple[type[Any], ...], data: object, prefix: str, *, collect_errors: bool
-) -> None:
+) -> bool:
     """
     Runtime cast for Union types.
 
@@ -324,10 +346,10 @@ def _cast_union(
     """
     for arg in args:
         if arg is str and isinstance(data, str):
-            return
+            return True
         if (arg is dict or _is_typed_dict(arg)) and isinstance(data, dict):
             _cast(arg, data, prefix, collect_errors=collect_errors)
-            return
+            return True
     arg_names = " | ".join(_get_name(a) for a in args)
     msg = f'Field "{prefix}" does not match any of: {arg_names} (got {_get_name(type(data))})'
     raise ConfigurationTypeError(msg, key=prefix)
@@ -357,15 +379,9 @@ def _cast(
     if origin is Required:
         (inner_type_hint,) = args
         _cast(inner_type_hint, data, prefix, collect_errors=collect_errors)
-    elif origin is typing.Literal:
-        _cast_literal(args, data, prefix)
-    elif origin is list:
-        _cast_list(args, data, prefix, collect_errors=collect_errors)
-    elif origin is dict:
-        _cast_dict(args, data, prefix, collect_errors=collect_errors)
-    elif origin is typing.Union:
-        _cast_union(args, data, prefix, collect_errors=collect_errors)
-    elif isinstance(data, origin or type_hint):
+    elif _cast_type(
+        origin, args, data, prefix, collect_errors=collect_errors
+    ) or isinstance(data, origin or type_hint):
         return
     else:
         msg = f'Field "{prefix}" has an invalid type, expecting {_get_name(type_hint)} (got {_get_name(type(data))})'
