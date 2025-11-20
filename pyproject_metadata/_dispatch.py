@@ -7,6 +7,7 @@ This module contains dispatchers for use in project_table.py.
 from __future__ import annotations
 
 import functools
+import re
 import sys
 import typing
 from typing import Callable, Generic
@@ -36,8 +37,6 @@ P = ParamSpec("P")
 R = typing.TypeVar("R")
 T = typing.TypeVar("T")
 
-REMOVE_DIGITS = str.maketrans("", "", "0123456789")
-
 
 class KeyDispatcher(Generic[P, R]):
     def __init__(self, func: Callable[Concatenate[str, P], R]) -> None:
@@ -60,7 +59,8 @@ class KeyDispatcher(Generic[P, R]):
 
     def dispatch(self, value: str) -> Callable[Concatenate[str, P], R]:
         """Return the registered implementation or the default."""
-        result = value.translate(REMOVE_DIGITS)
+        results = [key for key in self.registry if re.fullmatch(key, value, re.ASCII)]
+        result = results[0] if results else ""
         return self.registry.get(result, self.default)
 
     def __call__(self, value: str, *args: P.args, **kwargs: P.kwargs) -> R:
