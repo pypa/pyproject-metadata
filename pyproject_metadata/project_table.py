@@ -206,6 +206,24 @@ def _(data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector) 
             raise ConfigurationError(msg, key=prefix)
 
 
+@validate_typed_dict.register(ReadmeTable)
+def _(data: dict[str, Any], prefix: str, error_collector: SimpleErrorCollector) -> None:
+    with error_collector.collect():
+        extra_keys = set(data.keys()) - {"file", "text", "content-type"}
+        if extra_keys:
+            extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
+            msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
+            raise ConfigurationError(msg, key=prefix)
+    with error_collector.collect():
+        if len({"file", "text"} & set(data.keys())) != 1:
+            msg = f'Field "{prefix}" must have exactly one of "file" or "text" keys'
+            raise ConfigurationError(msg, key=prefix)
+    with error_collector.collect():
+        if "content-type" not in data:
+            msg = f'Field "{prefix}" is missing required key "content-type"'
+            raise ConfigurationError(msg, key=prefix)
+
+
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, *, collect_errors: bool
 ) -> None:
