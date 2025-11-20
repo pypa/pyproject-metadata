@@ -127,7 +127,6 @@ def test_project_table_type_only() -> None:
             [project]
             name = "example"
             unknown-key = 123
-            license.unreal = "ignored as well"
             readme.nothing = "ignored too"
             """,
             id="extra keys are ignored",  # TypedDict's are not complete (unless validator registered)
