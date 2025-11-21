@@ -7,9 +7,22 @@ import-names(paces) fields. Support hasn't rolled out in other packages yet, but
 once it does, you can be ready for it with this release. As usual, nothing
 changes if you don't specify the new fields or the new METADATA version.
 
+Features:
+
 - Support `import-names(paces)`
 - Remove Python 3.7 support
+
+Fixes:
+
 - Minimum supported version of packaging corrected (now tested)
+
+Internal and CI:
+
+- Add PyPy 3.11 testing
+- Add Python 3.14 classifier
+- Use PEP 639 license
+- Use dependency groups
+- Enable branch coverage
 - Enabled most Ruff linting rules on codebase
 
 ## 0.9.1 (10-03-2024)
