@@ -1,8 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.10.0 (11-21-2025)
 
+This release adds support for PEP 795 (METADATA 2.5), the new
+import-names(paces) fields. Support hasn't rolled out in other packages yet, but
+once it does, you can be ready for it with this release. As usual, nothing
+changes if you don't specify the new fields or the new METADATA version.
+
+- Support `import-names(paces)`
 - Remove Python 3.7 support
+- Minimum supported version of packaging corrected (now tested)
+- Enabled most Ruff linting rules on codebase
 
 ## 0.9.1 (10-03-2024)
 
