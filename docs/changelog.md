@@ -2,10 +2,11 @@
 
 ## 0.10.0 (11-21-2025)
 
-This release adds support for PEP 795 (METADATA 2.5), the new
-import-names(paces) fields. Support hasn't rolled out in other packages yet, but
-once it does, you can be ready for it with this release. As usual, nothing
-changes if you don't specify the new fields or the new METADATA version.
+This release adds support for [PEP 794](https://peps.python.org/pep-0794/)
+(METADATA 2.5), the new import-names(paces) fields. Support hasn't rolled out in
+other packages yet, but once it does, you can be ready for it with this release.
+As usual, nothing changes if you don't specify the new fields or the new
+METADATA version.
 
 Features:
 
