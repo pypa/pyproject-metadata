@@ -58,8 +58,6 @@ class Readme:
     content_type: str
 
 
-T = typing.TypeVar("T")
-
 
 @dataclasses.dataclass
 class PyProjectReader(ErrorCollector):
@@ -78,7 +76,7 @@ class PyProjectReader(ErrorCollector):
             return value
         return None
 
-    def ensure_list(self, val: object) -> list[T] | None:
+    def ensure_list(self, val: object) -> list[str] | None:
         """Ensure that a value is a list of strings."""
         if val is None:
             return None
