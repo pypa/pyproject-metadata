@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: hynek/build-and-inspect-python-package@v2
 
   # Upload to real PyPI on GitHub Releases.
