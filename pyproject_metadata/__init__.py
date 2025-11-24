@@ -47,10 +47,10 @@ import typing
 import warnings
 
 # Build backends may vendor this package, so all imports are relative.
-from . import constants
+from . import constants, pyproject
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .project_table import to_project_table
-from .pyproject import License, PyProjectReader, Readme
+from .pyproject import License, Readme
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator, Mapping
@@ -399,15 +399,15 @@ class StandardMetadata:
         present in the pyproject table, and ``all_errors``, to  raise all errors
         in an ExceptionGroup instead of raising the first one.
         """
-        pyproject = PyProjectReader(collect_errors=all_errors)
+        error_collector = ErrorCollector(collect_errors=all_errors)
         if "project" not in data:
             msg = "Section {key} missing in pyproject.toml"
-            pyproject.config_error(msg, key="project")
-            pyproject.finalize("Failed to parse pyproject.toml")
+            error_collector.config_error(msg, key="project")
+            error_collector.finalize("Failed to parse pyproject.toml")
             msg = "Unreachable code"  # pragma: no cover
             raise AssertionError(msg)  # pragma: no cover
 
-        with pyproject.collect():
+        with error_collector.collect():
             to_project_table(dict(data), collect_errors=all_errors)
 
         assert "project" in data
@@ -419,19 +419,19 @@ class StandardMetadata:
             if extra_keys:
                 extra_keys_str = ", ".join(sorted(f"{k!r}" for k in extra_keys))
                 msg = "Extra keys present in {key}: {extra_keys}"
-                pyproject.config_error(
+                error_collector.config_error(
                     msg,
                     key="project",
                     extra_keys=extra_keys_str,
                     warn=allow_extra_keys is None,
                 )
 
-        dynamic = pyproject.get_dynamic(project)
+        dynamic = project.get("dynamic", [])
 
         for field in dynamic:
             if field in data["project"] and field != "name":
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                pyproject.config_error(msg, key=f"project.{field}")
+                error_collector.config_error(msg, key=f"project.{field}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
@@ -450,7 +450,7 @@ class StandardMetadata:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
             )
-            pyproject.config_error(msg, key="project.version")
+            error_collector.config_error(msg, key="project.version")
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
@@ -474,15 +474,17 @@ class StandardMetadata:
 
         authors = pyproject.ensure_people(project.get("authors", []))
         maintainers = pyproject.ensure_people(project.get("maintainers", []))
-        license = pyproject.get_license(project, project_dir)
-        license_files = pyproject.get_license_files(project, project_dir)
-        readme = pyproject.get_readme(project, project_dir)
+        license = pyproject.get_license(project, project_dir, error_collector)
+        license_files = pyproject.get_license_files(
+            project, project_dir, error_collector
+        )
+        readme = pyproject.get_readme(project, project_dir, error_collector)
         dependencies = pyproject.get_dependencies(project)
         optional_dependencies = pyproject.get_optional_dependencies(project)
         entrypoints = pyproject.get_entrypoints(project)
 
         self = None
-        with pyproject.collect():
+        with error_collector.collect():
             self = cls(
                 name=name,
                 version=version,
@@ -503,13 +505,13 @@ class StandardMetadata:
                 gui_scripts=project.get("gui-scripts", {}),
                 import_names=project.get("import-names", None),
                 import_namespaces=project.get("import-namespaces", None),
-                dynamic=dynamic,  # type: ignore[arg-type]
+                dynamic=dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
             )
 
-        pyproject.finalize("Failed to parse pyproject.toml")
+        error_collector.finalize("Failed to parse pyproject.toml")
         assert self is not None
         return self
 
