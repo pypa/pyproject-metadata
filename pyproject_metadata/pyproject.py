@@ -4,6 +4,9 @@
 This module focuses on reading pyproject.toml fields with error collection. It is
 mostly internal, except for License and Readme classes, which are re-exported in
 the top-level package.
+
+These functions return None if an error occurred, and use the ErrorCollector to
+record errors.
 """
 
 from __future__ import annotations
