@@ -7,7 +7,6 @@ This module contains dispatchers for use in project_table.py.
 from __future__ import annotations
 
 import functools
-import re
 import sys
 import typing
 from typing import Callable, Generic
@@ -45,23 +44,22 @@ class KeyDispatcher(Generic[P, R]):
         functools.update_wrapper(self, func)
 
     def register(
-        self, value: str
+        self, *values: str
     ) -> Callable[[Callable[Concatenate[str, P], R]], Callable[Concatenate[str, P], R]]:
         """Register a function for an exact value."""
 
         def decorator(
             func: Callable[Concatenate[str, P], R],
         ) -> Callable[Concatenate[str, P], R]:
-            self.registry[value] = func
+            for value in values:
+                self.registry[value] = func
             return func
 
         return decorator
 
     def dispatch(self, value: str) -> Callable[Concatenate[str, P], R]:
         """Return the registered implementation or the default."""
-        results = [key for key in self.registry if re.fullmatch(key, value, re.ASCII)]
-        result = results[0] if results else ""
-        return self.registry.get(result, self.default)
+        return self.registry.get(value, self.default)
 
     def __call__(self, value: str, *args: P.args, **kwargs: P.kwargs) -> R:
         impl = self.dispatch(value)

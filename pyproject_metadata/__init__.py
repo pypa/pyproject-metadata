@@ -48,6 +48,7 @@ import warnings
 
 # Build backends may vendor this package, so all imports are relative.
 from . import constants, pyproject
+from ._validate import validate_via_prefix, validate_license, validate_readme
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .project_table import to_project_table
 from .pyproject import License, Readme
@@ -77,7 +78,6 @@ if sys.version_info < (3, 12, 4):
 
     RE_EOL_STR = re.compile(r"[\r\n]+")
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
-
 
 __version__ = "0.10.0"
 
@@ -350,12 +350,32 @@ class StandardMetadata:
     """
     If True, all errors will be collected and raised in an ExceptionGroup.
     """
+    error_collector: ErrorCollector | None = dataclasses.field(default=None, init=False)
+    """
+    This collector will hold errors during construction.
+    """
+
+    def __setattr__(self, key: str, value: object) -> None:
+        """
+        Set an attribute, converting to the correct type if it's not already.
+        """
+        if key in {"all_errors", "error_collector"}:
+            super().__setattr__(key, value)
+            return
+
+        if self.error_collector is None:
+            self.error_collector = ErrorCollector(collect_errors=self.all_errors)
+
+        new_value = validate_via_prefix(key, value, self.error_collector)
+        super().__setattr__(key, new_value)
 
     def __post_init__(self) -> None:
         """
         Validate the fields on construction.
         """
-        self.validate()
+        assert self.error_collector is not None
+        self.validate(validate=False)
+        self.error_collector.finalize("Failed to create StandardMetadata")
 
     @property
     def auto_metadata_version(self) -> str:
@@ -400,6 +420,7 @@ class StandardMetadata:
         in an ExceptionGroup instead of raising the first one.
         """
         error_collector = ErrorCollector(collect_errors=all_errors)
+
         if "project" not in data:
             msg = "Section {key} missing in pyproject.toml"
             error_collector.config_error(msg, key="project")
@@ -413,6 +434,10 @@ class StandardMetadata:
         assert "project" in data
         project = data["project"]
         project_dir = pathlib.Path(project_dir)
+
+        if "name" not in project:
+            msg = 'Field "project.name" is required if "project" is present'
+            error_collector.error(ConfigurationError(msg, key="project.name"))
 
         if not allow_extra_keys:
             extra_keys = extras_project(data)
@@ -434,18 +459,15 @@ class StandardMetadata:
                 error_collector.config_error(msg, key=f"project.{field}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
+        validate_license("license", project.get("license"), error_collector)
+        validate_readme("readme", project.get("readme"), error_collector)
 
-        version: packaging.version.Version | None = packaging.version.Version("0.0.0")
         raw_version = project.get("version")
         if raw_version is not None:
             version_string = pyproject.ensure_str(raw_version)
             if version_string is not None:
                 with contextlib.suppress(packaging.version.InvalidVersion):
-                    version = (
-                        packaging.version.Version(version_string)
-                        if version_string
-                        else None
-                    )
+                    packaging.version.Version(version_string)
         elif "version" not in dynamic:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
@@ -462,15 +484,7 @@ class StandardMetadata:
             else None
         )
 
-        requires_python_raw = project.get("requires-python")
-        requires_python = None
-        if requires_python_raw is not None:
-            requires_python_string = pyproject.ensure_str(requires_python_raw)
-            if requires_python_string is not None:
-                with contextlib.suppress(packaging.specifiers.InvalidSpecifier):
-                    requires_python = packaging.specifiers.SpecifierSet(
-                        requires_python_string
-                    )
+        requires_python = project.get("requires-python")
 
         authors = pyproject.ensure_people(project.get("authors", []))
         maintainers = pyproject.ensure_people(project.get("maintainers", []))
@@ -487,7 +501,7 @@ class StandardMetadata:
         with error_collector.collect():
             self = cls(
                 name=name,
-                version=version,
+                version=raw_version,
                 description=description,
                 license=license,
                 license_files=license_files,
@@ -533,7 +547,7 @@ class StandardMetadata:
         self._write_metadata(smart_message)
         return message
 
-    def validate(self, *, warn: bool = True) -> None:  # noqa: C901
+    def validate(self, *, warn: bool = True, validate: bool = True) -> None:  # noqa: C901
         """
         Validate metadata for consistency and correctness.
 
@@ -555,7 +569,7 @@ class StandardMetadata:
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
         - ``import-names`` and ``import-namespaces`` cannot overlap.
         """
-        errors = ErrorCollector(collect_errors=self.all_errors)
+        errors = self.error_collector
 
         if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
             msg = "The metadata_version must be one of {versions} or None (default)"
@@ -651,7 +665,8 @@ class StandardMetadata:
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
-        errors.finalize("Metadata validation failed")
+        if validate:
+            errors.finalize("Metadata validation failed")
 
     def _write_metadata(  # noqa: C901
         self, smart_message: _SmartMessageSetter | _JSonMessageSetter

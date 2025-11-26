@@ -10,7 +10,6 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 
 from __future__ import annotations
 
-import re
 import sys
 import typing
 from typing import (
@@ -22,10 +21,7 @@ from typing import (
     Union,
 )
 
-import packaging.requirements
-import packaging.specifiers
-
-from ._dispatch import get_name, is_typed_dict, keydispatch
+from ._dispatch import get_name, is_typed_dict
 from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
 
 if sys.version_info < (3, 11):
@@ -55,9 +51,6 @@ __all__ = [
     "ReadmeTable",
     "to_project_table",
 ]
-
-
-VALID_ENTRY_POINT = re.compile(r"^\w+(\.\w+)*$")
 
 
 def __dir__() -> list[str]:
@@ -175,122 +168,6 @@ def join(prefix: str, name: str) -> str:
     return f"{prefix}.{name!r}" if "." in name else f"{prefix}.{name}"
 
 
-@keydispatch
-def validate_via_prefix(
-    prefix: str, data: object, error_collector: SimpleErrorCollector
-) -> None:
-    """
-    Validate a TypedDict at runtime.
-    """
-
-
-@validate_via_prefix.register("project")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, dict):
-        return
-
-    if "name" not in data:
-        msg = f'Field "{prefix}.name" is required if "{prefix}" is present'
-        error_collector.error(ConfigurationError(msg, key=f"{prefix}.name"))
-
-
-@validate_via_prefix.register(r"project\.(authors|maintainers)\[\d+\]")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, dict):
-        return
-
-    if "name" not in data and "email" not in data:
-        msg = f'Field "{prefix}" must have at least one of "name" or "email" keys'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-    extra_keys = set(data.keys()) - {"name", "email"}
-    if extra_keys:
-        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
-@validate_via_prefix.register(r"project\.license")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, dict):
-        return
-
-    if len({"text", "file"} & set(data.keys())) != 1:
-        msg = f'Field "{prefix}" must have exactly one of "text" or "file" keys'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-    extra_keys = set(data.keys()) - {"text", "file"}
-    if extra_keys:
-        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
-@validate_via_prefix.register(r"project\.readme")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, dict):
-        return
-    extra_keys = set(data.keys()) - {"file", "text", "content-type"}
-    if extra_keys:
-        extra_keys_list = ", ".join(f'"{k}"' for k in sorted(extra_keys))
-        msg = f'Field "{prefix}" contains unexpected keys: {extra_keys_list}'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-    if len({"file", "text"} & set(data.keys())) != 1:
-        msg = f'Field "{prefix}" must have exactly one of "file" or "text" keys'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-    if "content-type" not in data:
-        msg = f'Field "{prefix}" is missing required key "content-type"'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
-@validate_via_prefix.register(r"project\.version")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, str):
-        return
-    try:
-        packaging.version.Version(data)
-    except packaging.version.InvalidVersion:
-        msg = f'Field "{prefix}" is an invalid PEP 440 version string (got {data!r})'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
-@validate_via_prefix.register(
-    r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]"
-)
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, str):
-        return
-    try:
-        packaging.requirements.Requirement(data)
-    except packaging.requirements.InvalidRequirement as exc:
-        msg = f'Field "{prefix}" is an invalid PEP 508 requirement string {data!r} ({exc!r})'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
-@validate_via_prefix.register(r"project\.entry-points")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, dict):
-        return
-    for name in data:
-        if not VALID_ENTRY_POINT.fullmatch(name):
-            msg = (
-                f'Field "{prefix}" has an invalid key, expecting a key containing'
-                f" only alphanumeric, underscore, or dot characters (got {name!r})"
-            )
-            error_collector.error(ConfigurationTypeError(msg, key=prefix))
-
-
-@validate_via_prefix.register(r"project\.requires-python")
-def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
-    if not isinstance(data, str):
-        return
-    try:
-        packaging.specifiers.SpecifierSet(data)
-    except packaging.specifiers.InvalidSpecifier:
-        msg = f'Field "{prefix}" is an invalid Python version specifier string (got {data!r})'
-        error_collector.error(ConfigurationError(msg, key=prefix))
-
-
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, error_collector: SimpleErrorCollector
 ) -> None:
@@ -391,9 +268,9 @@ def _cast(
     """
     Runtime cast for types.
 
-    Just enough to cover the dicts above (not general or public). Calls validators as well.
-    This may raise ConfigurationError even when the error collector is collecting; this is used
-    to short-circuit further validation when the type is wrong.
+    Just enough to cover the dicts above (not general or public).  This may
+    raise ConfigurationError even when the error collector is collecting; this
+    is used to short-circuit further validation when the type is wrong.
     """
     origin = typing.get_origin(type_hint)
     # Special case Required, needed on 3.10 and older
@@ -404,29 +281,24 @@ def _cast(
 
     # Any accepts everything, so no validation
     if type_hint is Any:  # type: ignore[comparison-overlap]
-        validate_via_prefix(prefix, data, error_collector)
         return
 
     # TypedDict
     if is_typed_dict(type_hint):
-        validate_via_prefix(prefix, data, error_collector)
         _cast_typed_dict(type_hint, data, prefix, error_collector)
         return
 
     if origin is typing.Literal:
-        validate_via_prefix(prefix, data, error_collector)
         _cast_literal(args, data, prefix, error_collector)
     elif origin is list:
-        validate_via_prefix(prefix, data, error_collector)
         _cast_list(args, data, prefix, error_collector)
     elif origin is dict:
-        validate_via_prefix(prefix, data, error_collector)
         _cast_dict(args, data, prefix, error_collector)
     elif origin is typing.Union:
         # A union does not run the validator, the selected branch will
         _cast_union(args, data, prefix, error_collector)
     elif isinstance(data, origin or type_hint):
-        validate_via_prefix(prefix, data, error_collector)
+        pass
     else:
         msg = f'Field "{prefix}" has an invalid type, expecting {get_name(type_hint)} (got {get_name(type(data))})'
         error_collector.error(ConfigurationTypeError(msg, key=prefix))
