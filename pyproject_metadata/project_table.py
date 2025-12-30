@@ -24,6 +24,7 @@ from typing import (
 
 import packaging.requirements
 import packaging.specifiers
+import packaging.version
 
 from ._dispatch import get_name, is_typed_dict, keydispatch
 from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
