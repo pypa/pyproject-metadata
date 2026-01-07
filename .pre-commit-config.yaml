@@ -21,7 +21,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.7"
+    rev: "v0.14.10"
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -41,14 +41,14 @@ repos:
         additional_dependencies: [black==25.*]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.7.3"
+    rev: "v3.7.4"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.3.0"
+    rev: "v1.3.2"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -67,12 +67,12 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.11.21
+    rev: 2026.01.02
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.35.0
+    rev: 0.36.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
