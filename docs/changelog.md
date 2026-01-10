@@ -121,7 +121,8 @@ Docs:
 - Always normalize extras following PEP 685
 - Preserve the user-specified name style in the metadata. `.canonical_name`
   added to get the normalized name
-- Require "version" in the dynamic table if unset (following `pyproject.toml [project]` metadata)
+- Require "version" in the dynamic table if unset (following
+  `pyproject.toml [project]` metadata)
 - Support extras using markers containing "or"
 - Support empty extras
 - Using `.as_rfc822()` no longer modifies the metadata object
