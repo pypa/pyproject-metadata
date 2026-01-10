@@ -7,7 +7,7 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 [![PyPI version][pypi-version]][pypi-link]
 
-> Dataclass for pyproject.toml [project] metadata with support for [core
+> Dataclass for pyproject.toml [project] metadata with support for [core >
 > metadata] generation
 
 This project does not implement the parsing of `pyproject.toml` containing
