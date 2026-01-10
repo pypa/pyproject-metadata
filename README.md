@@ -7,13 +7,15 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 [![PyPI version][pypi-version]][pypi-link]
 
-> Dataclass for pyproject.toml [project] metadata with support for [core metadata] generation
+> Dataclass for pyproject.toml [project] metadata with support for [core
+> metadata] generation
 
-This project does not implement the parsing of `pyproject.toml`containing [project] metadata.
+This project does not implement the parsing of `pyproject.toml` containing
+pyproject.toml [project] metadata.
 
-Instead, given a Python data structure representing [project] metadata (already
-parsed), it will validate this input and generate a PEP 643-compliant metadata
-file (e.g. `PKG-INFO`).
+Instead, given a Python data structure representing pyproject.toml [project]
+metadata (already parsed), it will validate this input and generate a PEP
+643-compliant metadata file (e.g. `PKG-INFO`).
 
 ## Usage
 
@@ -26,7 +28,9 @@ from pyproject_metadata import StandardMetadata
 
 parsed_pyproject = {...}  # you can use parsers like `tomli` to obtain this dict
 metadata = StandardMetadata.from_pyproject(parsed_pyproject, allow_extra_keys=False)
-print(metadata.entrypoints)  # same fields as defined in [project] metadata
+print(
+    metadata.entrypoints
+)  # same fields as defined in pyproject.toml [project] metadata
 
 pkg_info = metadata.as_rfc822()
 print(str(pkg_info))  # core metadata
