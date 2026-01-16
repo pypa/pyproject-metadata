@@ -7,13 +7,13 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 [![PyPI version][pypi-version]][pypi-link]
 
-> Dataclass for pyproject.toml [project] metadata with support for [core > > >
-> metadata] generation
+> Dataclass for pyproject.toml `[project]` metadata with support for \[core >
+> metadata\] generation
 
 This project does not implement the parsing of `pyproject.toml` containing
-pyproject.toml [project] metadata.
+pyproject.toml `[project]` metadata.
 
-Instead, given a Python data structure representing pyproject.toml [project]
+Instead, given a Python data structure representing pyproject.toml `[project]`
 metadata (already parsed), it will validate this input and generate a PEP
 643-compliant metadata file (e.g. `PKG-INFO`).
 
