@@ -84,7 +84,7 @@ ignore = [
   "D200",    # Don't force single line docstring (for now)
   "D205",    # Some of our summaries are more than a line (for now)
 ]
-flake8-builtins.ignorelist = ["copyright"]
+flake8-builtins.ignorelist = ["copyright", "license"]
 pydocstyle.convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
@@ -92,8 +92,9 @@ pydocstyle.convention = "pep257"
   "PTH123",  # Path.open not needed for simple files
   "D",       # Tests don't need docs
   "INP001",  # Tests don't need an __init__
-  "FBT001",  # Bools are fine in test fixutres/params
+  "FBT001",  # Bools are fine in test fixtures/params
   "SLF001",  # Tests can access private members
+  "ERA001",  # TODO: temporary
 ]
 "docs/**" = [
   "INP001",  # Docs don't need an __init__
