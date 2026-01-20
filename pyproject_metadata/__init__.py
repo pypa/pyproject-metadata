@@ -47,9 +47,10 @@ import typing
 import warnings
 
 # Build backends may vendor this package, so all imports are relative.
-from . import constants
+from . import constants, pyproject
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
-from .pyproject import License, PyProjectReader, Readme
+from .project_table import to_project_table
+from .pyproject import License, Readme
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator, Mapping
@@ -62,7 +63,9 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import Dynamic, PyProjectTable
+    from .project_table import Dynamic
+
+import contextlib
 
 import packaging.markers
 import packaging.specifiers
@@ -240,7 +243,11 @@ def _validate_import_names(
     """
     Return normalized names for comparisons.
     """
+    if not isinstance(names, list):
+        return
     for fullname in names:
+        if not isinstance(fullname, str):
+            continue
         name, simicolon, private = fullname.partition(";")
         if simicolon and private.lstrip() != "private":
             msg = "{key} contains an ending tag other than '; private', got {value!r}"
@@ -392,17 +399,19 @@ class StandardMetadata:
         present in the pyproject table, and ``all_errors``, to  raise all errors
         in an ExceptionGroup instead of raising the first one.
         """
-        pyproject = PyProjectReader(collect_errors=all_errors)
-
-        pyproject_table: PyProjectTable = data  # type: ignore[assignment]
-        if "project" not in pyproject_table:
+        error_collector = ErrorCollector(collect_errors=all_errors)
+        if "project" not in data:
             msg = "Section {key} missing in pyproject.toml"
-            pyproject.config_error(msg, key="project")
-            pyproject.finalize("Failed to parse pyproject.toml")
+            error_collector.config_error(msg, key="project")
+            error_collector.finalize("Failed to parse pyproject.toml")
             msg = "Unreachable code"  # pragma: no cover
             raise AssertionError(msg)  # pragma: no cover
 
-        project = pyproject_table["project"]
+        with error_collector.collect():
+            to_project_table(dict(data), collect_errors=all_errors)
+
+        assert "project" in data
+        project = data["project"]
         project_dir = pathlib.Path(project_dir)
 
         if not allow_extra_keys:
@@ -410,58 +419,45 @@ class StandardMetadata:
             if extra_keys:
                 extra_keys_str = ", ".join(sorted(f"{k!r}" for k in extra_keys))
                 msg = "Extra keys present in {key}: {extra_keys}"
-                pyproject.config_error(
+                error_collector.config_error(
                     msg,
                     key="project",
                     extra_keys=extra_keys_str,
                     warn=allow_extra_keys is None,
                 )
 
-        dynamic = pyproject.get_dynamic(project)
+        dynamic = project.get("dynamic", [])
 
         for field in dynamic:
-            if field in data["project"]:
+            if field in data["project"] and field != "name":
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                pyproject.config_error(msg, key=f"project.{field}")
+                error_collector.config_error(msg, key=f"project.{field}")
 
-        raw_name = project.get("name")
-        name = "UNKNOWN"
-        if raw_name is None:
-            msg = "Field {key} missing"
-            pyproject.config_error(msg, key="project.name")
-        else:
-            tmp_name = pyproject.ensure_str(raw_name, "project.name")
-            if tmp_name is not None:
-                name = tmp_name
+        name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
         version: packaging.version.Version | None = packaging.version.Version("0.0.0")
         raw_version = project.get("version")
         if raw_version is not None:
-            version_string = pyproject.ensure_str(raw_version, "project.version")
+            version_string = pyproject.ensure_str(raw_version)
             if version_string is not None:
-                try:
+                with contextlib.suppress(packaging.version.InvalidVersion):
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
                     )
-                except packaging.version.InvalidVersion:
-                    msg = "Invalid {key} value, expecting a valid PEP 440 version"
-                    pyproject.config_error(
-                        msg, key="project.version", got=version_string
-                    )
         elif "version" not in dynamic:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
             )
-            pyproject.config_error(msg, key="project.version")
+            error_collector.config_error(msg, key="project.version")
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
         project_description_raw = project.get("description")
         description = (
-            pyproject.ensure_str(project_description_raw, "project.description")
+            pyproject.ensure_str(project_description_raw)
             if project_description_raw is not None
             else None
         )
@@ -469,70 +465,53 @@ class StandardMetadata:
         requires_python_raw = project.get("requires-python")
         requires_python = None
         if requires_python_raw is not None:
-            requires_python_string = pyproject.ensure_str(
-                requires_python_raw, "project.requires-python"
-            )
+            requires_python_string = pyproject.ensure_str(requires_python_raw)
             if requires_python_string is not None:
-                try:
+                with contextlib.suppress(packaging.specifiers.InvalidSpecifier):
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
                     )
-                except packaging.specifiers.InvalidSpecifier:
-                    msg = "Invalid {key} value, expecting a valid specifier set"
-                    pyproject.config_error(
-                        msg, key="project.requires-python", got=requires_python_string
-                    )
+
+        authors = pyproject.ensure_people(project.get("authors", []))
+        maintainers = pyproject.ensure_people(project.get("maintainers", []))
+        license = pyproject.get_license(project, project_dir, error_collector)
+        license_files = pyproject.get_license_files(
+            project, project_dir, error_collector
+        )
+        readme = pyproject.get_readme(project, project_dir, error_collector)
+        dependencies = pyproject.get_dependencies(project)
+        optional_dependencies = pyproject.get_optional_dependencies(project)
+        entrypoints = pyproject.get_entrypoints(project)
 
         self = None
-        with pyproject.collect():
+        with error_collector.collect():
             self = cls(
                 name=name,
                 version=version,
                 description=description,
-                license=pyproject.get_license(project, project_dir),
-                license_files=pyproject.get_license_files(project, project_dir),
-                readme=pyproject.get_readme(project, project_dir),
+                license=license,
+                license_files=license_files,
+                readme=readme,
                 requires_python=requires_python,
-                dependencies=pyproject.get_dependencies(project),
-                optional_dependencies=pyproject.get_optional_dependencies(project),
-                entrypoints=pyproject.get_entrypoints(project),
-                authors=pyproject.ensure_people(
-                    project.get("authors", []), "project.authors"
-                ),
-                maintainers=pyproject.ensure_people(
-                    project.get("maintainers", []), "project.maintainers"
-                ),
-                urls=pyproject.ensure_dict(project.get("urls", {}), "project.urls")
-                or {},
-                classifiers=pyproject.ensure_list(
-                    project.get("classifiers", []), "project.classifiers"
-                )
-                or [],
-                keywords=pyproject.ensure_list(
-                    project.get("keywords", []), "project.keywords"
-                )
-                or [],
-                scripts=pyproject.ensure_dict(
-                    project.get("scripts", {}), "project.scripts"
-                )
-                or {},
-                gui_scripts=pyproject.ensure_dict(
-                    project.get("gui-scripts", {}), "project.gui-scripts"
-                )
-                or {},
-                import_names=pyproject.ensure_list(
-                    project.get("import-names", None), "project.import-names"
-                ),
-                import_namespaces=pyproject.ensure_list(
-                    project.get("import-namespaces", None), "project.import-namespaces"
-                ),
+                dependencies=dependencies,
+                optional_dependencies=optional_dependencies,
+                entrypoints=entrypoints,
+                authors=authors,
+                maintainers=maintainers,
+                urls=project.get("urls", {}),
+                classifiers=project.get("classifiers", []),
+                keywords=project.get("keywords", []),
+                scripts=project.get("scripts", {}),
+                gui_scripts=project.get("gui-scripts", {}),
+                import_names=project.get("import-names", None),
+                import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
             )
 
-        pyproject.finalize("Failed to parse pyproject.toml")
+        error_collector.finalize("Failed to parse pyproject.toml")
         assert self is not None
         return self
 
