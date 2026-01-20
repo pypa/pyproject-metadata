@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-This is pyproject_metadata, a library for working with PEP 621 metadata.
+This is pyproject_metadata, a library for working with metadata in the
+pyproject.toml project table.
 
 Example usage:
 
