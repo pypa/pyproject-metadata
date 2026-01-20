@@ -918,8 +918,8 @@ def test_load(
             [
                 'Field "project.name" has an invalid type, expecting str (got bool)',
                 "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
-                "'dependencies', 'description', 'dynamic', 'entry-points', 'gui-scripts', "
-                "'import-names', 'import-namespaces', 'keywords', 'license', "
+                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
                 "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
                 "'scripts', 'urls', 'version' (got 'name')",
             ],
@@ -937,8 +937,8 @@ def test_load(
             [
                 'Field "project.name" has an invalid type, expecting str (got bool)',
                 "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
-                "'dependencies', 'description', 'dynamic', 'entry-points', 'gui-scripts', "
-                "'import-names', 'import-namespaces', 'keywords', 'license', "
+                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
                 "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
                 "'scripts', 'urls', 'version' (got 3)",
             ],
