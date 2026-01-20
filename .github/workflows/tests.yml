@@ -69,12 +69,42 @@ jobs:
           env_vars: PYTHON
           name: ${{ matrix.python }}
 
+  downstream:
+    name: Downstream ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - sphinx-theme-builder
+          - meson-python
+          - scikit-build-core
+          - pdm-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up target Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Run nox
+        run: uvx nox -s 'downstream(project="${{ matrix.project }}")'
+
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass: # This job does nothing and is only used for the branch protection
     if: always()
 
     needs:
       - pytest
+      - downstream
 
     runs-on: ubuntu-latest
 
