@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.0 (1-29-2026)
+## 0.11.0 (2-6-2026)
 
 This release refactors a lot of the internals to break up conversion and
 validation. This should not be noticeable except for better error messages in
