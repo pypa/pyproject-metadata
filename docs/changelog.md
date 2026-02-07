@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.0 (2-6-2026)
+
+This release refactors a lot of the internals to break up conversion and
+validation. This should not be noticeable except for better error messages in
+some cases. We also now test on some downstream projects; if you are using
+pyproject-metadata for a backend, you can suggest adding a downstream test to
+our noxfile.
+
+Refactoring:
+
+- Restructured internals around conversion.
+
+Internal and CI:
+
+- Test on some downstream projects.
+- Remove some PEP 621 terminology
+
 ## 0.10.0 (11-21-2025)
 
 This release adds support for [PEP 794](https://peps.python.org/pep-0794/)
