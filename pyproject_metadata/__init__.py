@@ -80,7 +80,7 @@ if sys.version_info < (3, 12, 4):
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
 
 
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 
 __all__ = [
     "ConfigurationError",
