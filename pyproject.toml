@@ -30,6 +30,7 @@ dependencies = [
 
 [project.urls]
 changelog = "https://pep621.readthedocs.io/en/stable/changelog.html"
+documentation = "https://pep621.readthedocs.io/en/stable/"
 homepage = "https://github.com/pypa/pyproject-metadata"
 
 [dependency-groups]
