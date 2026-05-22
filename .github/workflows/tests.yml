@@ -66,7 +66,7 @@ jobs:
         run: uv run noxfile.py -s minimums-${{ matrix.python }}
 
       - name: Send coverage report
-        uses: codecov/codecov-action@28efbc6e0c7e4df2935b7eb2da67e4e5f3d62712 # v6.0.2
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
         env:
           PYTHON: ${{ matrix.python }}
         with:
