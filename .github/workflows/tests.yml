@@ -112,7 +112,7 @@ jobs:
       - pytest
       - downstream
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Decide whether the needed jobs succeeded or failed
