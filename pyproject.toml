@@ -116,5 +116,8 @@ report.exclude_also = [
     "if typing.TYPE_CHECKING:",
 ]
 
+[tool.uv]
+exclude-newer = "7 days"
+
 [tool.repo-review]
 ignore = ["PC140"]
