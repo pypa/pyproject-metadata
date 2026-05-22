@@ -1,6 +1,0 @@
-rules:
-  template-injection:
-    ignore:
-      - tests.yml:63
-      - tests.yml:66
-      - tests.yml:104

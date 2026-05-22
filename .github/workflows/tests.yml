@@ -60,10 +60,14 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Run tests
-        run: uv run noxfile.py -s test-${{ matrix.python }}
+        run: uv run noxfile.py -s test-$PYTHON
+        env:
+          PYTHON: ${{ matrix.python }}
 
       - name: Run minimum tests
-        run: uv run noxfile.py -s minimums-${{ matrix.python }}
+        run: uv run noxfile.py -s minimums-$PYTHON
+        env:
+          PYTHON: ${{ matrix.python }}
 
       - name: Send coverage report
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
@@ -101,7 +105,9 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Run nox
-        run: uvx nox -s 'downstream(project="${{ matrix.project }}")'
+        run: uvx nox -s "downstream(project=\"$PROJECT\")"
+        env:
+          PYTHON: ${{ matrix.project }}
 
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass:
