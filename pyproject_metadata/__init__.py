@@ -212,7 +212,7 @@ class RFC822Policy(email.policy.EmailPolicy):
         ) -> str:  # pragma: no cover
             if hasattr(value, "name"):
                 return value.fold(policy=self)  # type: ignore[no-any-return]
-            maxlen = self.max_line_length if self.max_line_length else sys.maxsize
+            maxlen = self.max_line_length or sys.maxsize
 
             # this is from the library version, and it improperly breaks on chars like 0x0c, treating
             # them as 'form feed' etc.
