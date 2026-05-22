@@ -1820,6 +1820,159 @@ def test_dual_defined_dynamic_field() -> None:
     )
     assert len(metadata.dependencies) == 1
     assert metadata.dynamic == ["dependencies"]
+    assert metadata.auto_metadata_version == "2.6"
+
+
+@pytest.mark.parametrize(
+    ("field", "static_value"),
+    [
+        ("authors", [{"name": "Author"}]),
+        ("classifiers", ["Development Status :: 3 - Alpha"]),
+        ("dependencies", ["some-dep"]),
+        ("keywords", ["example"]),
+        ("maintainers", [{"name": "Maintainer"}]),
+        ("urls", {"Homepage": "https://example.com"}),
+        ("entry-points", {"console_scripts": {"foo": "bar:baz"}}),
+        ("gui-scripts", {"foo": "bar:baz"}),
+        ("optional-dependencies", {"test": ["pytest"]}),
+        ("scripts", {"foo": "bar:baz"}),
+    ],
+)
+def test_dual_defined_dynamic_field_auto_version(
+    field: str, static_value: object
+) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                field: static_value,
+                "dynamic": [field],
+            },
+        }
+    )
+    assert metadata.auto_metadata_version == "2.6"
+
+
+@pytest.mark.parametrize("version", ["2.1", "2.2", "2.3", "2.4", "2.5"])
+def test_dual_defined_dynamic_field_requires_26(version: str) -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            "Fields dependencies are declared as both static and dynamic, which requires metadata_version >= 2.6"
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "dependencies": ["example"],
+                    "dynamic": ["dependencies"],
+                },
+            },
+            metadata_version=version,
+        )
+
+
+def test_dual_defined_dynamic_field_with_26() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        },
+        metadata_version="2.6",
+    )
+    assert metadata.auto_metadata_version == "2.6"
+    assert len(metadata.dependencies) == 1
+
+
+def test_dual_defined_license_files_auto_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(DIR / "packages/fulltext_license")
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "license-files": ["LICENSE.txt"],
+                "dynamic": ["license-files"],
+            },
+        },
+    )
+    assert metadata.auto_metadata_version == "2.6"
+
+
+def test_non_dual_field_still_errors() -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            'Field "project.version" declared as dynamic in "project.dynamic" but is defined'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "dynamic": ["version"],
+                },
+            },
+            metadata_version="2.6",
+        )
+
+
+def test_description_dual_field_still_errors() -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            'Field "project.description" declared as dynamic in "project.dynamic" but is defined'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "description": "A description",
+                    "dynamic": ["description"],
+                },
+            },
+            metadata_version="2.6",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "static_value"),
+    [
+        ("version", "1.2.3"),
+        ("description", "A description"),
+        ("requires-python", ">=3.8"),
+    ],
+)
+def test_non_dual_static_dynamic_field_errors_with_26(
+    field: str, static_value: object
+) -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape('declared as dynamic in "project.dynamic" but is defined'),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    field: static_value,
+                    "dynamic": [field],
+                },
+            },
+            metadata_version="2.6",
+        )
 
 
 @pytest.mark.parametrize(
