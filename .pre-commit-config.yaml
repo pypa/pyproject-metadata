@@ -84,7 +84,7 @@ repos:
     rev: 122913fcf3aa27fa6867c902c3e803b7bff22d28 # frozen: v1.25.0
     hooks:
       - id: zizmor
-        files: "^\\.github"
+        files: "^\\.github/workflows"
         args: [--persona=pedantic]
 
   - repo: https://github.com/scientific-python/cookie
