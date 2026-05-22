@@ -11,8 +11,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   pytest:
+    name: Test Python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,25 +46,33 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up target Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Run tests
-        run: uv run noxfile.py -s test-${{ matrix.python }}
+        run: uv run noxfile.py -s test-$PYTHON
+        shell: bash
+        env:
+          PYTHON: ${{ matrix.python }}
 
       - name: Run minimum tests
-        run: uv run noxfile.py -s minimums-${{ matrix.python }}
+        run: uv run noxfile.py -s minimums-$PYTHON
+        shell: bash
+        env:
+          PYTHON: ${{ matrix.python }}
 
       - name: Send coverage report
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
         env:
           PYTHON: ${{ matrix.python }}
         with:
@@ -83,33 +94,36 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Set up target Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.14"
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Run nox
-        run: uvx nox -s 'downstream(project="${{ matrix.project }}")'
+        run: uvx nox -s "downstream(project=\"$PROJECT\")"
+        env:
+          PROJECT: ${{ matrix.project }}
 
   # https://github.com/marketplace/actions/alls-green#why
-  required-checks-pass: # This job does nothing and is only used for the branch protection
+  required-checks-pass:
+    name: All checks passed
     if: always()
 
     needs:
       - pytest
       - downstream
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
           jobs: ${{ toJSON(needs) }}
