@@ -113,7 +113,7 @@ def docs(session: nox.Session) -> None:
 PROJECTS = {
     "sphinx-theme-builder": "https://github.com/pradyunsg/sphinx-theme-builder/archive/refs/tags/0.3.2.tar.gz",
     "meson-python": "https://github.com/mesonbuild/meson-python/archive/refs/tags/0.19.0.tar.gz",
-    "scikit-build-core": "https://github.com/scikit-build/scikit-build-core/archive/41056e7b9aac3721994aa684de3314aa04c17dc9.tar.gz",
+    "scikit-build-core": "https://github.com/scikit-build/scikit-build-core/archive/8621243325da790d8d11d8443507ffab121f9650.tar.gz",
     "pdm-backend": "https://github.com/pdm-project/pdm-backend/archive/refs/tags/2.4.6.tar.gz",
 }
 
