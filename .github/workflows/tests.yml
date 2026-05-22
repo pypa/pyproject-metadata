@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   pytest:
-    name: Test Python ${{ matrix.python }}
+    name: Test Python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -62,11 +62,13 @@ jobs:
 
       - name: Run tests
         run: uv run noxfile.py -s test-$PYTHON
+        shell: bash
         env:
           PYTHON: ${{ matrix.python }}
 
       - name: Run minimum tests
         run: uv run noxfile.py -s minimums-$PYTHON
+        shell: bash
         env:
           PYTHON: ${{ matrix.python }}
 
@@ -108,7 +110,7 @@ jobs:
       - name: Run nox
         run: uvx nox -s "downstream(project=\"$PROJECT\")"
         env:
-          PYTHON: ${{ matrix.project }}
+          PROJECT: ${{ matrix.project }}
 
   # https://github.com/marketplace/actions/alls-green#why
   required-checks-pass:
