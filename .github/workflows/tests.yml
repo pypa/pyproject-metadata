@@ -52,7 +52,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Run tests
         run: uv run noxfile.py -s test-${{ matrix.python }}
@@ -93,7 +93,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Run nox
         run: uvx nox -s 'downstream(project="${{ matrix.project }}")'
