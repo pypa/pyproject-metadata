@@ -339,6 +339,10 @@ class StandardMetadata:
     This field is used to track dynamic fields. You can't set a field not in this list.
     """
 
+    dual_dynamic: set[str] = dataclasses.field(default_factory=set, repr=False)
+    """
+    This is a set of all the items set both in dynamic and static mode. Requires metadata_version 2.6+.
+    """
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
     This is a list of METADATA fields that can change in between SDist and wheel. Requires metadata_version 2.2+.
@@ -367,6 +371,8 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
+        if self.dual_dynamic:
+            return "2.6"
         if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
@@ -429,10 +435,14 @@ class StandardMetadata:
 
         dynamic = project.get("dynamic", [])
 
+        dual_dynamic: set[str] = set()
         for field in dynamic:
-            if field in data["project"] and field != "name":
-                msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                error_collector.config_error(msg, key=f"project.{field}")
+            if field in data["project"]:
+                if field in constants.PROJECT_DYNAMIC_STATIC:
+                    dual_dynamic.add(field)
+                elif field != "name":
+                    msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
+                    error_collector.config_error(msg, key=f"project.{field}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
@@ -507,6 +517,7 @@ class StandardMetadata:
                 import_names=project.get("import-names", None),
                 import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,
+                dual_dynamic=dual_dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
@@ -555,6 +566,7 @@ class StandardMetadata:
         - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
         - ``import-names`` and ``import-namespaces`` cannot overlap.
+        - Static and ``dynamic`` requires metadata_version >= 2.6
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -651,6 +663,14 @@ class StandardMetadata:
             errors.config_error(msg, key="project.import-names", in_both=in_both)
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
+
+        if (
+            self.dual_dynamic
+            and self.auto_metadata_version in constants.PRE_2_6_METADATA_VERSIONS
+        ):
+            fields = ", ".join(sorted(self.dual_dynamic))
+            msg = "Fields {fields} are declared as both static and dynamic, which requires metadata_version >= 2.6"
+            errors.config_error(msg, fields=fields)
 
         errors.finalize("Metadata validation failed")
 

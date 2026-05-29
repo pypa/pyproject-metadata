@@ -15,7 +15,9 @@ __all__ = [
     "KNOWN_MULTIUSE",
     "KNOWN_PROJECT_FIELDS",
     "KNOWN_TOPLEVEL_FIELDS",
+    "PRE_2_6_METADATA_VERSIONS",
     "PRE_SPDX_METADATA_VERSIONS",
+    "PROJECT_DYNAMIC_STATIC",
     "PROJECT_TO_METADATA",
 ]
 
@@ -24,9 +26,10 @@ def __dir__() -> list[str]:
     return __all__
 
 
-KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5"}
+KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5", "2.6"}
 PRE_SPDX_METADATA_VERSIONS = {"2.1", "2.2", "2.3"}
 PRE_2_5_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4"}
+PRE_2_6_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5"}
 
 PROJECT_TO_METADATA = {
     "authors": frozenset(["Author", "Author-Email"]),
@@ -50,6 +53,21 @@ PROJECT_TO_METADATA = {
     "import-names": frozenset(["Import-Name"]),
     "import-namespaces": frozenset(["Import-Namespaces"]),
 }
+
+PROJECT_DYNAMIC_STATIC = {
+    "authors",
+    "classifiers",
+    "dependencies",
+    "keywords",
+    "license-files",
+    "maintainers",
+    "urls",
+    "entry-points",
+    "gui-scripts",
+    "optional-dependencies",
+    "scripts",
+}
+
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}
