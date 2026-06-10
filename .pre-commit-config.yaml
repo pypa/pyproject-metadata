@@ -21,7 +21,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.12"
+    rev: "v0.15.15"
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -67,7 +67,7 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.04.26
+    rev: 2026.05.28
     hooks:
       - id: validate-pyproject
 
