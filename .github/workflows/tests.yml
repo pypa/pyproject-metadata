@@ -53,7 +53,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - name: Run tests
         run: uv run noxfile.py -s test-${{ matrix.python }}
@@ -62,7 +62,7 @@ jobs:
         run: uv run noxfile.py -s minimums-${{ matrix.python }}
 
       - name: Send coverage report
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         env:
           PYTHON: ${{ matrix.python }}
         with:
@@ -94,7 +94,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v8.2.0
 
       - name: Run nox
         run: uvx nox -s 'downstream(project="${{ matrix.project }}")'
