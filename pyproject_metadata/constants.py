@@ -48,7 +48,7 @@ PROJECT_TO_METADATA = {
     "urls": frozenset(["Project-URL"]),
     "version": frozenset(["Version"]),
     "import-names": frozenset(["Import-Name"]),
-    "import-namespaces": frozenset(["Import-Namespaces"]),
+    "import-namespaces": frozenset(["Import-Namespace"]),
 }
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}

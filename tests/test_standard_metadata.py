@@ -1674,6 +1674,17 @@ def test_as_rfc822_mapped_dynamic() -> None:
     )
 
 
+def test_project_to_metadata_fields_are_known() -> None:
+    """All metadata field names in PROJECT_TO_METADATA must be known metadata fields."""
+    unknown = {
+        field
+        for fields in pyproject_metadata.constants.PROJECT_TO_METADATA.values()
+        for field in fields
+        if field.lower() not in pyproject_metadata.constants.KNOWN_METADATA_FIELDS
+    }
+    assert not unknown, f"Unknown metadata fields in PROJECT_TO_METADATA: {unknown}"
+
+
 def test_as_rfc822_missing_version() -> None:
     metadata = pyproject_metadata.StandardMetadata(name="something")
     with pytest.raises(
