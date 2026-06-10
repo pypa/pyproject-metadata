@@ -33,6 +33,7 @@ Example usage:
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import dataclasses
 import email.message
@@ -66,16 +67,12 @@ if typing.TYPE_CHECKING:
 
     from .project_table import Dynamic, ProjectTable
 
-import contextlib
-
 import packaging.markers
 import packaging.specifiers
 import packaging.utils
 import packaging.version
 
 if sys.version_info < (3, 12, 4):
-    import re
-
     RE_EOL_STR = re.compile(r"[\r\n]+")
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
 
@@ -278,7 +275,6 @@ def _validate_dotted_names(names: set[str], *, errors: ErrorCollector) -> None:
             if parent not in names:
                 msg = "{key} is missing {value!r}, but submodules are present elsewhere"
                 errors.config_error(msg, key="project.import-namespaces", value=parent)
-                continue
 
 
 class RFC822Message(email.message.EmailMessage):
@@ -412,7 +408,6 @@ class StandardMetadata:
         with error_collector.collect():
             to_project_table(dict(data), collect_errors=all_errors)
 
-        assert "project" in data
         project = data["project"]
         if not isinstance(project, dict):
             # In non-collecting mode, to_project_table already raised; this path
@@ -706,13 +701,13 @@ class StandardMetadata:
 
         if self.license_files is not None:
             for license_file in sorted(set(self.license_files)):
-                smart_message["License-File"] = os.fspath(license_file.as_posix())
+                smart_message["License-File"] = license_file.as_posix()
         elif (
             self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS
             and isinstance(self.license, License)
             and self.license.file
         ):
-            smart_message["License-File"] = os.fspath(self.license.file.as_posix())
+            smart_message["License-File"] = self.license.file.as_posix()
 
         for classifier in self.classifiers:
             smart_message["Classifier"] = classifier
