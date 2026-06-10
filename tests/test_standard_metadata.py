@@ -1051,6 +1051,23 @@ def test_load_multierror(
         assert "Failed to parse pyproject.toml" in repr(execinfo.value)
 
 
+def test_load_non_table_project(all_errors: bool) -> None:
+    error = 'Field "project" has an invalid type, expecting ProjectTable (got list)'
+    data = {"project": ["oops"]}
+    if not all_errors:
+        with pytest.raises(
+            pyproject_metadata.ConfigurationError, match=re.escape(error)
+        ):
+            pyproject_metadata.StandardMetadata.from_pyproject(data)
+    else:
+        with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
+            pyproject_metadata.StandardMetadata.from_pyproject(data, all_errors=True)
+        exceptions = execinfo.value.exceptions
+        args = [e.args[0] for e in exceptions]
+        assert args == [error]
+        assert "Failed to parse pyproject.toml" in repr(execinfo.value)
+
+
 @pytest.mark.parametrize(
     ("data", "error", "metadata_version"),
     [
