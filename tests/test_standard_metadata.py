@@ -1662,6 +1662,35 @@ def test_as_rfc822_invalid_dynamic() -> None:
         metadata.as_rfc822()
 
 
+def test_license_file_not_found_with_braces() -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape("License file not found ('LICENSE{oops}')"),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.0",
+                    "license": {"file": "LICENSE{oops}"},
+                }
+            }
+        )
+
+
+def test_as_rfc822_invalid_dynamic_with_braces() -> None:
+    metadata = pyproject_metadata.StandardMetadata(
+        name="something",
+        version=packaging.version.Version("1.0.0"),
+        dynamic_metadata=["{key}"],
+    )
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape("Unknown metadata field '{key}' cannot be declared dynamic"),
+    ):
+        metadata.as_rfc822()
+
+
 def test_as_rfc822_mapped_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata(
         name="something",
