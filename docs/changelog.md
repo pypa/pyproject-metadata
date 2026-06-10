@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+Fixes:
+
+- Error on an unset dynamic version instead of silently writing
+  `Version: 0.0.0`. If `"version"` is declared in `project.dynamic` but never
+  assigned by the build backend, writing the metadata now raises a
+  `ConfigurationError` (`Field "project.version" missing`), restoring the 0.8.x
+  behavior that regressed in the 0.9 rewrite.
+
 ## 0.11.0 (2-9-2026)
 
 This release refactors a lot of the internals to break up conversion and

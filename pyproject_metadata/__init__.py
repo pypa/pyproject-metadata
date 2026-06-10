@@ -447,7 +447,14 @@ class StandardMetadata:
                         if version_string
                         else None
                     )
-        elif "version" not in dynamic:
+        elif "version" in dynamic:
+            # A dynamic version that has not been assigned yet is None; the
+            # build backend is expected to set ``metadata.version`` before
+            # writing the metadata. The 0.0.0 placeholder is only kept for the
+            # error-collection paths (version present but invalid) so parsing
+            # can continue under ``all_errors=True``.
+            version = None
+        else:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
             )

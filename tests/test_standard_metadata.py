@@ -1738,6 +1738,34 @@ def test_version_dynamic() -> None:
     metadata.version = packaging.version.Version("1.2.3")
 
 
+def test_version_dynamic_unset() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "dynamic": [
+                    "version",
+                ],
+            },
+        }
+    )
+    assert metadata.version is None
+    with pytest.raises(
+        pyproject_metadata.errors.ConfigurationError,
+        match=re.escape('Field "project.version" missing'),
+    ):
+        metadata.as_rfc822()
+    with pytest.raises(
+        pyproject_metadata.errors.ConfigurationError,
+        match=re.escape('Field "project.version" missing'),
+    ):
+        metadata.as_json()
+
+    # Assigning a dynamic version before writing the metadata works as usual.
+    metadata.version = packaging.version.Version("1.2.3")
+    assert "Version: 1.2.3" in metadata.as_rfc822().as_string()
+
+
 def test_modify_dynamic() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
