@@ -18,12 +18,12 @@ Example usage:
    with open("METADATA", "wb") as f:
        f.write(pkg_info.as_bytes())
 
-   ep = self.metadata.entrypoints.copy()
-   ep["console_scripts"] = self.metadata.scripts
-   ep["gui_scripts"] = self.metadata.gui_scripts
-   for group, entries in ep.items():
-       if entries:
-           with open("entry_points.txt", "w", encoding="utf-8") as f:
+   ep = metadata.entrypoints.copy()
+   ep["console_scripts"] = metadata.scripts
+   ep["gui_scripts"] = metadata.gui_scripts
+   with open("entry_points.txt", "w", encoding="utf-8") as f:
+       for group, entries in ep.items():
+           if entries:
                print(f"[{group}]", file=f)
                for name, target in entries.items():
                    print(f"{name} = {target}", file=f)
@@ -336,7 +336,8 @@ class StandardMetadata:
     import_namespaces: list[str] | None = None
     dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
-    This field is used to track dynamic fields. You can't set a field not in this list.
+    This field contains the list of fields declared dynamic in ``project.dynamic``.
+    A field that is both declared dynamic and explicitly set causes a parsing error.
     """
 
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
