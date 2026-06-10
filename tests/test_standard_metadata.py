@@ -775,6 +775,26 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
                 [project]
                 name = "test"
                 version = "0.1.0"
+                license-files = ['foo/../../LICENSE']
+            """,
+            "'foo/../../LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
+            id="Interior dotdot license-files glob",
+        ),
+        pytest.param(
+            r"""
+                [project]
+                name = "test"
+                version = "0.1.0"
+                license-files = ['C:\LICENSE']
+            """,
+            "'C:\\\\LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
+            id="Windows absolute license-files glob",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
                 license = 'MIT'
                 classifiers = ['License :: OSI Approved :: MIT License']
             """,
@@ -1018,6 +1038,20 @@ def test_load(
                 "\"project.import-namespaces\" is missing 'other.one', but submodules are present elsewhere",
             ],
             id="Multiple errors related to names/namespaces",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = 'test'
+                version = "0.1.0"
+                license-files = ['../LICENSE', '/LICENSE', 'foo/../../LICENSE']
+            """,
+            [
+                "'../LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
+                "'/LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
+                "'foo/../../LICENSE' is an invalid \"project.license-files\" glob: the pattern must match files within the project directory",
+            ],
+            id="Multiple bad license-files globs all reported",
         ),
     ],
 )
@@ -1388,6 +1422,19 @@ def test_rfc822_empty_import_name() -> None:
         ("Version", "0.1.0"),
         ("Import-Name", ""),
     ]
+
+
+def test_import_names_private_trailing_whitespace() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "test",
+                "version": "0.1.0",
+                "import-names": ["name; private "],
+            }
+        }
+    )
+    assert metadata.import_names == ["name; private "]
 
 
 def test_rfc822_full_import_name() -> None:

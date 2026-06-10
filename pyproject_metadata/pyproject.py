@@ -12,13 +12,13 @@ record errors.
 from __future__ import annotations
 
 import dataclasses
+import pathlib
 import typing
 from typing import Any
 
 import packaging.requirements
 
 if typing.TYPE_CHECKING:
-    import pathlib
     from collections.abc import Generator, Iterable
 
     from packaging.requirements import Requirement
@@ -305,14 +305,22 @@ def _get_files_from_globs(
 ) -> Generator[pathlib.Path, None, None]:
     """Given a list of globs, get files that match."""
     for glob in globs:
-        if glob.startswith(("..", "/")):
+        # Reject any glob that escapes the project directory: absolute paths
+        # (POSIX or Windows) or any pattern containing a ".." path segment.
+        pure_path = pathlib.PurePosixPath(glob)
+        if (
+            pure_path.is_absolute()
+            or pathlib.PureWindowsPath(glob).is_absolute()
+            or ".." in pure_path.parts
+            or ".." in pathlib.PureWindowsPath(glob).parts
+        ):
             msg = "{glob!r} is an invalid {key} glob: the pattern must match files within the project directory"
             error_collector.config_error(msg, key="project.license-files", glob=glob)
-            break
+            continue
         files = [f for f in project_dir.glob(glob) if f.is_file()]
         if not files:
             msg = "Every pattern in {key} must match at least one file: {glob!r} did not match any"
             error_collector.config_error(msg, key="project.license-files", glob=glob)
-            break
+            continue
         for f in files:
             yield f.relative_to(project_dir)
