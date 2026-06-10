@@ -37,12 +37,12 @@ import copy
 import dataclasses
 import email.message
 import email.policy
-import email.utils
 import itertools
 import keyword
 import os
 import os.path
 import pathlib
+import re
 import sys
 import typing
 import warnings
@@ -747,14 +747,23 @@ def _name_list(people: list[tuple[str, str | None]]) -> str | None:
     return ", ".join(name for name, email_ in people if not email_) or None
 
 
+_DISPLAY_NAME_NEEDS_QUOTING = re.compile(r'[][\\()<>@,:;".]')
+_QUOTED_STRING_ESCAPE = re.compile(r'([\\"])')
+
+
+def _format_address(name: str, addr: str) -> str:
+    if _DISPLAY_NAME_NEEDS_QUOTING.search(name):
+        quoted = _QUOTED_STRING_ESCAPE.sub(r"\\\1", name)
+        return f'"{quoted}" <{addr}>'
+    return f"{name} <{addr}>"
+
+
 def _email_list(people: list[tuple[str, str | None]]) -> str | None:
     """
     Build a comma-separated list of emails.
     """
     return (
-        ", ".join(
-            email.utils.formataddr((name, _email)) for name, _email in people if _email
-        )
+        ", ".join(_format_address(name, _email) for name, _email in people if _email)
         or None
     )
 

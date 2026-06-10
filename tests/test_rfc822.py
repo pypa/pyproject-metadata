@@ -248,6 +248,27 @@ def test_convert_author_email() -> None:
     ]
 
 
+def test_convert_author_email_non_ascii() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "authors": [
+                    {"name": "Antonín Dvořák", "email": "dvorak@example.com"},
+                ],
+                "maintainers": [
+                    {"name": "Björk", "email": "bjork@example.com"},
+                ],
+            },
+        }
+    )
+    message = str(metadata.as_rfc822())
+    assert "Author-Email: Antonín Dvořák <dvorak@example.com>" in message
+    assert "Maintainer-Email: Björk <bjork@example.com>" in message
+    assert "=?utf-8?" not in message
+
+
 def test_long_version() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
