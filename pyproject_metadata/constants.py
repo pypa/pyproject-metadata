@@ -36,6 +36,8 @@ PROJECT_TO_METADATA = {
     "dynamic": frozenset(),
     "entry-points": frozenset(),
     "gui-scripts": frozenset(),
+    "import-names": frozenset(["Import-Name"]),
+    "import-namespaces": frozenset(["Import-Namespace"]),
     "keywords": frozenset(["Keywords"]),
     "license": frozenset(["License", "License-Expression"]),
     "license-files": frozenset(["License-File"]),
@@ -47,8 +49,6 @@ PROJECT_TO_METADATA = {
     "scripts": frozenset(),
     "urls": frozenset(["Project-URL"]),
     "version": frozenset(["Version"]),
-    "import-names": frozenset(["Import-Name"]),
-    "import-namespaces": frozenset(["Import-Namespace"]),
 }
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
@@ -64,6 +64,8 @@ KNOWN_METADATA_FIELDS = {
     "download-url",  # Not specified via pyproject standards, deprecated by PEP 753
     "dynamic",  # Can't be in dynamic
     "home-page",  # Not specified via pyproject standards, deprecated by PEP 753
+    "import-name",
+    "import-namespace",
     "keywords",
     "license",
     "license-expression",
@@ -86,8 +88,6 @@ KNOWN_METADATA_FIELDS = {
     "summary",
     "supported-platform",  # Not specified via pyproject standards
     "version",  # Can't be in dynamic
-    "import-name",
-    "import-namespace",
 }
 
 KNOWN_MULTIUSE = {
