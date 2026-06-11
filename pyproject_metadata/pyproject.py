@@ -133,8 +133,10 @@ def get_license(
     if filename:
         file = project_dir.joinpath(filename)
         if not file.is_file():
-            msg = f"License file not found ({filename!r})"
-            error_collector.config_error(msg, key="project.license.file")
+            msg = "License file not found ({filename!r})"
+            error_collector.config_error(
+                msg, key="project.license.file", filename=filename
+            )
             return None
         text = file.read_text(encoding="utf-8")
 

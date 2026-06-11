@@ -731,11 +731,11 @@ class StandardMetadata:
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
                 if field.lower() in {"name", "version", "dynamic"}:
-                    msg = f"Metadata field {field!r} cannot be declared dynamic"
-                    errors.config_error(msg)
+                    msg = "Metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg, field=field)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f"Unknown metadata field {field!r} cannot be declared dynamic"
-                    errors.config_error(msg)
+                    msg = "Unknown metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg, field=field)
                 smart_message["Dynamic"] = field
 
         errors.finalize("Failed to write metadata")
