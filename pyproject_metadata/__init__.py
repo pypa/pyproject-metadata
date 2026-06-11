@@ -249,8 +249,8 @@ def _validate_import_names(
     for fullname in names:
         if not isinstance(fullname, str):
             continue
-        name, simicolon, private = fullname.partition(";")
-        if simicolon and private.lstrip() != "private":
+        name, semicolon, private = fullname.partition(";")
+        if semicolon and private.strip() != "private":
             msg = "{key} contains an ending tag other than '; private', got {value!r}"
             errors.config_error(msg, key=key, value=fullname)
         name = name.rstrip()
