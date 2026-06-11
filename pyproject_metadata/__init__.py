@@ -64,7 +64,7 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import Dynamic
+    from .project_table import Dynamic, ProjectTable
 
 import contextlib
 
@@ -414,6 +414,15 @@ class StandardMetadata:
 
         assert "project" in data
         project = data["project"]
+        if not isinstance(project, dict):
+            # In non-collecting mode, to_project_table already raised; this path
+            # is only reachable with all_errors=True, where the type error was
+            # collected and finalize is guaranteed to raise.
+            error_collector.finalize("Failed to parse pyproject.toml")
+            msg = "Unreachable code"  # pragma: no cover
+            raise AssertionError(msg)  # noqa: TRY004  # pragma: no cover
+        project = typing.cast("ProjectTable", project)
+
         project_dir = pathlib.Path(project_dir)
 
         if not allow_extra_keys:
