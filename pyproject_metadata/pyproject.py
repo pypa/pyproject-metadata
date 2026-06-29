@@ -263,7 +263,7 @@ def get_optional_dependencies(
     requirements_dict: dict[str, list[Requirement]] = {}
     if not isinstance(val, dict):
         return {}
-    for extra, requirements in val.copy().items():
+    for extra, requirements in val.items():
         assert isinstance(extra, str)
         if not isinstance(requirements, list):
             return {}
@@ -275,7 +275,7 @@ def get_optional_dependencies(
                 requirements_dict[extra].append(packaging.requirements.Requirement(req))
             except packaging.requirements.InvalidRequirement:
                 return {}
-    return dict(requirements_dict)
+    return requirements_dict
 
 
 def get_entrypoints(project: dict[str, Any]) -> dict[str, dict[str, str]]:
