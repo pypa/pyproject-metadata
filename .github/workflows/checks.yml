@@ -14,8 +14,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  mypy:
-    name: Type checking
+  mypy: # zizmor: ignore[anonymous-definition] required check; name must stay as the job id
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

@@ -113,8 +113,7 @@ jobs:
           PROJECT: ${{ matrix.project }}
 
   # https://github.com/marketplace/actions/alls-green#why
-  required-checks-pass:
-    name: All checks passed
+  required-checks-pass: # zizmor: ignore[anonymous-definition] required check; name must stay as the job id
     if: always()
 
     needs:
