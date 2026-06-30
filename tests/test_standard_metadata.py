@@ -1820,7 +1820,26 @@ def test_dual_defined_dynamic_field() -> None:
     )
     assert len(metadata.dependencies) == 1
     assert metadata.dynamic == ["dependencies"]
-    assert metadata.auto_metadata_version == "2.6"
+    # Without dynamic metadata the field is treated statically, so the version
+    # stays at the baseline rather than being bumped to 2.6.
+    assert metadata.auto_metadata_version == "2.1"
+
+
+@pytest.mark.parametrize("version", ["2.1", "2.2", "2.5"])
+def test_dual_defined_dynamic_field_no_metadata_keeps_version(version: str) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        },
+        metadata_version=version,
+    )
+    assert metadata.auto_metadata_version == version
+    assert len(metadata.dependencies) == 1
 
 
 @pytest.mark.parametrize(
@@ -1829,13 +1848,15 @@ def test_dual_defined_dynamic_field() -> None:
         ("authors", [{"name": "Author"}]),
         ("classifiers", ["Development Status :: 3 - Alpha"]),
         ("dependencies", ["some-dep"]),
-        ("keywords", ["example"]),
-        ("maintainers", [{"name": "Maintainer"}]),
-        ("urls", {"Homepage": "https://example.com"}),
         ("entry-points", {"console_scripts": {"foo": "bar:baz"}}),
         ("gui-scripts", {"foo": "bar:baz"}),
+        ("import-names", ["foo"]),
+        ("import-namespaces", ["foo"]),
+        ("keywords", ["example"]),
+        ("maintainers", [{"name": "Maintainer"}]),
         ("optional-dependencies", {"test": ["pytest"]}),
         ("scripts", {"foo": "bar:baz"}),
+        ("urls", {"Homepage": "https://example.com"}),
     ],
 )
 def test_dual_defined_dynamic_field_auto_version(
@@ -1849,7 +1870,8 @@ def test_dual_defined_dynamic_field_auto_version(
                 field: static_value,
                 "dynamic": [field],
             },
-        }
+        },
+        dynamic_metadata=["Requires-Dist"],
     )
     assert metadata.auto_metadata_version == "2.6"
 
@@ -1872,6 +1894,7 @@ def test_dual_defined_dynamic_field_requires_26(version: str) -> None:
                 },
             },
             metadata_version=version,
+            dynamic_metadata=["Requires-Dist"],
         )
 
 
@@ -1886,6 +1909,7 @@ def test_dual_defined_dynamic_field_with_26() -> None:
             },
         },
         metadata_version="2.6",
+        dynamic_metadata=["Requires-Dist"],
     )
     assert metadata.auto_metadata_version == "2.6"
     assert len(metadata.dependencies) == 1
@@ -1904,6 +1928,7 @@ def test_dual_defined_license_files_auto_version(
                 "dynamic": ["license-files"],
             },
         },
+        dynamic_metadata=["License-File"],
     )
     assert metadata.auto_metadata_version == "2.6"
 

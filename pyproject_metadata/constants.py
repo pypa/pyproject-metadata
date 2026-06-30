@@ -53,20 +53,24 @@ PROJECT_TO_METADATA = {
     "version": frozenset(["Version"]),
 }
 
+# Fields PEP 808 allows to be both statically defined and listed in
+# project.dynamic. These are the arrays and tables with arbitrary entries; a
+# backend may extend them but not remove or modify existing entries.
 PROJECT_DYNAMIC_STATIC = {
     "authors",
     "classifiers",
     "dependencies",
+    "entry-points",
+    "gui-scripts",
+    "import-names",
+    "import-namespaces",
     "keywords",
     "license-files",
     "maintainers",
-    "urls",
-    "entry-points",
-    "gui-scripts",
     "optional-dependencies",
     "scripts",
+    "urls",
 }
-
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}

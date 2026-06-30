@@ -338,7 +338,9 @@ class StandardMetadata:
 
     dual_dynamic: set[str] = dataclasses.field(default_factory=set, repr=False)
     """
-    This is a set of all the items set both in dynamic and static mode. Requires metadata_version 2.6+.
+    Fields that are both declared in ``project.dynamic`` and given a static value
+    in ``[project]`` (PEP 808). Emitting these as dynamic metadata requires
+    metadata_version 2.6+.
     """
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
@@ -368,7 +370,7 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
-        if self.dual_dynamic:
+        if self.dual_dynamic and self.dynamic_metadata:
             return "2.6"
         if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
@@ -578,7 +580,7 @@ class StandardMetadata:
         - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
         - ``import-names`` and ``import-namespaces`` cannot overlap.
-        - Static and ``dynamic`` requires metadata_version >= 2.6
+        - A field that is both static and dynamic metadata requires metadata_version >= 2.6
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -678,11 +680,12 @@ class StandardMetadata:
 
         if (
             self.dual_dynamic
+            and self.dynamic_metadata
             and self.auto_metadata_version in constants.PRE_2_6_METADATA_VERSIONS
         ):
             fields = ", ".join(sorted(self.dual_dynamic))
             msg = "Fields {fields} are declared as both static and dynamic, which requires metadata_version >= 2.6"
-            errors.config_error(msg, fields=fields)
+            errors.config_error(msg, key="project.dynamic", fields=fields)
 
         errors.finalize("Metadata validation failed")
 
