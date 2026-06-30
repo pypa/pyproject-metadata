@@ -362,6 +362,22 @@ class StandardMetadata:
         self.validate()
 
     @property
+    def _dual_dynamic_metadata(self) -> set[str]:
+        """
+        Dual-dynamic fields (PEP 808) whose METADATA field is also marked in
+        ``dynamic_metadata``. Only these require metadata_version 2.6; fields
+        with no METADATA representation (scripts, gui-scripts, entry-points)
+        never do, nor do dual fields unrelated to the marked Dynamic headers.
+        """
+        dynamic_metadata = {field.lower() for field in self.dynamic_metadata}
+        return {
+            field
+            for field in self.dual_dynamic
+            if {header.lower() for header in constants.PROJECT_TO_METADATA[field]}
+            & dynamic_metadata
+        }
+
+    @property
     def auto_metadata_version(self) -> str:
         """
         This computes the metadata version based on the fields set in the object
@@ -370,7 +386,7 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
-        if self.dual_dynamic and self.dynamic_metadata:
+        if self._dual_dynamic_metadata:
             return "2.6"
         if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
@@ -678,12 +694,12 @@ class StandardMetadata:
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
+        dual_dynamic_metadata = self._dual_dynamic_metadata
         if (
-            self.dual_dynamic
-            and self.dynamic_metadata
+            dual_dynamic_metadata
             and self.auto_metadata_version in constants.PRE_2_6_METADATA_VERSIONS
         ):
-            fields = ", ".join(sorted(self.dual_dynamic))
+            fields = ", ".join(sorted(dual_dynamic_metadata))
             msg = "Fields {fields} are declared as both static and dynamic, which requires metadata_version >= 2.6"
             errors.config_error(msg, key="project.dynamic", fields=fields)
 
