@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Features:
+
+- Warn ([PEP 685](https://peps.python.org/pep-0685/)) when an extra name in
+  `project.optional-dependencies` is not a valid name. The extra is still
+  emitted, only a `ConfigurationWarning` is produced.
+
 Fixes:
 
 - Error on an unset dynamic version instead of silently writing

@@ -588,6 +588,7 @@ class StandardMetadata:
         - ``license_files`` can't be used with classic ``license``
         - License classifiers can't be used with SPDX license
         - ``description`` is a single line (warning)
+        - Extra names in "project.optional-dependencies" should be valid (warning)
         - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
         - License classifiers deprecated for metadata_version >= 2.4 (warning)
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
@@ -640,6 +641,17 @@ class StandardMetadata:
                 elif any(c.startswith("License ::") for c in self.classifiers):
                     warnings.warn(
                         "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for \"project.license\" instead",
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
+            for extra in self.optional_dependencies:
+                try:
+                    packaging.utils.canonicalize_name(extra, validate=True)
+                except packaging.utils.InvalidName:  # noqa: PERF203
+                    warnings.warn(
+                        f'Invalid extra name {extra!r} in "project.optional-dependencies". '
+                        "A valid name consists only of ASCII letters and numbers, period, "
+                        "underscore and hyphen. It must start and end with a letter or number",
                         ConfigurationWarning,
                         stacklevel=2,
                     )
