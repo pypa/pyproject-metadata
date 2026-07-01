@@ -144,7 +144,9 @@ def downstream(session: nox.Session, project: str) -> None:
     if project == "meson-python":
         session.install("-e.", "--group=test", "pip")
         session.run("pip", "list")
-        session.run("pytest", env=env)
+        # invalid_license expects meson-python's own post-parse canonicalization
+        # error; pyproject-metadata now raises ConfigurationError first
+        session.run("pytest", "-knot invalid_license", env=env)
     if project == "pdm-backend":
         session.install(
             "-e.", "pytest", "pip", "pytest-gitconfig", "pytest-xdist", "setuptools"
