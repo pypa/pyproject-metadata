@@ -1296,6 +1296,101 @@ def test_read_license(monkeypatch: pytest.MonkeyPatch) -> None:
     assert metadata.license.text == "Some license! 👋\n"
 
 
+def test_license_expression_canonicalized() -> None:
+    pytest.importorskip("packaging.licenses")
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        tomllib.loads(
+            textwrap.dedent(
+                """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                license = "mit or apache-2.0"
+                """
+            )
+        )
+    )
+    assert metadata.license == "MIT OR Apache-2.0"
+    assert "License-Expression: MIT OR Apache-2.0" in str(metadata.as_rfc822())
+
+
+def test_license_expression_invalid(all_errors: bool) -> None:
+    pytest.importorskip("packaging.licenses")
+    data = textwrap.dedent(
+        """
+        [project]
+        name = "test"
+        version = "0.1.0"
+        license = "Not-A-License"
+        """
+    )
+    error = '"project.license" is not a valid SPDX license expression'
+    if not all_errors:
+        with pytest.raises(
+            pyproject_metadata.ConfigurationError, match=re.escape(error)
+        ):
+            pyproject_metadata.StandardMetadata.from_pyproject(tomllib.loads(data))
+    else:
+        with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as execinfo:
+            pyproject_metadata.StandardMetadata.from_pyproject(
+                tomllib.loads(data), all_errors=True
+            )
+        args = [e.args[0] for e in execinfo.value.exceptions]
+        assert any(error in arg for arg in args)
+
+
+def test_license_expression_old_packaging_passthrough(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A None entry in sys.modules makes the local import raise ImportError,
+    # simulating packaging < 24.2 without packaging.licenses.
+    monkeypatch.setitem(sys.modules, "packaging.licenses", None)
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        tomllib.loads(
+            textwrap.dedent(
+                """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                license = "mit"
+                """
+            )
+        )
+    )
+    assert metadata.license == "mit"
+
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        tomllib.loads(
+            textwrap.dedent(
+                """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                license = "Not-A-License"
+                """
+            )
+        )
+    )
+    assert metadata.license == "Not-A-License"
+
+
+def test_license_expression_idempotent() -> None:
+    pytest.importorskip("packaging.licenses")
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        tomllib.loads(
+            textwrap.dedent(
+                """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                license = "MIT"
+                """
+            )
+        )
+    )
+    assert metadata.license == "MIT"
+
+
 @pytest.mark.parametrize(
     ("package", "content_type"),
     [

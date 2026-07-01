@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+Changes:
+
+- `project.license` SPDX expressions are now validated and canonicalized when
+  packaging 24.2+ is installed. Invalid expressions that previously passed
+  through unchanged now raise a `ConfigurationError` at `from_pyproject` time
+  (respecting `all_errors`). With older packaging the string still passes
+  through unvalidated.
+
 Fixes:
 
 - Error on an unset dynamic version instead of silently writing
