@@ -2,7 +2,19 @@
 
 """
 Constants for the pyproject_metadata package, collected here to make them easy
-to update. These should be considered mostly private.
+to update.
+
+The ``[project]`` field taxonomy is public API. Build backends and plugin
+systems (such as scikit-build-core, meson-python, and
+scikit-build/dynamic-metadata) can import these sets instead of hand-maintaining
+their own copies to decide which fields exist (``KNOWN_PROJECT_FIELDS``), which
+a plugin may set dynamically and which may be extended when both static and
+dynamic per PEP 808 (``PROJECT_DYNAMIC_STATIC``), and how each field's value is
+shaped (the ``PROJECT_*_FIELDS`` shape sets).
+
+The metadata-side sets (``PROJECT_TO_METADATA``, ``KNOWN_METADATA_FIELDS``,
+``KNOWN_MULTIUSE``, and the metadata-version sets) describe the RFC 822 output
+and remain implementation-oriented.
 """
 
 from __future__ import annotations
@@ -17,6 +29,12 @@ __all__ = [
     "PRE_2_6_METADATA_VERSIONS",
     "PRE_SPDX_METADATA_VERSIONS",
     "PROJECT_DYNAMIC_STATIC",
+    "PROJECT_ENTRY_POINTS_FIELDS",
+    "PROJECT_LIST_STR_FIELDS",
+    "PROJECT_OPTIONAL_DEPENDENCIES_FIELDS",
+    "PROJECT_PEOPLE_FIELDS",
+    "PROJECT_SCALAR_FIELDS",
+    "PROJECT_TABLE_FIELDS",
     "PROJECT_TO_METADATA",
 ]
 
@@ -53,24 +71,50 @@ PROJECT_TO_METADATA = {
     "version": frozenset(["Version"]),
 }
 
+# Classification of [project] fields by their TOML value shape. "name" and
+# "dynamic" are excluded from every set below: neither can ever be dynamic.
+# Together these sets partition the remaining KNOWN_PROJECT_FIELDS (see tests).
+
+# Single-value fields. Per PEP 808 these can never be both static and dynamic.
+PROJECT_SCALAR_FIELDS = frozenset(
+    {"version", "description", "requires-python", "license", "readme"}
+)
+
+# Arrays of strings.
+PROJECT_LIST_STR_FIELDS = frozenset(
+    {
+        "classifiers",
+        "keywords",
+        "dependencies",
+        "license-files",
+        "import-names",
+        "import-namespaces",
+    }
+)
+
+# Arrays of tables with "name"/"email" keys.
+PROJECT_PEOPLE_FIELDS = frozenset({"authors", "maintainers"})
+
+# Flat string-to-string tables.
+PROJECT_TABLE_FIELDS = frozenset({"urls", "scripts", "gui-scripts"})
+
+# Table mapping an extra name to an array of strings.
+PROJECT_OPTIONAL_DEPENDENCIES_FIELDS = frozenset({"optional-dependencies"})
+
+# Table mapping a group name to a string-to-string table.
+PROJECT_ENTRY_POINTS_FIELDS = frozenset({"entry-points"})
+
 # Fields PEP 808 allows to be both statically defined and listed in
-# project.dynamic. These are the arrays and tables with arbitrary entries; a
-# backend may extend them but not remove or modify existing entries.
-PROJECT_DYNAMIC_STATIC = {
-    "authors",
-    "classifiers",
-    "dependencies",
-    "entry-points",
-    "gui-scripts",
-    "import-names",
-    "import-namespaces",
-    "keywords",
-    "license-files",
-    "maintainers",
-    "optional-dependencies",
-    "scripts",
-    "urls",
-}
+# project.dynamic: the arrays and tables with arbitrary entries. A backend may
+# extend these entries but not remove or modify existing ones. Derived from the
+# shape sets so it stays consistent with the taxonomy by construction.
+PROJECT_DYNAMIC_STATIC = (
+    PROJECT_LIST_STR_FIELDS
+    | PROJECT_PEOPLE_FIELDS
+    | PROJECT_TABLE_FIELDS
+    | PROJECT_OPTIONAL_DEPENDENCIES_FIELDS
+    | PROJECT_ENTRY_POINTS_FIELDS
+)
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}
