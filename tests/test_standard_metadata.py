@@ -1807,6 +1807,259 @@ def test_statically_defined_dynamic_field() -> None:
         )
 
 
+def test_dual_defined_dynamic_field() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        }
+    )
+    assert len(metadata.dependencies) == 1
+    assert metadata.dynamic == ["dependencies"]
+    # Without dynamic metadata the field is treated statically, so the version
+    # stays at the baseline rather than being bumped to 2.6.
+    assert metadata.auto_metadata_version == "2.1"
+
+
+@pytest.mark.parametrize("version", ["2.1", "2.2", "2.5"])
+def test_dual_defined_dynamic_field_no_metadata_keeps_version(version: str) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        },
+        metadata_version=version,
+    )
+    assert metadata.auto_metadata_version == version
+    assert len(metadata.dependencies) == 1
+
+
+@pytest.mark.parametrize(
+    ("field", "static_value", "header"),
+    [
+        ("authors", [{"name": "Author"}], "Author"),
+        ("classifiers", ["Development Status :: 3 - Alpha"], "Classifier"),
+        ("dependencies", ["some-dep"], "Requires-Dist"),
+        ("import-names", ["foo"], "Import-Name"),
+        ("import-namespaces", ["foo"], "Import-Namespace"),
+        ("keywords", ["example"], "Keywords"),
+        ("maintainers", [{"name": "Maintainer"}], "Maintainer"),
+        ("optional-dependencies", {"test": ["pytest"]}, "Provides-Extra"),
+        ("urls", {"Homepage": "https://example.com"}, "Project-URL"),
+    ],
+)
+def test_dual_defined_dynamic_field_auto_version(
+    field: str, static_value: object, header: str
+) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                field: static_value,
+                "dynamic": [field],
+            },
+        },
+        dynamic_metadata=[header],
+    )
+    assert metadata.auto_metadata_version == "2.6"
+
+
+@pytest.mark.parametrize(
+    ("field", "static_value"),
+    [
+        ("entry-points", {"console_scripts": {"foo": "bar:baz"}}),
+        ("gui-scripts", {"foo": "bar:baz"}),
+        ("scripts", {"foo": "bar:baz"}),
+    ],
+)
+def test_dual_dynamic_field_without_metadata_header(
+    field: str, static_value: object
+) -> None:
+    # scripts, gui-scripts and entry-points have no METADATA representation, so
+    # marking them dynamic never requires 2.6, even when unrelated Dynamic
+    # metadata is present.
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                field: static_value,
+                "dynamic": [field],
+            },
+        },
+        metadata_version="2.2",
+        dynamic_metadata=["Requires-Dist"],
+    )
+    assert metadata.auto_metadata_version == "2.2"
+
+
+def test_dual_dynamic_unrelated_metadata_header_no_bump() -> None:
+    # The dual field (authors) is unrelated to the Dynamic header (Requires-Dist),
+    # so 2.6 is not required; the version only reflects the 2.2 Dynamic header.
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "authors": [{"name": "Author"}],
+                "dynamic": ["authors"],
+            },
+        },
+        dynamic_metadata=["Requires-Dist"],
+    )
+    assert metadata.auto_metadata_version == "2.2"
+
+
+def test_dual_dynamic_unrelated_metadata_header_no_error() -> None:
+    # An unrelated Dynamic header must not trigger the 2.6 requirement error.
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "authors": [{"name": "Author"}],
+                "dynamic": ["authors"],
+            },
+        },
+        metadata_version="2.2",
+        dynamic_metadata=["Requires-Dist"],
+    )
+    assert metadata.auto_metadata_version == "2.2"
+
+
+@pytest.mark.parametrize("version", ["2.1", "2.2", "2.3", "2.4", "2.5"])
+def test_dual_defined_dynamic_field_requires_26(version: str) -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            "Fields dependencies are declared as both static and dynamic, which requires metadata_version >= 2.6"
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "dependencies": ["example"],
+                    "dynamic": ["dependencies"],
+                },
+            },
+            metadata_version=version,
+            dynamic_metadata=["Requires-Dist"],
+        )
+
+
+def test_dual_defined_dynamic_field_with_26() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "dependencies": ["example"],
+                "dynamic": ["dependencies"],
+            },
+        },
+        metadata_version="2.6",
+        dynamic_metadata=["Requires-Dist"],
+    )
+    assert metadata.auto_metadata_version == "2.6"
+    assert len(metadata.dependencies) == 1
+
+
+def test_dual_defined_license_files_auto_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(DIR / "packages/fulltext_license")
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "1.2.3",
+                "license-files": ["LICENSE.txt"],
+                "dynamic": ["license-files"],
+            },
+        },
+        dynamic_metadata=["License-File"],
+    )
+    assert metadata.auto_metadata_version == "2.6"
+
+
+def test_non_dual_field_still_errors() -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            'Field "project.version" declared as dynamic in "project.dynamic" but is defined'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "dynamic": ["version"],
+                },
+            },
+            metadata_version="2.6",
+        )
+
+
+def test_description_dual_field_still_errors() -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape(
+            'Field "project.description" declared as dynamic in "project.dynamic" but is defined'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    "description": "A description",
+                    "dynamic": ["description"],
+                },
+            },
+            metadata_version="2.6",
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "static_value"),
+    [
+        ("version", "1.2.3"),
+        ("description", "A description"),
+        ("requires-python", ">=3.8"),
+    ],
+)
+def test_non_dual_static_dynamic_field_errors_with_26(
+    field: str, static_value: object
+) -> None:
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError,
+        match=re.escape('declared as dynamic in "project.dynamic" but is defined'),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "1.2.3",
+                    field: static_value,
+                    "dynamic": [field],
+                },
+            },
+            metadata_version="2.6",
+        )
+
+
 @pytest.mark.parametrize(
     "value",
     [

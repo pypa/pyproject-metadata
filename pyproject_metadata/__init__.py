@@ -336,6 +336,12 @@ class StandardMetadata:
     A field that is both declared dynamic and explicitly set causes a parsing error.
     """
 
+    dual_dynamic: set[str] = dataclasses.field(default_factory=set, repr=False)
+    """
+    Fields that are both declared in ``project.dynamic`` and given a static value
+    in ``[project]`` (PEP 808). Emitting these as dynamic metadata requires
+    metadata_version 2.6+.
+    """
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
     This is a list of METADATA fields that can change in between SDist and wheel. Requires metadata_version 2.2+.
@@ -356,6 +362,22 @@ class StandardMetadata:
         self.validate()
 
     @property
+    def _dual_dynamic_metadata(self) -> set[str]:
+        """
+        Dual-dynamic fields (PEP 808) whose METADATA field is also marked in
+        ``dynamic_metadata``. Only these require metadata_version 2.6; fields
+        with no METADATA representation (scripts, gui-scripts, entry-points)
+        never do, nor do dual fields unrelated to the marked Dynamic headers.
+        """
+        dynamic_metadata = {field.lower() for field in self.dynamic_metadata}
+        return {
+            field
+            for field in self.dual_dynamic
+            if {header.lower() for header in constants.PROJECT_TO_METADATA[field]}
+            & dynamic_metadata
+        }
+
+    @property
     def auto_metadata_version(self) -> str:
         """
         This computes the metadata version based on the fields set in the object
@@ -364,6 +386,8 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
+        if self._dual_dynamic_metadata:
+            return "2.6"
         if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
@@ -434,10 +458,14 @@ class StandardMetadata:
 
         dynamic = project.get("dynamic", [])
 
+        dual_dynamic: set[str] = set()
         for field in dynamic:
-            if field in data["project"] and field != "name":
-                msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                error_collector.config_error(msg, key=f"project.{field}")
+            if field in data["project"]:
+                if field in constants.PROJECT_DYNAMIC_STATIC:
+                    dual_dynamic.add(field)
+                elif field != "name":
+                    msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
+                    error_collector.config_error(msg, key=f"project.{field}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
@@ -519,6 +547,7 @@ class StandardMetadata:
                 import_names=project.get("import-names", None),
                 import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,
+                dual_dynamic=dual_dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
@@ -567,6 +596,7 @@ class StandardMetadata:
         - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
         - ``import-names`` and ``import-namespaces`` cannot overlap.
+        - A field that is both static and dynamic metadata requires metadata_version >= 2.6
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -663,6 +693,15 @@ class StandardMetadata:
             errors.config_error(msg, key="project.import-names", in_both=in_both)
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
+
+        dual_dynamic_metadata = self._dual_dynamic_metadata
+        if (
+            dual_dynamic_metadata
+            and self.auto_metadata_version in constants.PRE_2_6_METADATA_VERSIONS
+        ):
+            fields = ", ".join(sorted(dual_dynamic_metadata))
+            msg = "Fields {fields} are declared as both static and dynamic, which requires metadata_version >= 2.6"
+            errors.config_error(msg, key="project.dynamic", fields=fields)
 
         errors.finalize("Metadata validation failed")
 

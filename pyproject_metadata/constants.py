@@ -14,7 +14,9 @@ __all__ = [
     "KNOWN_MULTIUSE",
     "KNOWN_PROJECT_FIELDS",
     "KNOWN_TOPLEVEL_FIELDS",
+    "PRE_2_6_METADATA_VERSIONS",
     "PRE_SPDX_METADATA_VERSIONS",
+    "PROJECT_DYNAMIC_STATIC",
     "PROJECT_TO_METADATA",
 ]
 
@@ -23,9 +25,10 @@ def __dir__() -> list[str]:
     return __all__
 
 
-KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5"}
+KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5", "2.6"}
 PRE_SPDX_METADATA_VERSIONS = {"2.1", "2.2", "2.3"}
 PRE_2_5_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4"}
+PRE_2_6_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5"}
 
 PROJECT_TO_METADATA = {
     "authors": frozenset(["Author", "Author-Email"]),
@@ -48,6 +51,25 @@ PROJECT_TO_METADATA = {
     "scripts": frozenset(),
     "urls": frozenset(["Project-URL"]),
     "version": frozenset(["Version"]),
+}
+
+# Fields PEP 808 allows to be both statically defined and listed in
+# project.dynamic. These are the arrays and tables with arbitrary entries; a
+# backend may extend them but not remove or modify existing entries.
+PROJECT_DYNAMIC_STATIC = {
+    "authors",
+    "classifiers",
+    "dependencies",
+    "entry-points",
+    "gui-scripts",
+    "import-names",
+    "import-namespaces",
+    "keywords",
+    "license-files",
+    "maintainers",
+    "optional-dependencies",
+    "scripts",
+    "urls",
 }
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
