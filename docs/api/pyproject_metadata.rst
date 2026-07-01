@@ -48,6 +48,30 @@ three questions:
    :undoc-members:
    :show-inheritance:
 
+pyproject\_metadata.dynamic module
+----------------------------------
+
+A build backend that runs a dynamic-metadata plugin gets back only the plugin's
+*additions* for a field. :func:`~pyproject_metadata.merge_dynamic` applies those
+additions on top of whatever the user declared statically, using the PEP 808
+merge rules keyed off the field's shape (see the taxonomy above), so backends do
+not each re-derive them. Values are raw ``[project]`` data as parsed from
+``pyproject.toml``:
+
+.. code-block:: python
+
+   from pyproject_metadata import merge_dynamic
+
+   static = {"test": ["pytest"]}
+   plugin_result = {"test": ["coverage"], "docs": ["sphinx"]}
+   merged = merge_dynamic("optional-dependencies", static, plugin_result)
+   # {"test": ["pytest", "coverage"], "docs": ["sphinx"]}
+
+.. automodule:: pyproject_metadata.dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyproject\_metadata.errors module
 ---------------------------------
 
