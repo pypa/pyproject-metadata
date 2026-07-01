@@ -2214,3 +2214,61 @@ def test_multiline_description_warns() -> None:
                 },
             }
         )
+
+
+@pytest.mark.parametrize("extra", ["my extra", "extra!", "-leading", "trailing_"])
+def test_invalid_extra_name_warns(extra: str) -> None:
+    data = f"""
+        [project]
+        name = "example"
+        version = "1.2.3"
+
+        [project.optional-dependencies]
+        "{extra}" = []
+    """
+    with pytest.warns(
+        pyproject_metadata.errors.ConfigurationWarning,
+        match=re.escape(
+            f'Invalid extra name {extra!r} in "project.optional-dependencies".'
+        ),
+    ):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            tomllib.loads(textwrap.dedent(data))
+        )
+
+
+@pytest.mark.parametrize("extra", ["test", "My-Extra", "a.b_c"])
+def test_valid_extra_name_no_warning(extra: str) -> None:
+    data = f"""
+        [project]
+        name = "example"
+        version = "1.2.3"
+
+        [project.optional-dependencies]
+        "{extra}" = []
+    """
+    pyproject_metadata.StandardMetadata.from_pyproject(
+        tomllib.loads(textwrap.dedent(data))
+    )
+
+
+def test_invalid_extra_name_warns_once_and_still_emitted() -> None:
+    data = """
+        [project]
+        name = "example"
+        version = "1.2.3"
+
+        [project.optional-dependencies]
+        "my extra" = []
+    """
+    with pytest.warns(
+        pyproject_metadata.errors.ConfigurationWarning,
+        match=re.escape("Invalid extra name 'my extra'"),
+    ):
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+            tomllib.loads(textwrap.dedent(data))
+        )
+
+    # Emitting metadata must not warn again (filterwarnings=error would raise),
+    # and the extra is not dropped.
+    assert "Provides-Extra: my extra" in str(metadata.as_rfc822())
