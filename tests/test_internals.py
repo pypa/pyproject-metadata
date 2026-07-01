@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 import typing
 
@@ -24,6 +26,36 @@ def test_project_table_all() -> None:
     import pyproject_metadata.project_table  # noqa: PLC0415
 
     assert "annotations" not in dir(pyproject_metadata.project_table)
+
+
+def test_project_field_taxonomy_partitions() -> None:
+    constants = pyproject_metadata.constants
+    shape_sets = [
+        constants.PROJECT_SCALAR_FIELDS,
+        constants.PROJECT_LIST_STR_FIELDS,
+        constants.PROJECT_PEOPLE_FIELDS,
+        constants.PROJECT_TABLE_FIELDS,
+        constants.PROJECT_OPTIONAL_DEPENDENCIES_FIELDS,
+        constants.PROJECT_ENTRY_POINTS_FIELDS,
+        frozenset({"name", "dynamic"}),
+    ]
+    union: set[str] = set()
+    for shape in shape_sets:
+        assert union.isdisjoint(shape)
+        union |= shape
+    assert union == constants.KNOWN_PROJECT_FIELDS
+
+
+def test_project_dynamic_static_is_extendable_shapes() -> None:
+    constants = pyproject_metadata.constants
+    assert constants.PROJECT_DYNAMIC_STATIC == (
+        constants.PROJECT_LIST_STR_FIELDS
+        | constants.PROJECT_PEOPLE_FIELDS
+        | constants.PROJECT_TABLE_FIELDS
+        | constants.PROJECT_OPTIONAL_DEPENDENCIES_FIELDS
+        | constants.PROJECT_ENTRY_POINTS_FIELDS
+    )
+    assert constants.PROJECT_DYNAMIC_STATIC.isdisjoint(constants.PROJECT_SCALAR_FIELDS)
 
 
 def test_get_name() -> None:
