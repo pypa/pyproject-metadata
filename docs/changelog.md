@@ -5,7 +5,7 @@
 Features:
 
 - Support [PEP 808](https://peps.python.org/pep-0808/) (partially dynamic
-  project metadata).
+  project metadata) (METADATA 2.6).
 - Add support for Python 3.15.
 - Warn ([PEP 685](https://peps.python.org/pep-0685/)) when an extra name in
   `project.optional-dependencies` is not a valid name. The extra is still
