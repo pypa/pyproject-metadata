@@ -4,6 +4,9 @@
 
 Features:
 
+- Support [PEP 808](https://peps.python.org/pep-0808/) (partially dynamic
+  project metadata).
+- Add support for Python 3.15.
 - Warn ([PEP 685](https://peps.python.org/pep-0685/)) when an extra name in
   `project.optional-dependencies` is not a valid name. The extra is still
   emitted, only a `ConfigurationWarning` is produced.
@@ -15,6 +18,27 @@ Fixes:
   assigned by the build backend, writing the metadata now raises a
   `ConfigurationError` (`Field "project.version" missing`), restoring the 0.8.x
   behavior that regressed in the 0.9 rewrite.
+- Don't crash on a non-table `[project]` when `all_errors=True`.
+- Tighten `license-files` glob checks and private-tag parsing.
+- Handle braces in user data within error messages.
+- Correct the `Import-Namespace` field name in the metadata mapping.
+- Fix UTF-8 author and maintainer names.
+
+Performance:
+
+- Cache `get_type_hints` and precompile dispatch patterns.
+
+Documentation:
+
+- Fix a stale dynamic docstring and a broken module example.
+- Add a documentation project URL.
+
+Internal and CI:
+
+- Refactoring: consistent dataclass decorators, sorted constant entries, and
+  removal of duplicate imports and dead code.
+- Cover defensive branches in dispatch helpers and validators.
+- Secure GitHub Actions workflows and bump pinned/downstream dependencies.
 
 ## 0.11.0 (2-9-2026)
 
