@@ -411,7 +411,7 @@ def _cast(
     args = typing.get_args(type_hint)
 
     # Any accepts everything, so no validation
-    if type_hint is Any:  # type: ignore[comparison-overlap]
+    if type_hint is Any:
         validate_via_prefix(prefix, data, error_collector)
         return
 

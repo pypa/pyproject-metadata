@@ -145,7 +145,7 @@ def get_license(
 
 
 def get_license_files(
-    project: dict[str, Any], project_dir: pathlib.Path, error_collector: ErrorCollector
+    project: ProjectTable, project_dir: pathlib.Path, error_collector: ErrorCollector
 ) -> list[pathlib.Path] | None:
     """Get the license-files list of files from the project table.
 
@@ -162,7 +162,7 @@ def get_license_files(
 
 
 def get_readme(  # noqa: C901
-    project: dict[str, Any], project_dir: pathlib.Path, error_collector: ErrorCollector
+    project: ProjectTable, project_dir: pathlib.Path, error_collector: ErrorCollector
 ) -> Readme | None:
     """Get the text of the readme from the project table.
 
@@ -233,7 +233,7 @@ def get_readme(  # noqa: C901
     return Readme(text, file, content_type)
 
 
-def get_dependencies(project: dict[str, Any]) -> list[Requirement]:
+def get_dependencies(project: ProjectTable) -> list[Requirement]:
     """Get the dependencies from the project table."""
     requirement_strings: list[str] | None = None
     requirement_strings_raw = project.get("dependencies")
@@ -253,7 +253,7 @@ def get_dependencies(project: dict[str, Any]) -> list[Requirement]:
 
 
 def get_optional_dependencies(
-    project: dict[str, Any],
+    project: ProjectTable,
 ) -> dict[str, list[Requirement]]:
     """Get the optional dependencies from the project table."""
     val = project.get("optional-dependencies")
@@ -278,7 +278,7 @@ def get_optional_dependencies(
     return requirements_dict
 
 
-def get_entrypoints(project: dict[str, Any]) -> dict[str, dict[str, str]]:
+def get_entrypoints(project: ProjectTable) -> dict[str, dict[str, str]]:
     """Get the entrypoints from the project table."""
     val = project.get("entry-points")
     if val is None:
