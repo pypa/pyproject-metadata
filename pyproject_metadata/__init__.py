@@ -460,12 +460,16 @@ class StandardMetadata:
 
         dual_dynamic: set[str] = set()
         for field in dynamic:
-            if field in data["project"]:
-                if field in constants.PROJECT_DYNAMIC_STATIC:
-                    dual_dynamic.add(field)
-                elif field != "name":
+            # ``dynamic`` is validated separately with error collection, so the
+            # raw list may still contain values outside the Dynamic literal
+            # (e.g. the invalid "name"); treat it as a plain string here.
+            field_str: str = field
+            if field_str in data["project"]:
+                if field_str in constants.PROJECT_DYNAMIC_STATIC:
+                    dual_dynamic.add(field_str)
+                elif field_str != "name":
                     msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                    error_collector.config_error(msg, key=f"project.{field}")
+                    error_collector.config_error(msg, key=f"project.{field_str}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 

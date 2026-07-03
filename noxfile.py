@@ -22,7 +22,7 @@ ALL_PYTHONS = nox.project.python_versions(PYPROJECT)
 ALL_PYTHONS += ["pypy-3.11"]
 
 
-@nox.session(python="3.8")
+@nox.session(python="3.10")
 def mypy(session: nox.Session) -> None:
     """
     Run a type checker.
