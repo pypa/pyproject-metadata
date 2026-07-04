@@ -466,12 +466,13 @@ class StandardMetadata:
             # that is not a string and let that validation report it.
             if not isinstance(field, str):
                 continue
-            if field in data["project"]:
-                if field in constants.PROJECT_DYNAMIC_STATIC:
-                    dual_dynamic.add(field)
-                elif field != "name":
+            field_str: str = field
+            if field_str in data["project"]:
+                if field_str in constants.PROJECT_DYNAMIC_STATIC:
+                    dual_dynamic.add(field_str)
+                elif field_str != "name":
                     msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                    error_collector.config_error(msg, key=f"project.{field}")
+                    error_collector.config_error(msg, key=f"project.{field_str}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
