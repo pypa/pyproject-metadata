@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.12.1 (7-3-2026)
 
 Fixes:
 
