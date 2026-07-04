@@ -969,6 +969,24 @@ def test_load(
                 [project]
                 name = "test"
                 version = "0.1.0"
+                dynamic = [
+                    [ "nested" ],
+                ]
+            """,
+            [
+                "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
+                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
+                "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
+                "'scripts', 'urls', 'version' (got ['nested'])",
+            ],
+            id="Unhashable type in project.dynamic",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
                 readme = { }
             """,
             [

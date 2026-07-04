@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Fixes:
+
+- Collect a config error instead of raising a raw `TypeError` when
+  `project.dynamic` contains a non-string (unhashable) entry with
+  `all_errors=True`.
+
 ## 0.12.0 (7-3-2026)
 
 Features:
