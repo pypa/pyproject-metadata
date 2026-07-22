@@ -16,8 +16,6 @@ import sys
 import typing
 from typing import (
     Any,
-    Dict,
-    List,
     Literal,
     TypedDict,
     Union,
@@ -116,22 +114,22 @@ ProjectTable = TypedDict(
         "version": str,
         "description": str,
         "license": Union[LicenseTable, str],
-        "license-files": List[str],
+        "license-files": list[str],
         "readme": Union[str, ReadmeTable],
         "requires-python": str,
-        "dependencies": List[str],
-        "optional-dependencies": Dict[str, List[str]],
-        "entry-points": Dict[str, Dict[str, str]],
-        "authors": List[ContactTable],
-        "maintainers": List[ContactTable],
-        "urls": Dict[str, str],
-        "classifiers": List[str],
-        "keywords": List[str],
-        "scripts": Dict[str, str],
-        "gui-scripts": Dict[str, str],
-        "import-names": List[str],
-        "import-namespaces": List[str],
-        "dynamic": List[Dynamic],
+        "dependencies": list[str],
+        "optional-dependencies": dict[str, list[str]],
+        "entry-points": dict[str, dict[str, str]],
+        "authors": list[ContactTable],
+        "maintainers": list[ContactTable],
+        "urls": dict[str, str],
+        "classifiers": list[str],
+        "keywords": list[str],
+        "scripts": dict[str, str],
+        "gui-scripts": dict[str, str],
+        "import-names": list[str],
+        "import-namespaces": list[str],
+        "dynamic": list[Dynamic],
     },
     total=False,
 )
@@ -140,8 +138,8 @@ BuildSystemTable = TypedDict(
     "BuildSystemTable",
     {
         "build-backend": str,
-        "requires": List[str],
-        "backend-path": List[str],
+        "requires": list[str],
+        "backend-path": list[str],
     },
     total=False,
 )
@@ -159,8 +157,8 @@ PyProjectTable = TypedDict(
     {
         "build-system": BuildSystemTable,
         "project": ProjectTable,
-        "tool": Dict[str, Any],
-        "dependency-groups": Dict[str, List[Union[str, IncludeGroupTable]]],
+        "tool": dict[str, Any],
+        "dependency-groups": dict[str, list[Union[str, IncludeGroupTable]]],
     },
     total=False,
 )
@@ -293,7 +291,7 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
         error_collector.error(ConfigurationError(msg, key=prefix))
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _get_type_hints(cls: type[object]) -> dict[str, Any]:
     """Cache ``typing.get_type_hints`` results per class."""
     return typing.get_type_hints(cls)

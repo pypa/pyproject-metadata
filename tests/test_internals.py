@@ -1,5 +1,4 @@
 import sys
-import typing
 
 import pytest
 
@@ -29,8 +28,8 @@ def test_project_table_all() -> None:
 def test_get_name() -> None:
     get_name = pyproject_metadata._dispatch.get_name
     assert get_name(int) == "int"
-    assert get_name(typing.List[int]) == "list[int]"
-    assert get_name(typing.List) == "list"
+    assert get_name(list[int]) == "list[int]"
+    assert get_name(list) == "list"
 
 
 def test_ensure_list() -> None:
