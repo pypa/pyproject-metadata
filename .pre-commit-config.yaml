@@ -21,7 +21,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "0671d8ab202c4ac093b78433ae5baf74f3fc7246" # frozen: v0.15.15
+    rev: "39d9ac5938dadb73df0564a45f163e25ff9fa6e2"  # frozen: v0.16.1
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -35,20 +35,20 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: fda77690955e9b63c6687d8806bafd56a526e45f # frozen: 1.20.0
+    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326  # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "515f543f5718ebfd6ce22e16708bb32c68ff96e1" # frozen: v3.8.3
+    rev: "0ee178619d696787ca73d210cc191d720868c631"  # frozen: v3.9.6
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "8d786ae74939ac1d9b12681bc43f72a0980283dd" # frozen: v1.4.0
+    rev: "377c4f639d3c5fd025ee882a22ae243e12bef469"  # frozen: v1.5.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -56,7 +56,7 @@ repos:
           - flit-core
 
   - repo: https://github.com/codespell-project/codespell
-    rev: 2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a # frozen: v2.4.2
+    rev: 57b21406f092110c18776e39b0bda50d37c945c8  # frozen: v2.4.3
     hooks:
       - id: codespell
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
@@ -67,12 +67,12 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: a4ec1952e236bbc3b6ec29909724a33ff9d83327 # frozen: 2026.05.28
+    rev: 9efb3138f1d55c197b17348a8dd5b732d384603f  # frozen: 2026.08.01
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: f805888065fdb6162e1f800e50bb9460cbd223d6 # frozen: 0.37.2
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -81,13 +81,13 @@ repos:
         files: \.schema\.json
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: 122913fcf3aa27fa6867c902c3e803b7bff22d28 # frozen: v1.25.0
+    rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa  # frozen: v1.29.0
     hooks:
       - id: zizmor
         files: "^\\.github/workflows"
         args: [--persona=pedantic]
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 04d0e44c1d3b036e9714aca375d965504ba5ea4a # frozen: 2026.04.04
+    rev: 8f0581cc50b14023b14a9c77e9b358738ba637e7  # frozen: 2026.06.18
     hooks:
       - id: sp-repo-review
