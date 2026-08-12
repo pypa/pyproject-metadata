@@ -937,11 +937,13 @@ def test_load(
             """,
             [
                 'Field "project.name" has an invalid type, expecting str (got bool)',
-                "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
-                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
-                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
-                "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
-                "'scripts', 'urls', 'version' (got 'name')",
+                (
+                    "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
+                    "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                    "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
+                    "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
+                    "'scripts', 'urls', 'version' (got 'name')"
+                ),
             ],
             id="Unsupported field in project.dynamic",
         ),
@@ -956,11 +958,13 @@ def test_load(
             """,
             [
                 'Field "project.name" has an invalid type, expecting str (got bool)',
-                "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
-                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
-                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
-                "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
-                "'scripts', 'urls', 'version' (got 3)",
+                (
+                    "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
+                    "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                    "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
+                    "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
+                    "'scripts', 'urls', 'version' (got 3)"
+                ),
             ],
             id="Unsupported type in project.dynamic",
         ),
@@ -974,11 +978,13 @@ def test_load(
                 ]
             """,
             [
-                "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
-                "'dependencies', 'description', 'entry-points', 'gui-scripts', "
-                "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
-                "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
-                "'scripts', 'urls', 'version' (got ['nested'])",
+                (
+                    "Field \"project.dynamic[0]\" expected one of 'authors', 'classifiers', "
+                    "'dependencies', 'description', 'entry-points', 'gui-scripts', "
+                    "'import-names', 'import-namespaces', 'keywords', 'license', 'license-files', "
+                    "'maintainers', 'optional-dependencies', 'readme', 'requires-python', "
+                    "'scripts', 'urls', 'version' (got ['nested'])"
+                ),
             ],
             id="Unhashable type in project.dynamic",
         ),
