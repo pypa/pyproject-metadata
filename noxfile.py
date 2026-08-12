@@ -48,7 +48,6 @@ def test(session: nox.Session) -> None:
         f"--cov-report=html:{htmlcov_output}",
         f"--cov-report=xml:{xmlcov_output}",
         "--cov-report=term-missing",
-        "--cov-context=test",
         "tests/",
         *session.posargs,
     )
@@ -71,7 +70,6 @@ def minimums(session: nox.Session) -> None:
         "--cov",
         f"--cov-report=xml:{xmlcov_output}",
         "--cov-report=term-missing",
-        "--cov-context=test",
         "tests/",
         *session.posargs,
     )
