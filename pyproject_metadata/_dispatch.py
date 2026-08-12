@@ -85,8 +85,6 @@ def get_name(type_hint: type[object]) -> str:
     Get the name of a type hint as a readable modern Python type.
     """
     if origin := typing.get_origin(type_hint):
-        if args := typing.get_args(type_hint):
-            arg_names = ", ".join(get_name(a) for a in args)
-            return f"{origin.__name__}[{arg_names}]"
-        return origin.__name__  # type: ignore[no-any-return]
+        arg_names = ", ".join(get_name(a) for a in typing.get_args(type_hint))
+        return f"{origin.__name__}[{arg_names}]"
     return type_hint.__name__

@@ -1231,7 +1231,7 @@ def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     assert metadata.name == "full_metadata"
     assert metadata.canonical_name == "full-metadata"
     assert metadata.version == packaging.version.Version("3.2.1")
-    assert metadata.requires_python == packaging.specifiers.Specifier(">=3.8")
+    assert metadata.requires_python == packaging.specifiers.Specifier(">=3.9")
     assert isinstance(metadata.license, pyproject_metadata.License)
     assert metadata.license.file is None
     assert metadata.license.text == "some license text"
@@ -1334,12 +1334,15 @@ def test_readme_content_type(
 
 def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/unknown-readme-type")
-    with pytest.raises(
-        pyproject_metadata.ConfigurationError,
-        match=re.escape(
-            "Could not infer content type for readme file 'README.just-made-this-up-now'"
+    with (
+        pytest.raises(
+            pyproject_metadata.ConfigurationError,
+            match=re.escape(
+                "Could not infer content type for readme file 'README.just-made-this-up-now'"
+            ),
         ),
-    ), open("pyproject.toml", "rb") as f:
+        open("pyproject.toml", "rb") as f,
+    ):
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
@@ -1382,7 +1385,7 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
             'test_dependency[test_extra]; extra == "test"',
             'test_dependency[test_extra2]>3.0; os_name == "nt" and extra == "test"',
         ],
-        "requires_python": ">=3.8",
+        "requires_python": ">=3.9",
         "summary": "A package with all the metadata :)",
         "version": "3.2.1",
     }
@@ -1425,7 +1428,7 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ("Project-URL", "documentation, readthedocs.org"),
         ("Project-URL", "repository, github.com/some/repo"),
         ("Project-URL", "changelog, github.com/some/repo/blob/master/CHANGELOG.rst"),
-        ("Requires-Python", ">=3.8"),
+        ("Requires-Python", ">=3.9"),
         ("Requires-Dist", "dependency1"),
         ("Requires-Dist", "dependency2>1.0.0"),
         ("Requires-Dist", "dependency3[extra]"),
