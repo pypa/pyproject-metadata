@@ -103,6 +103,26 @@ def ensure_people(val: object) -> list[tuple[str, str | None]]:
     return [(entry.get("name", "Unknown"), entry.get("email")) for entry in val]
 
 
+def _canonicalize_license_expression(
+    expression: str, error_collector: ErrorCollector
+) -> str | None:
+    """Validate and normalize an SPDX license expression.
+
+    Passes the expression through unchanged if packaging is too old
+    (< 24.2) to provide ``packaging.licenses``.
+    """
+    try:
+        import packaging.licenses  # noqa: PLC0415
+    except ImportError:
+        return expression
+    try:
+        return packaging.licenses.canonicalize_license_expression(expression)
+    except packaging.licenses.InvalidLicenseExpression:
+        msg = "{key} is not a valid SPDX license expression"
+        error_collector.config_error(msg, key="project.license", got=expression)
+        return None
+
+
 def get_license(
     project: ProjectTable, project_dir: pathlib.Path, error_collector: ErrorCollector
 ) -> License | str | None:
@@ -114,7 +134,7 @@ def get_license(
     if val is None:
         return None
     if isinstance(val, str):
-        return val
+        return _canonicalize_license_expression(val, error_collector)
 
     if isinstance(val, dict):
         _license = ensure_dict(val)
