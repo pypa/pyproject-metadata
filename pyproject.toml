@@ -53,6 +53,7 @@ dev = [{include-group = "test"}]
 
 [tool.flit.sdist]
 include = ["LICENSE", "tests/**", "docs/**", ".gitignore"]
+exclude = ["**/*.egg-info/**"]
 
 
 [tool.pytest.ini_options]
@@ -82,6 +83,7 @@ ignore = [
   "PLR09",   # Design related (too many X)
   "PLR2004", # Magic value in comparison
   "COM812",  # Trailing commas inform the formatter
+  "CPY001",  # No copyright notices in this project
   "E501",    # Not worried about long lines in strings
   "D200",    # Don't force single line docstring (for now)
   "D205",    # Some of our summaries are more than a line (for now)
