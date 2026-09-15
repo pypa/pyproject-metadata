@@ -38,16 +38,13 @@ print(str(pkg_info))  # core metadata
 ## SPDX licenses (METADATA 2.4+)
 
 If `project.license` is a string or `project.license-files` is present, then
-METADATA 2.4+ will be used. A user is expected to validate and normalize
-`metadata.license` with an SPDX validation tool, such as the one being added to
-`packaging`. Add something like this (requires packaging 24.2+):
-
-```python
-if isinstance(metadata.license, str):
-    metadata.license = packaging.licenses.canonicalize_license_expression(
-        metadata.license
-    )
-```
+METADATA 2.4+ will be used. Pyproject-metadata validates and canonicalizes
+`project.license` automatically when packaging 24.2+ is installed: invalid SPDX
+expressions raise a `ConfigurationError` (respecting `all_errors`), and valid
+ones are normalized (e.g. `mit or apache-2.0` becomes `MIT OR Apache-2.0`). With
+older packaging the string passes through unvalidated, so a backend that wants
+guaranteed validation should depend on `packaging>=24.2`. Re-canonicalizing the
+result yourself remains harmless, since the operation is idempotent.
 
 A backend is also expected to copy entries from `project.license_files`, which
 are paths relative to the project directory, into the `dist-info/licenses`
