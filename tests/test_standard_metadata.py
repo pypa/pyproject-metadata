@@ -1709,6 +1709,92 @@ def test_as_rfc822_set_metadata(metadata_version: str) -> None:
     assert 'Requires-Dist: some.package; extra == "do-t"' in rfc822
 
 
+@pytest.mark.parametrize(
+    "extra", ["Dev__Test", "Dev..Test", "Dev--Test", "Dev_._-Test"]
+)
+def test_extra_separator_runs_normalized(extra: str, metadata_version: str) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "demo",
+                "version": "1.0",
+                "optional-dependencies": {extra: ["pytest"]},
+            }
+        },
+        metadata_version=metadata_version,
+    )
+
+    message = metadata.as_rfc822()
+    assert message.get_all("Provides-Extra") == ["dev-test"]
+    assert message.get_all("Requires-Dist") == ['pytest; extra == "dev-test"']
+    json = metadata.as_json()
+    assert json["provides_extra"] == ["dev-test"]
+    assert json["requires_dist"] == ['pytest; extra == "dev-test"']
+    assert list(metadata.optional_dependencies) == [extra]
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("Dev_Test", "dev-test"),
+        ("dev.test", "dev-test"),
+        ("dev__test", "dev-test"),
+        ("dev--test", "DEV..Test"),
+    ],
+)
+def test_extra_name_collision(
+    first: str, second: str, metadata_version: str, all_errors: bool
+) -> None:
+    error_type = (
+        pyproject_metadata.errors.ExceptionGroup
+        if all_errors
+        else pyproject_metadata.ConfigurationError
+    )
+    with pytest.raises(error_type) as exc_info:
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "demo",
+                    "version": "1.0",
+                    "optional-dependencies": {first: ["pytest"], second: ["coverage"]},
+                }
+            },
+            metadata_version=metadata_version,
+            all_errors=all_errors,
+        )
+
+    error = exc_info.value
+    if isinstance(error, pyproject_metadata.errors.ExceptionGroup):
+        assert len(error.exceptions) == 1
+        error = error.exceptions[0]
+    assert isinstance(error, pyproject_metadata.ConfigurationError)
+    assert error.key == "project.optional-dependencies"
+    assert str(error) == (
+        f"Extra names {first!r} and {second!r} in "
+        "\"project.optional-dependencies\" normalize to the same name: 'dev-test'"
+    )
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_extra_name_collision_after_mutation(as_json: bool) -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "demo",
+                "version": "1.0",
+                "optional-dependencies": {"dev_test": ["pytest"]},
+            }
+        }
+    )
+    metadata.optional_dependencies["dev-test"] = []
+    write = metadata.as_json if as_json else metadata.as_rfc822
+
+    with pytest.raises(
+        pyproject_metadata.ConfigurationError, match="normalize to the same name"
+    ):
+        write()
+
+
 def test_as_json_set_metadata() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
