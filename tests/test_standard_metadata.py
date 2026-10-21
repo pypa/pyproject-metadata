@@ -1352,6 +1352,39 @@ def test_readme_content_type_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
         pyproject_metadata.StandardMetadata.from_pyproject(tomllib.load(f))
 
 
+@pytest.mark.parametrize(
+    ("extension", "content_type"),
+    [
+        ("md", "text/markdown"),
+        ("MD", "text/markdown"),
+        ("mD", "text/markdown"),
+        ("Md", "text/markdown"),
+        ("rst", "text/x-rst"),
+        ("RST", "text/x-rst"),
+        ("Rst", "text/x-rst"),
+        ("rSt", "text/x-rst"),
+    ],
+)
+def test_readme_extension_case(
+    tmp_path: pathlib.Path, extension: str, content_type: str
+) -> None:
+    filename = f"README.{extension}"
+    text = "Package description 👋\n"
+    (tmp_path / filename).write_text(text, encoding="utf-8")
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {"project": {"name": "example", "version": "1.0", "readme": filename}},
+        project_dir=tmp_path,
+    )
+
+    assert isinstance(metadata.readme, pyproject_metadata.Readme)
+    assert metadata.readme.file == tmp_path / filename
+    assert metadata.readme.text == text
+    assert metadata.readme.content_type == content_type
+    core_metadata = metadata.as_rfc822()
+    assert core_metadata["Description-Content-Type"] == content_type
+    assert core_metadata.get_payload() == text
+
+
 def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/full-metadata")
 
