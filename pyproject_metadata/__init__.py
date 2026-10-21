@@ -596,6 +596,7 @@ class StandardMetadata:
         - License classifiers can't be used with SPDX license
         - ``description`` is a single line (warning)
         - Extra names in "project.optional-dependencies" should be valid (warning)
+        - Extra names in "project.optional-dependencies" must not collide after normalization
         - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
         - License classifiers deprecated for metadata_version >= 2.4 (warning)
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
@@ -630,6 +631,21 @@ class StandardMetadata:
         ):
             msg = "Setting {key} to an SPDX license expression is not compatible with 'License ::' classifiers"
             errors.config_error(msg, key="project.license")
+
+        normalized_extras: dict[str, str] = {}
+        for extra in self.optional_dependencies:
+            normalized = packaging.utils.canonicalize_name(extra)
+            if normalized in normalized_extras:
+                msg = "Extra names {first!r} and {second!r} in {key} normalize to the same name: {normalized!r}"
+                errors.config_error(
+                    msg,
+                    key="project.optional-dependencies",
+                    first=normalized_extras[normalized],
+                    second=extra,
+                    normalized=normalized,
+                )
+            else:
+                normalized_extras[normalized] = extra
 
         if warn:
             if self.description and "\n" in self.description:
@@ -779,7 +795,7 @@ class StandardMetadata:
         for dep in self.dependencies:
             smart_message["Requires-Dist"] = str(dep)
         for extra, requirements in self.optional_dependencies.items():
-            norm_extra = extra.replace(".", "-").replace("_", "-").lower()
+            norm_extra = packaging.utils.canonicalize_name(extra)
             smart_message["Provides-Extra"] = norm_extra
             for requirement in requirements:
                 smart_message["Requires-Dist"] = str(
