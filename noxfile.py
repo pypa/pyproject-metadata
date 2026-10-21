@@ -136,7 +136,7 @@ def downstream(session: nox.Session, project: str) -> None:
 
     if project == "sphinx-theme-builder":
         session.install("-r", "tests/requirements.txt")
-        session.install("-e.[cli]", "pip")
+        session.install("-e.[cli]", "pip", "click<8.5")
         session.run("pip", "list")
         session.run("pytest", "--pspec", "-knot import_name", env=env)
     if project == "meson-python":
