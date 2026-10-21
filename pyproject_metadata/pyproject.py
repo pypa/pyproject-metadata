@@ -181,9 +181,9 @@ def get_readme(  # noqa: C901
         # readme is a file
         text = None
         filename = readme
-        if filename.endswith(".md"):
+        if filename.lower().endswith(".md"):
             content_type = "text/markdown"
-        elif filename.endswith(".rst"):
+        elif filename.lower().endswith(".rst"):
             content_type = "text/x-rst"
         else:
             msg = "Could not infer content type for readme file {filename!r}"
