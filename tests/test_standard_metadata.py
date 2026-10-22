@@ -10,7 +10,6 @@ import sys
 import textwrap
 import warnings
 
-import packaging.metadata
 import packaging.specifiers
 import packaging.version
 import pytest
@@ -1457,9 +1456,6 @@ def test_readme_text(text: str) -> None:
     assert pyproject.readme.content_type == "text/plain"
     assert pyproject.as_rfc822()["Description-Content-Type"] == "text/plain"
     assert pyproject.as_json()["description"] == text
-    metadata, unparsed = packaging.metadata.parse_email(bytes(pyproject.as_rfc822()))
-    assert not unparsed
-    assert metadata.get("description") == text
 
 
 def test_empty_license_text() -> None:

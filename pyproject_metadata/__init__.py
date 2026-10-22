@@ -804,11 +804,7 @@ class StandardMetadata:
         if self.readme:
             assert self.readme.content_type  # verified earlier
             smart_message["Description-Content-Type"] = self.readme.content_type
-            if self.readme.text:
-                smart_message.set_payload(self.readme.text)
-            else:
-                # An empty body reads back as no description
-                smart_message["Description"] = ""
+            smart_message.set_payload(self.readme.text)
         for import_name in self.import_names or []:
             smart_message["Import-Name"] = import_name
         for import_namespace in self.import_namespaces or []:
