@@ -127,10 +127,10 @@ def get_license(
     filename = _license.get("file")
     text = _license.get("text")
 
-    if (filename and text) or (not filename and not text):
+    if (filename is None) == (text is None):
         return None
 
-    if filename:
+    if filename is not None:
         file = project_dir.joinpath(filename)
         if not file.is_file():
             msg = "License file not found ({filename!r})"
@@ -212,14 +212,14 @@ def get_readme(  # noqa: C901
             if text is None:
                 return None
 
-        if (filename and text) or (not filename and not text):
+        if (filename is None) == (text is None):
             return None
         if not content_type:
             return None
     else:
         return None
 
-    if filename:
+    if filename is not None:
         file = project_dir.joinpath(filename)
         if not file.is_file():
             msg = "Readme file not found ({filename!r})"

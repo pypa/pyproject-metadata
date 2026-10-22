@@ -1430,18 +1430,42 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
     }
 
 
-def test_readme_text() -> None:
+@pytest.mark.parametrize("text", ["onetwothree", ""])
+def test_readme_text(text: str) -> None:
     pyproject = pyproject_metadata.StandardMetadata.from_pyproject(
         {
             "project": {
                 "name": "foo",
                 "version": "1.2.3",
-                "readme": {"text": "onetwothree", "content-type": "text/plain"},
+                "readme": {"text": text, "content-type": "text/plain"},
             }
         }
     )
     assert pyproject.readme
-    assert pyproject.readme.text == "onetwothree"
+    assert pyproject.readme.text == text
+    assert pyproject.readme.content_type == "text/plain"
+    assert pyproject.as_rfc822()["Description-Content-Type"] == "text/plain"
+
+
+def test_empty_license_text() -> None:
+    pyproject = pyproject_metadata.StandardMetadata.from_pyproject(
+        {"project": {"name": "x", "version": "1.0", "license": {"text": ""}}}
+    )
+    assert pyproject.license == pyproject_metadata.License("", file=None)
+    assert pyproject.as_rfc822()["License"] == ""
+
+
+@pytest.mark.parametrize("field", ["readme", "license"])
+def test_empty_metadata_filename(field: str) -> None:
+    value = (
+        {"file": "", "content-type": "text/plain"}
+        if field == "readme"
+        else {"file": ""}
+    )
+    with pytest.raises(pyproject_metadata.ConfigurationError, match="file not found"):
+        pyproject_metadata.StandardMetadata.from_pyproject(
+            {"project": {"name": "x", "version": "1.0", field: value}}
+        )
 
 
 def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
