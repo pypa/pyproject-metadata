@@ -127,6 +127,7 @@ def get_license(
     filename = _license.get("file")
     text = _license.get("text")
 
+    # Reported by the project.license validator
     if (filename is None) == (text is None):
         return None
 
@@ -212,6 +213,7 @@ def get_readme(  # noqa: C901
             if text is None:
                 return None
 
+        # Reported by the project.readme validator
         if (filename is None) == (text is None):
             return None
         if not content_type:

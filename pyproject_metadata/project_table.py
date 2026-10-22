@@ -241,6 +241,9 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
     if "content-type" not in data:
         msg = f'Field "{prefix}" is missing required key "content-type"'
         error_collector.error(ConfigurationError(msg, key=prefix))
+    elif data["content-type"] == "":
+        msg = f'Field "{prefix}.content-type" must not be empty'
+        error_collector.error(ConfigurationError(msg, key=f"{prefix}.content-type"))
 
 
 @validate_via_prefix.register(r"project\.version")

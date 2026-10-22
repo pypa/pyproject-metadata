@@ -10,6 +10,7 @@ import sys
 import textwrap
 import warnings
 
+import packaging.metadata
 import packaging.specifiers
 import packaging.version
 import pytest
@@ -307,6 +308,16 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
             """,
             'Field "project.readme" is missing required key "content-type"',
             id="Missing content-type for readme (text only)",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                readme = { text = "...", content-type = "" }
+            """,
+            'Field "project.readme.content-type" must not be empty',
+            id="Empty content-type for readme",
         ),
         pytest.param(
             """
@@ -1445,6 +1456,10 @@ def test_readme_text(text: str) -> None:
     assert pyproject.readme.text == text
     assert pyproject.readme.content_type == "text/plain"
     assert pyproject.as_rfc822()["Description-Content-Type"] == "text/plain"
+    assert pyproject.as_json()["description"] == text
+    metadata, unparsed = packaging.metadata.parse_email(bytes(pyproject.as_rfc822()))
+    assert not unparsed
+    assert metadata.get("description") == text
 
 
 def test_empty_license_text() -> None:
@@ -1455,13 +1470,14 @@ def test_empty_license_text() -> None:
     assert pyproject.as_rfc822()["License"] == ""
 
 
-@pytest.mark.parametrize("field", ["readme", "license"])
-def test_empty_metadata_filename(field: str) -> None:
-    value = (
-        {"file": "", "content-type": "text/plain"}
-        if field == "readme"
-        else {"file": ""}
-    )
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("readme", {"file": "", "content-type": "text/plain"}),
+        ("license", {"file": ""}),
+    ],
+)
+def test_empty_metadata_filename(field: str, value: dict[str, str]) -> None:
     with pytest.raises(pyproject_metadata.ConfigurationError, match="file not found"):
         pyproject_metadata.StandardMetadata.from_pyproject(
             {"project": {"name": "x", "version": "1.0", field: value}}
