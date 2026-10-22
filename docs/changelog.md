@@ -1,17 +1,5 @@
 # Changelog
 
-## Unreleased
-
-Fixes:
-
-- Keep an explicitly empty `readme.text` or `license.text`. Before, these were
-  dropped silently. An empty `license.text` now writes an empty `License` field.
-  With METADATA 2.4 and higher, it also gives the usual warning to use an SPDX
-  license expression. An empty readme writes an empty `Description` field, so it
-  reads back as an empty string.
-- Error on an empty `readme.content-type`. Before, the readme was dropped
-  silently.
-
 ## 0.12.1 (7-3-2026)
 
 Fixes:
