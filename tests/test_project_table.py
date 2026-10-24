@@ -207,9 +207,9 @@ def test_conversion_fn(toml_string: str) -> None:
             [project]
             name = "example"
             [project.entry-points]
-            console_scripts = { bad = 123 }
+            some_group = { bad = 123 }
             """,
-            'Field "project.entry-points.console_scripts.bad" has an invalid type, expecting str (got int)',
+            'Field "project.entry-points.some_group.bad" has an invalid type, expecting str (got int)',
             id="nested dicts of dicts bad type",
         ),
         pytest.param(
@@ -247,11 +247,11 @@ def test_conversion_error(toml_string: str, expected_msg: str) -> None:
         pytest.param(
             """
             [project.entry-points]
-            console_scripts = { bad = 123 }
+            some_group = { bad = 123 }
             """,
             [
                 'Field "project.name" is required if "project" is present',
-                'Field "project.entry-points.console_scripts.bad" has an invalid type, expecting str (got int)',
+                'Field "project.entry-points.some_group.bad" has an invalid type, expecting str (got int)',
             ],
             id="missing name and bad entry-point",
         ),
