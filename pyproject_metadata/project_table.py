@@ -281,6 +281,11 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
                 f" only alphanumeric, underscore, or dot characters (got {name!r})"
             )
             error_collector.error(ConfigurationTypeError(msg, key=prefix))
+        elif name in {"console_scripts", "gui_scripts"}:
+            # These groups would be ambiguous with [project.scripts] and [project.gui-scripts]
+            field = "scripts" if name == "console_scripts" else "gui-scripts"
+            msg = f'Field "{prefix}" cannot have a {name!r} group, use "project.{field}" instead'
+            error_collector.error(ConfigurationError(msg, key=f"{prefix}.{name}"))
 
 
 @validate_via_prefix.register(r"project\.requires-python")

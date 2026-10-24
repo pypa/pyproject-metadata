@@ -719,6 +719,28 @@ def all_errors(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) 
         pytest.param(
             """
                 [project]
+                name = "test"
+                version = "0.1.0"
+                [project.entry-points.console_scripts]
+                test = "test:main"
+            """,
+            'Field "project.entry-points" cannot have a \'console_scripts\' group, use "project.scripts" instead',
+            id="console_scripts in entry-points",
+        ),
+        pytest.param(
+            """
+                [project]
+                name = "test"
+                version = "0.1.0"
+                [project.entry-points.gui_scripts]
+                test = "test:main"
+            """,
+            'Field "project.entry-points" cannot have a \'gui_scripts\' group, use "project.gui-scripts" instead',
+            id="gui_scripts in entry-points",
+        ),
+        pytest.param(
+            """
+                [project]
                 name = ".test"
                 version = "0.1.0"
             """,
@@ -2058,7 +2080,7 @@ def test_dual_defined_dynamic_field_auto_version(
 @pytest.mark.parametrize(
     ("field", "static_value"),
     [
-        ("entry-points", {"console_scripts": {"foo": "bar:baz"}}),
+        ("entry-points", {"some_group": {"foo": "bar:baz"}}),
         ("gui-scripts", {"foo": "bar:baz"}),
         ("scripts", {"foo": "bar:baz"}),
     ],
