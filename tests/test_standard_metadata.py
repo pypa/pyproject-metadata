@@ -2454,3 +2454,124 @@ def test_invalid_extra_name_warns_once_and_still_emitted() -> None:
     # Emitting metadata must not warn again (filterwarnings=error would raise),
     # and the extra is not dropped.
     assert "Provides-Extra: my extra" in str(metadata.as_rfc822())
+
+
+@pytest.mark.parametrize("extra", ["docs.test", "docs..test"])
+def test_dotted_extra_invalid_requirement(extra: str, all_errors: bool) -> None:
+    data = tomllib.loads(
+        f"""[project]
+        name = "example"
+        version = "1.0"
+        [project.optional-dependencies]
+        "{extra}" = ["sphinx>=7", "broken => 1"]
+        other = ["pytest>=7"]
+        """
+    )
+    error_type = (
+        pyproject_metadata.errors.ExceptionGroup
+        if all_errors
+        else pyproject_metadata.ConfigurationError
+    )
+    with pytest.raises(error_type) as exc_info:
+        pyproject_metadata.StandardMetadata.from_pyproject(data, all_errors=all_errors)
+
+    error = exc_info.value
+    if isinstance(error, pyproject_metadata.errors.ExceptionGroup):
+        assert len(error.exceptions) == 1
+        error = error.exceptions[0]
+    assert isinstance(error, pyproject_metadata.ConfigurationError)
+    assert error.key == f"project.optional-dependencies.{extra!r}[1]"
+    assert "invalid PEP 508 requirement string 'broken => 1'" in str(error)
+
+
+def test_dotted_extra_collects_requirement_errors() -> None:
+    data = tomllib.loads(
+        """[project]
+        name = "example"
+        version = "1.0"
+        [project.optional-dependencies]
+        "docs.test" = ["sphinx => 7", "broken => 1"]
+        other = ["pytest => 7"]
+        """
+    )
+    with pytest.raises(pyproject_metadata.errors.ExceptionGroup) as exc_info:
+        pyproject_metadata.StandardMetadata.from_pyproject(data, all_errors=True)
+
+    errors = exc_info.value.exceptions
+    expected_keys = [
+        "project.optional-dependencies.'docs.test'[0]",
+        "project.optional-dependencies.'docs.test'[1]",
+        "project.optional-dependencies.other[0]",
+    ]
+    assert len(errors) == len(expected_keys)
+    for error, key in zip(errors, expected_keys):
+        assert isinstance(error, pyproject_metadata.ConfigurationError)
+        assert error.key == key
+
+
+@pytest.mark.parametrize("extra", ["docs.test", "docs..test"])
+def test_dotted_extra_preserves_valid_requirements(extra: str) -> None:
+    data = tomllib.loads(
+        f"""[project]
+        name = "example"
+        version = "1.0"
+        [project.optional-dependencies]
+        "{extra}" = ["sphinx>=7"]
+        other = ["pytest>=7"]
+        """
+    )
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(data)
+    assert list(metadata.optional_dependencies) == [extra, "other"]
+    assert list(map(str, metadata.optional_dependencies[extra])) == ["sphinx>=7"]
+    message = metadata.as_rfc822()
+    assert message.get_all("Provides-Extra") == ["docs-test", "other"]
+    assert message.get_all("Requires-Dist") == [
+        'sphinx>=7; extra == "docs-test"',
+        'pytest>=7; extra == "other"',
+    ]
+
+
+@pytest.mark.parametrize(
+    "extra", ["line\nbreak", "line\rbreak", "docs", "docs-test", "docs_test"]
+)
+def test_existing_extra_invalid_requirement(extra: str, all_errors: bool) -> None:
+    data = {
+        "project": {
+            "name": "example",
+            "version": "1.0",
+            "optional-dependencies": {extra: ["broken => 1"], "other": ["pytest>=7"]},
+        }
+    }
+    error_type = (
+        pyproject_metadata.errors.ExceptionGroup
+        if all_errors
+        else pyproject_metadata.ConfigurationError
+    )
+    with pytest.raises(error_type) as exc_info:
+        pyproject_metadata.StandardMetadata.from_pyproject(data, all_errors=all_errors)
+
+    error = exc_info.value
+    if isinstance(error, pyproject_metadata.errors.ExceptionGroup):
+        assert len(error.exceptions) == 1
+        error = error.exceptions[0]
+    assert isinstance(error, pyproject_metadata.ConfigurationError)
+    assert error.key == f"project.optional-dependencies.{extra}[0]"
+    assert "invalid PEP 508 requirement string 'broken => 1'" in str(error)
+
+
+@pytest.mark.parametrize("extra", ["line\nbreak", "line\rbreak"])
+def test_existing_extra_preserves_name_warning(extra: str) -> None:
+    data = {
+        "project": {
+            "name": "example",
+            "version": "1.0",
+            "optional-dependencies": {extra: ["sphinx>=7"], "other": ["pytest>=7"]},
+        }
+    }
+    with pytest.warns(
+        pyproject_metadata.errors.ConfigurationWarning, match="Invalid extra name"
+    ):
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(data)
+    assert list(metadata.optional_dependencies) == [extra, "other"]
+    assert list(map(str, metadata.optional_dependencies[extra])) == ["sphinx>=7"]
+    assert list(map(str, metadata.optional_dependencies["other"])) == ["pytest>=7"]
