@@ -276,7 +276,7 @@ def test_conversion_errors(toml_string: str, expected_msgs: list[str]) -> None:
     with pytest.raises(ExceptionGroup) as exc_info:
         to_project_table(data, collect_errors=True)
 
-    # Python 3.10+ could use strict=True
-    assert len(exc_info.value.exceptions) == len(expected_msgs)
-    for error, expected_msg in zip(exc_info.value.exceptions, expected_msgs):
+    for error, expected_msg in zip(
+        exc_info.value.exceptions, expected_msgs, strict=True
+    ):
         assert expected_msg in str(error)
