@@ -2476,3 +2476,54 @@ def test_invalid_extra_name_warns_once_and_still_emitted() -> None:
     # Emitting metadata must not warn again (filterwarnings=error would raise),
     # and the extra is not dropped.
     assert "Provides-Extra: my extra" in str(metadata.as_rfc822())
+
+
+@pytest.mark.parametrize(
+    "extra", ["docs", "docs.test", "docs..test", "a.b[0]", "line\nbreak", ""]
+)
+def test_extra_invalid_requirement(extra: str, all_errors: bool) -> None:
+    data = {
+        "project": {
+            "name": "example",
+            "version": "1.0",
+            "optional-dependencies": {
+                extra: ["sphinx>=7", "broken => 1"],
+                "other": ["pytest>=7"],
+            },
+        }
+    }
+    error_type = (
+        pyproject_metadata.errors.ExceptionGroup
+        if all_errors
+        else pyproject_metadata.ConfigurationError
+    )
+    with pytest.raises(error_type) as exc_info:
+        pyproject_metadata.StandardMetadata.from_pyproject(data, all_errors=all_errors)
+
+    error = exc_info.value
+    if isinstance(error, pyproject_metadata.errors.ExceptionGroup):
+        assert len(error.exceptions) == 1
+        error = error.exceptions[0]
+    assert isinstance(error, pyproject_metadata.ConfigurationError)
+    name = repr(extra) if "." in extra else extra
+    assert error.key == f"project.optional-dependencies.{name}[1]"
+    assert "invalid PEP 508 requirement string 'broken => 1'" in str(error)
+
+
+def test_dotted_extra_preserves_valid_requirements() -> None:
+    data = tomllib.loads(
+        """[project]
+        name = "example"
+        version = "1.0"
+        [project.optional-dependencies]
+        "docs.test" = ["sphinx>=7"]
+        other = ["pytest>=7"]
+        """
+    )
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(data)
+    message = metadata.as_rfc822()
+    assert message.get_all("Provides-Extra") == ["docs-test", "other"]
+    assert message.get_all("Requires-Dist") == [
+        'sphinx>=7; extra == "docs-test"',
+        'pytest>=7; extra == "other"',
+    ]

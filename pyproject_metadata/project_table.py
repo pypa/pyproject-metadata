@@ -258,7 +258,7 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
 
 
 @validate_via_prefix.register(
-    r"project\.(dependencies|optional-dependencies\.[^\.]+)\[\d+\]"
+    r"project\.(dependencies|optional-dependencies\.[\s\S]*)\[\d+\]"
 )
 def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
     if not isinstance(data, str):
