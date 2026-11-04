@@ -91,6 +91,7 @@ jobs:
           - meson-python
           - scikit-build-core
           - pdm-backend
+          - conan-py-build
 
     steps:
       - name: Checkout
