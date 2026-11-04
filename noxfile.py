@@ -113,6 +113,7 @@ PROJECTS = {
     "meson-python": "https://github.com/mesonbuild/meson-python/archive/refs/tags/0.22.1.tar.gz",
     "scikit-build-core": "https://github.com/scikit-build/scikit-build-core/archive/refs/tags/v1.1.1.tar.gz",
     "pdm-backend": "https://github.com/pdm-project/pdm-backend/archive/refs/tags/2.5.0.tar.gz",
+    "conan-py-build": "https://github.com/conan-io/conan-py-build/archive/refs/tags/v0.6.4.tar.gz",
 }
 
 
@@ -136,7 +137,7 @@ def downstream(session: nox.Session, project: str) -> None:
 
     if project == "sphinx-theme-builder":
         session.install("-r", "tests/requirements.txt")
-        session.install("-e.[cli]", "pip", "click<8.5")
+        session.install("-e.[cli]", "pip", "click<8.5", "pytest<9.2")
         session.run("pip", "list")
         session.run("pytest", "--pspec", "-knot import_name", env=env)
     if project == "meson-python":
@@ -158,6 +159,10 @@ def downstream(session: nox.Session, project: str) -> None:
         shutil.rmtree(repl_dir)
         shutil.copytree(pkg_dir, repl_dir)
         session.run("pytest", "-mnot network", env=env)
+    if project == "conan-py-build":
+        session.install("-e.[dev]", "pip")
+        session.run("pip", "list")
+        session.run("pytest", env=env)
 
 
 if __name__ == "__main__":
