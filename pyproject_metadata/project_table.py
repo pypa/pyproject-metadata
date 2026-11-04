@@ -13,19 +13,19 @@ from __future__ import annotations
 import functools
 import re
 import sys
+import types
 import typing
 from typing import (
     Any,
     Literal,
     TypedDict,
-    Union,
 )
 
 import packaging.requirements
 import packaging.specifiers
 import packaging.version
 
-from ._dispatch import get_name, is_typed_dict, keydispatch
+from ._dispatch import get_name, keydispatch
 from .errors import ConfigurationError, ConfigurationTypeError, SimpleErrorCollector
 
 if sys.version_info < (3, 11):
@@ -113,9 +113,9 @@ ProjectTable = TypedDict(
         "name": Required[str],
         "version": str,
         "description": str,
-        "license": Union[LicenseTable, str],
+        "license": LicenseTable | str,
         "license-files": list[str],
-        "readme": Union[str, ReadmeTable],
+        "readme": str | ReadmeTable,
         "requires-python": str,
         "dependencies": list[str],
         "optional-dependencies": dict[str, list[str]],
@@ -158,7 +158,7 @@ PyProjectTable = TypedDict(
         "build-system": BuildSystemTable,
         "project": ProjectTable,
         "tool": dict[str, Any],
-        "dependency-groups": dict[str, list[Union[str, IncludeGroupTable]]],
+        "dependency-groups": dict[str, list[str | IncludeGroupTable]],
     },
     total=False,
 )
@@ -387,7 +387,7 @@ def _cast_union(
     for arg in args:
         if arg is str and isinstance(data, str):
             return
-        if (arg is dict or is_typed_dict(arg)) and isinstance(data, dict):
+        if (arg is dict or typing.is_typeddict(arg)) and isinstance(data, dict):
             _cast(arg, data, prefix, error_collector)
             return
     # No variant matched, raise a union type error
@@ -422,7 +422,7 @@ def _cast(
         return
 
     # TypedDict
-    if is_typed_dict(type_hint):
+    if typing.is_typeddict(type_hint):
         validate_via_prefix(prefix, data, error_collector)
         _cast_typed_dict(type_hint, data, prefix, error_collector)
         return
@@ -436,7 +436,7 @@ def _cast(
     elif origin is dict:
         validate_via_prefix(prefix, data, error_collector)
         _cast_dict(args, data, prefix, error_collector)
-    elif origin is typing.Union:
+    elif origin in {typing.Union, types.UnionType}:
         # A union does not run the validator, the selected branch will
         _cast_union(args, data, prefix, error_collector)
     elif isinstance(data, origin or type_hint):

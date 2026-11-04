@@ -8,23 +8,14 @@ from __future__ import annotations
 
 import functools
 import re
-import sys
 import typing
-from typing import Callable, Generic
+from typing import Concatenate, Generic, ParamSpec
 
-if sys.version_info < (3, 10):
-    if typing.TYPE_CHECKING:
-        from typing_extensions import Concatenate, ParamSpec
-    else:
-        ParamSpec = typing.TypeVar
-        Concatenate = object
-else:
-    from typing import Concatenate, ParamSpec
-
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = [
     "get_name",
-    "is_typed_dict",
     "keydispatch",
 ]
 
@@ -72,12 +63,6 @@ class KeyDispatcher(Generic[P, R]):
 def keydispatch(func: Callable[Concatenate[str, P], R]) -> KeyDispatcher[P, R]:
     """Decorate a function into a KeyDispatcher."""
     return KeyDispatcher(func)
-
-
-def is_typed_dict(type_hint: object) -> bool:
-    if sys.version_info >= (3, 10):
-        return typing.is_typeddict(type_hint)
-    return hasattr(type_hint, "__annotations__") and hasattr(type_hint, "__total__")
 
 
 def get_name(type_hint: type[object]) -> str:
