@@ -50,6 +50,7 @@ import warnings
 
 # Build backends may vendor this package, so all imports are relative.
 from . import constants, pyproject
+from .dynamic import merge_dynamic
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .project_table import to_project_table
 from .pyproject import License, Readme
@@ -90,6 +91,7 @@ __all__ = [
     "extras_project",
     "extras_top_level",
     "field_to_metadata",
+    "merge_dynamic",
 ]
 
 
