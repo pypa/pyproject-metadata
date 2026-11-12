@@ -1703,6 +1703,30 @@ def test_license_file_24(
         assert b"License-File: LICENSE.txt" in bmessage
 
 
+def test_license_file_24_relative_to_project_dir(tmp_path: pathlib.Path) -> None:
+    (tmp_path / "licenses").mkdir()
+    (tmp_path / "licenses" / "LICENSE.txt").write_text("Some license", encoding="utf-8")
+
+    with pytest.warns(pyproject_metadata.errors.ConfigurationWarning):
+        metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+            {
+                "project": {
+                    "name": "example",
+                    "version": "0.1.0",
+                    "license": {"file": "licenses/LICENSE.txt"},
+                },
+            },
+            project_dir=tmp_path,
+            metadata_version="2.4",
+        )
+
+    assert metadata.license == pyproject_metadata.License(
+        "Some license", tmp_path / "licenses" / "LICENSE.txt"
+    )
+    assert metadata.as_rfc822().get_all("License-File") == ["licenses/LICENSE.txt"]
+    assert metadata.as_json()["license_file"] == ["licenses/LICENSE.txt"]
+
+
 def test_license_file_broken(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(DIR / "packages/broken_license")
 
