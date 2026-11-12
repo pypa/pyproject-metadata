@@ -355,6 +355,15 @@ class StandardMetadata:
     If True, all errors will be collected and raised in an ExceptionGroup.
     """
 
+    _license_file_relpath: pathlib.Path | None = dataclasses.field(
+        default=None, init=False, repr=False, compare=False
+    )
+    """
+    The classic ``project.license.file`` path relative to the project directory,
+    used for the ``License-File`` field. ``license.file`` itself is joined with
+    the project directory, so it is absolute if the project directory is.
+    """
+
     def __post_init__(self) -> None:
         """
         Validate the fields on construction.
@@ -562,6 +571,9 @@ class StandardMetadata:
 
         error_collector.finalize("Failed to parse pyproject.toml")
         assert self is not None
+        if isinstance(license, License) and license.file is not None:
+            with contextlib.suppress(ValueError):
+                self._license_file_relpath = license.file.relative_to(project_dir)
         return self
 
     def as_rfc822(self) -> RFC822Message:
@@ -781,7 +793,8 @@ class StandardMetadata:
             and isinstance(self.license, License)
             and self.license.file
         ):
-            smart_message["License-File"] = self.license.file.as_posix()
+            license_file = self._license_file_relpath or self.license.file
+            smart_message["License-File"] = license_file.as_posix()
 
         for classifier in self.classifiers:
             smart_message["Classifier"] = classifier
