@@ -248,6 +248,32 @@ def test_convert_author_email() -> None:
     ]
 
 
+def test_convert_email_only_contacts() -> None:
+    metadata = pyproject_metadata.StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "example",
+                "version": "0.1.0",
+                "authors": [
+                    {"email": "johndoe@example.com"},
+                    {"name": "Kate Doe", "email": "katedoe@example.com"},
+                    {"name": "Emailless"},
+                ],
+                "maintainers": [
+                    {"email": "maintainer@example.com"},
+                ],
+            },
+        }
+    )
+    message = metadata.as_rfc822()
+    assert message.get_all("Author") == ["Emailless"]
+    assert message.get_all("Author-Email") == [
+        "johndoe@example.com, Kate Doe <katedoe@example.com>"
+    ]
+    assert message.get_all("Maintainer") is None
+    assert message.get_all("Maintainer-Email") == ["maintainer@example.com"]
+
+
 def test_convert_author_email_non_ascii() -> None:
     metadata = pyproject_metadata.StandardMetadata.from_pyproject(
         {
