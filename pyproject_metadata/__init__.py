@@ -321,8 +321,12 @@ class StandardMetadata:
         default_factory=dict
     )
     entrypoints: dict[str, dict[str, str]] = dataclasses.field(default_factory=dict)
-    authors: list[tuple[str, str | None]] = dataclasses.field(default_factory=list)
-    maintainers: list[tuple[str, str | None]] = dataclasses.field(default_factory=list)
+    authors: list[tuple[str | None, str | None]] = dataclasses.field(
+        default_factory=list
+    )
+    maintainers: list[tuple[str | None, str | None]] = dataclasses.field(
+        default_factory=list
+    )
     urls: dict[str, str] = dataclasses.field(default_factory=dict)
     classifiers: list[str] = dataclasses.field(default_factory=list)
     keywords: list[str] = dataclasses.field(default_factory=list)
@@ -826,25 +830,30 @@ class StandardMetadata:
         errors.finalize("Failed to write metadata")
 
 
-def _name_list(people: list[tuple[str, str | None]]) -> str | None:
+def _name_list(people: list[tuple[str | None, str | None]]) -> str | None:
     """
     Build a comma-separated list of names.
     """
-    return ", ".join(name for name, email_ in people if not email_) or None
+    return (
+        ", ".join(name for name, email_ in people if name is not None and not email_)
+        or None
+    )
 
 
 _DISPLAY_NAME_NEEDS_QUOTING = re.compile(r'[][\\()<>@,:;".]')
 _QUOTED_STRING_ESCAPE = re.compile(r'([\\"])')
 
 
-def _format_address(name: str, addr: str) -> str:
+def _format_address(name: str | None, addr: str) -> str:
+    if name is None:
+        return addr
     if _DISPLAY_NAME_NEEDS_QUOTING.search(name):
         quoted = _QUOTED_STRING_ESCAPE.sub(r"\\\1", name)
         return f'"{quoted}" <{addr}>'
     return f"{name} <{addr}>"
 
 
-def _email_list(people: list[tuple[str, str | None]]) -> str | None:
+def _email_list(people: list[tuple[str | None, str | None]]) -> str | None:
     """
     Build a comma-separated list of emails.
     """

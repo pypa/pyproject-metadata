@@ -1279,7 +1279,7 @@ def test_value(after_rfc: bool, monkeypatch: pytest.MonkeyPatch) -> None:
     assert metadata.readme.content_type == "text/markdown"
     assert metadata.description == "A package with all the metadata :)"
     assert metadata.authors == [
-        ("Unknown", "example@example.com"),
+        (None, "example@example.com"),
         ("Example!", None),
     ]
     assert metadata.maintainers == [
@@ -1426,7 +1426,7 @@ def test_as_json(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert core_metadata == {
         "author": "Example!",
-        "author_email": "Unknown <example@example.com>",
+        "author_email": "example@example.com",
         "classifier": [
             "Development Status :: 4 - Beta",
             "Programming Language :: Python",
@@ -1515,7 +1515,7 @@ def test_as_rfc822(monkeypatch: pytest.MonkeyPatch) -> None:
         ("Summary", "A package with all the metadata :)"),
         ("Keywords", "trampolim,is,interesting"),
         ("Author", "Example!"),
-        ("Author-Email", "Unknown <example@example.com>"),
+        ("Author-Email", "example@example.com"),
         ("Maintainer", "Emailless"),
         ("Maintainer-Email", "Other Example <other@example.com>"),
         ("License", "some license text"),

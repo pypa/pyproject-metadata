@@ -90,7 +90,7 @@ def ensure_dict(val: object) -> dict[str, str] | None:
     return val
 
 
-def ensure_people(val: object) -> list[tuple[str, str | None]]:
+def ensure_people(val: object) -> list[tuple[str | None, str | None]]:
     """Ensure that a value is a list of tables with optional "name" and "email" keys."""
     if not isinstance(val, list):
         return []
@@ -100,7 +100,7 @@ def ensure_people(val: object) -> list[tuple[str, str | None]]:
         for value in each.values():
             if not isinstance(value, str):
                 return []
-    return [(entry.get("name", "Unknown"), entry.get("email")) for entry in val]
+    return [(entry.get("name"), entry.get("email")) for entry in val]
 
 
 def get_license(
